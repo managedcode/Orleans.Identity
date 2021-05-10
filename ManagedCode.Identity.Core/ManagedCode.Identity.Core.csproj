@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.1</TargetFramework>
+        <LangVersion>9</LangVersion>
+        <Title>ManagedCode.Identity.Core</Title>
+        <Authors>ManagedCode</Authors>
+        <PackageProjectUrl>https://github.com/managed-code-hub/Identity</PackageProjectUrl>
+        <PackageLicenseUrl>https://github.com/managed-code-hub/Identity/blob/main/LICENSE</PackageLicenseUrl>
+        <RepositoryUrl>https://github.com/managed-code-hub/Identity</RepositoryUrl>
+        <PackageVersion>0.0.1</PackageVersion>
+        <Description>Base implementation for ASP.NET Identity</Description>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="ManagedCode.Repository.Core" Version="1.0.10" />
+      <PackageReference Include="Microsoft.AspNetCore.Identity" Version="2.2.0" />
+      <PackageReference Include="Microsoft.Extensions.Identity.Core" Version="5.0.5" />
+      <PackageReference Include="Microsoft.Extensions.Identity.Stores" Version="5.0.5" />
+      <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="5.0.0" />
+    </ItemGroup>
+
+</Project>
