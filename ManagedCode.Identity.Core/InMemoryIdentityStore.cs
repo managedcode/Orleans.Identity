@@ -15,13 +15,11 @@ namespace ManagedCode.Identity.Core
     {
         private readonly IIdentityRoleRepository<string, InMemoryIdentityRole> _roleRepository;
         private readonly IIdentityUserRepository<string, InMemoryIdentityUser> _userRepository;
-        private ILogger<InMemoryIdentityStore> _logger;
 
-        public InMemoryIdentityStore(ILogger<InMemoryIdentityStore> logger,
+        public InMemoryIdentityStore(
             IIdentityUserRepository<string, InMemoryIdentityUser> userRepository,
-            IIdentityRoleRepository<string, InMemoryIdentityRole> roleRepository) : base(logger)
+            IIdentityRoleRepository<string, InMemoryIdentityRole> roleRepository) 
         {
-            _logger = logger;
             _userRepository = userRepository;
             _roleRepository = roleRepository;
         }

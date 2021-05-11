@@ -7,8 +7,6 @@ namespace ManagedCode.Identity.Core
     public class InMemoryIdentityRoleRepository : InMemoryRepository<string, InMemoryIdentityRole>,
         IIdentityRoleRepository<string, InMemoryIdentityRole>
     {
-        public InMemoryIdentityRoleRepository(ILogger logger) : base(logger)
-        {
-        }
+    
     }
 }

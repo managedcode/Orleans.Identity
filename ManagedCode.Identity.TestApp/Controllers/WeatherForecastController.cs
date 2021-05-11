@@ -27,7 +27,10 @@ namespace ManagedCode.Identity.TestApp.Controllers
         [HttpGet]
         public async Task<IEnumerable<string>> Get()
         {
-            var user = await _userManager.CreateAsync(new InMemoryIdentityUser());
+            var user = await _userManager.CreateAsync(new InMemoryIdentityUser()
+            {
+                UserName = "username"
+            });
             return Enumerable.Range(1, 5)
                 .Select(index => index.ToString())
                 .ToArray();

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using ManagedCode.Repository.Core;
 using Microsoft.AspNetCore.Identity;
@@ -8,6 +9,7 @@ namespace ManagedCode.Identity.Core
     {
         public InMemoryIdentityUser()
         {
+            Id = Guid.NewGuid().ToString();
             Roles = new List<string>();
             Logins = new List<IdentityUserLogin<string>>();
             Claims = new List<IdentityUserClaim<string>>();

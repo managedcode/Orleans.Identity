@@ -8,11 +8,13 @@ using System.Threading.Tasks;
 using ManagedCode.Repository.Core;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace ManagedCode.Identity.Core.Common
 {
     public abstract class BaseIdentityStore<TKey, TUser, TRole> :
         IUserStore<TUser>,
+        IRoleStore<TRole>,
         IUserLoginStore<TUser>,
         IUserRoleStore<TUser>,
         IUserClaimStore<TUser>,
@@ -30,15 +32,8 @@ namespace ManagedCode.Identity.Core.Common
         where TUser : IdentityUser<TKey>, IItem<TKey>
         where TRole : IdentityRole<TKey>, IItem<TKey>
     {
-        private readonly ILogger _logger;
-
         private bool _disposed;
-
-        protected BaseIdentityStore(ILogger logger)
-        {
-            _logger = logger;
-        }
-
+        
         public async Task<IdentityResult> CreateAsync(TRole role, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();

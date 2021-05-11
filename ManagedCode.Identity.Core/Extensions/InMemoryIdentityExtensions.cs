@@ -30,20 +30,25 @@ namespace ManagedCode.Identity.Core.Extensions
             builder.Services.AddSingleton<IIdentityUserRepository<string, InMemoryIdentityUser>, InMemoryIdentityUserRepository>();
             builder.Services.AddSingleton<IIdentityRoleRepository<string, InMemoryIdentityRole>, InMemoryIdentityRoleRepository>();
             
-            builder.Services.AddSingleton<IUserStore<InMemoryIdentityUser>, InMemoryIdentityStore>();
-            builder.Services.AddSingleton<IUserLoginStore<InMemoryIdentityUser>, InMemoryIdentityStore>();
-            builder.Services.AddSingleton<IUserRoleStore<InMemoryIdentityUser>, InMemoryIdentityStore>();
-            builder.Services.AddSingleton<IUserClaimStore<InMemoryIdentityUser>, InMemoryIdentityStore>();
-            builder.Services.AddSingleton<IUserPasswordStore<InMemoryIdentityUser>, InMemoryIdentityStore>();
-            builder.Services.AddSingleton<IUserSecurityStampStore<InMemoryIdentityUser>, InMemoryIdentityStore>();
-            builder.Services.AddSingleton<IUserEmailStore<InMemoryIdentityUser>, InMemoryIdentityStore>();
-            builder.Services.AddSingleton<IUserLockoutStore<InMemoryIdentityUser>, InMemoryIdentityStore>();
-            builder.Services.AddSingleton<IUserPhoneNumberStore<InMemoryIdentityUser>, InMemoryIdentityStore>();
-            builder.Services.AddSingleton<IQueryableUserStore<InMemoryIdentityUser>, InMemoryIdentityStore>();
-            builder.Services.AddSingleton<IUserTwoFactorStore<InMemoryIdentityUser>, InMemoryIdentityStore>();
-            builder.Services.AddSingleton<IQueryableRoleStore<InMemoryIdentityRole>, InMemoryIdentityStore>();
-            builder.Services.AddSingleton<IRoleClaimStore<InMemoryIdentityRole>, InMemoryIdentityStore>();
-            builder.Services.AddSingleton<IUserAuthenticationTokenStore<InMemoryIdentityUser>, InMemoryIdentityStore>();
+            builder.Services.AddSingleton<InMemoryIdentityStore>();
+            
+            builder.Services.AddTransient(provider => (IUserStore<TUser>)provider.GetService<InMemoryIdentityStore>());
+            builder.Services.AddTransient(provider => (IUserTwoFactorStore<TUser>)provider.GetService<InMemoryIdentityStore>());
+            builder.Services.AddTransient(provider => (IQueryableUserStore<TUser>)provider.GetService<InMemoryIdentityStore>());
+            builder.Services.AddTransient(provider => (IUserLoginStore<TUser>)provider.GetService<InMemoryIdentityStore>());
+            builder.Services.AddTransient(provider => (IUserRoleStore<TUser>)provider.GetService<InMemoryIdentityStore>());
+            builder.Services.AddTransient(provider => (IUserClaimStore<TUser>)provider.GetService<InMemoryIdentityStore>());
+            builder.Services.AddTransient(provider => (IUserPhoneNumberStore<TUser>)provider.GetService<InMemoryIdentityStore>());
+            builder.Services.AddTransient(provider => (IUserLockoutStore<TUser>)provider.GetService<InMemoryIdentityStore>());
+            builder.Services.AddTransient(provider => (IUserEmailStore<TUser>)provider.GetService<InMemoryIdentityStore>());
+            builder.Services.AddTransient(provider => (IUserPasswordStore<TUser>)provider.GetService<InMemoryIdentityStore>());
+            builder.Services.AddTransient(provider => (IUserSecurityStampStore<TUser>)provider.GetService<InMemoryIdentityStore>());
+            builder.Services.AddTransient(provider => (IUserAuthenticationTokenStore<TUser>)provider.GetService<InMemoryIdentityStore>());
+
+            builder.Services.AddTransient(provider => (IRoleStore<InMemoryIdentityRole>)provider.GetService<InMemoryIdentityStore>());
+            builder.Services.AddTransient(provider => (IQueryableRoleStore<InMemoryIdentityRole>)provider.GetService<InMemoryIdentityStore>());
+            builder.Services.AddTransient(provider => (IRoleClaimStore<InMemoryIdentityRole>)provider.GetService<InMemoryIdentityStore>());
+            
 
             return builder;
         }
