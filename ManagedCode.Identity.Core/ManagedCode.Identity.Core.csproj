@@ -14,7 +14,7 @@
         <RepositoryUrl>https://github.com/managed-code-hub/Identity</RepositoryUrl>
         <PackageVersion>0.0.2</PackageVersion>
         <Description>Base implementation for ASP.NET Identity</Description>
-        <PackageIcon>https://github.com/managed-code-hub/Identity/raw/main/logo.png</PackageIcon>
+        <PackageIcon>logo.png</PackageIcon>
     </PropertyGroup>
     <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
         <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
@@ -22,11 +22,15 @@
 
     <ItemGroup>
         <PackageReference Include="ManagedCode.Repository.Core" Version="1.0.10" />
-        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All"/>
+        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
         <PackageReference Include="Microsoft.AspNetCore.Identity" Version="2.2.0" />
         <PackageReference Include="Microsoft.Extensions.Identity.Core" Version="5.0.5" />
         <PackageReference Include="Microsoft.Extensions.Identity.Stores" Version="5.0.5" />
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="5.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="..\logo.png" Pack="true" Visible="false" PackagePath="" />
     </ItemGroup>
 
 </Project>
