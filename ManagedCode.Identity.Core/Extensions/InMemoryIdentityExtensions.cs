@@ -34,7 +34,7 @@ namespace ManagedCode.Identity.Core.Extensions
             return builder;
         }
 
-        public static IdentityBuilder AddIdentityWithMongoStores(this IServiceCollection services)
+        public static IdentityBuilder AddIdentityWithInMemoryStore(this IServiceCollection services)
         {
             return services.AddIdentityWithInMemoryStore<InMemoryIdentityUser, InMemoryIdentityRole>();
         }

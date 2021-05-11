@@ -12,7 +12,7 @@
         <PackageProjectUrl>https://github.com/managed-code-hub/Identity</PackageProjectUrl>
         <PackageLicenseUrl>https://github.com/managed-code-hub/Identity/blob/main/LICENSE</PackageLicenseUrl>
         <RepositoryUrl>https://github.com/managed-code-hub/Identity</RepositoryUrl>
-        <PackageVersion>0.0.2</PackageVersion>
+        <PackageVersion>0.0.3</PackageVersion>
         <Description>Base implementation for ASP.NET Identity</Description>
         <PackageIcon>logo.png</PackageIcon>
     </PropertyGroup>
