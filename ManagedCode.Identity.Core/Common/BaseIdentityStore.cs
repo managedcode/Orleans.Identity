@@ -12,6 +12,7 @@ using Microsoft.Extensions.Logging;
 namespace ManagedCode.Identity.Core.Common
 {
     public abstract class BaseIdentityStore<TKey, TUser, TRole> :
+        IUserStore<TUser>,
         IUserLoginStore<TUser>,
         IUserRoleStore<TUser>,
         IUserClaimStore<TUser>,

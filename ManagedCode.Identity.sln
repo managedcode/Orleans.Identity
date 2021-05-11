@@ -4,6 +4,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Identity.Core",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Identity.Tests", "ManagedCode.Identity.Tests\ManagedCode.Identity.Tests.csproj", "{6FD1A8A0-E36B-467E-99C8-0E7220B8643B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Identity.TestApp", "ManagedCode.Identity.TestApp\ManagedCode.Identity.TestApp.csproj", "{880531F9-AB4D-41F9-BB40-C129A4360D2E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{6FD1A8A0-E36B-467E-99C8-0E7220B8643B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6FD1A8A0-E36B-467E-99C8-0E7220B8643B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6FD1A8A0-E36B-467E-99C8-0E7220B8643B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{880531F9-AB4D-41F9-BB40-C129A4360D2E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{880531F9-AB4D-41F9-BB40-C129A4360D2E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{880531F9-AB4D-41F9-BB40-C129A4360D2E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{880531F9-AB4D-41F9-BB40-C129A4360D2E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

@@ -30,6 +30,7 @@ namespace ManagedCode.Identity.Core.Extensions
             builder.Services.AddSingleton<IIdentityUserRepository<string, InMemoryIdentityUser>, InMemoryIdentityUserRepository>();
             builder.Services.AddSingleton<IIdentityRoleRepository<string, InMemoryIdentityRole>, InMemoryIdentityRoleRepository>();
             
+            builder.Services.AddSingleton<IUserStore<InMemoryIdentityUser>, InMemoryIdentityStore>();
             builder.Services.AddSingleton<IUserLoginStore<InMemoryIdentityUser>, InMemoryIdentityStore>();
             builder.Services.AddSingleton<IUserRoleStore<InMemoryIdentityUser>, InMemoryIdentityStore>();
             builder.Services.AddSingleton<IUserClaimStore<InMemoryIdentityUser>, InMemoryIdentityStore>();
