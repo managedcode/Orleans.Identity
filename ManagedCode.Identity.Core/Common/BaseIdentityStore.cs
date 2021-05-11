@@ -32,7 +32,7 @@ namespace ManagedCode.Identity.Core.Common
         private readonly ILogger _logger;
 
         private bool _disposed;
-        
+
         protected BaseIdentityStore(ILogger logger)
         {
             _logger = logger;
