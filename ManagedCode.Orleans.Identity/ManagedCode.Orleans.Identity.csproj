@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net7.0</TargetFramework>
+        <LangVersion>11</LangVersion>
+        <OutputType>Library</OutputType>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="ManagedCode.Communication" Version="1.0.3" />
+        <PackageReference Include="ManagedCode.Repository.Core" Version="1.0.18" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0" />
+        <PackageReference Include="Microsoft.Orleans.Sdk" Version="7.0.0" />
+
+    </ItemGroup>
+
+</Project>
