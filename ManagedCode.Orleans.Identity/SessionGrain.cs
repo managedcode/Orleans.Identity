@@ -5,7 +5,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using ManagedCode.Communication;
 using ManagedCode.Communication.Extensions;
+using ManagedCode.Orleans.Identity;
 using Orleans;
+
 
 namespace ManagedCode.Orleans.Identity;
 
@@ -172,9 +174,9 @@ public class SessionGrain : Grain, ISessionGrain
         return Result<SessionModel>.Succeed(new SessionModel()).AsTask();
     }
 
-    public Task<Result<KeyValuePair<string, string>[]>> ValidateSessionAsync()
+    public Task<Result<List<KeyValuePair<string, string>>>> ValidateSessionAsync()
     {
-        return Result<KeyValuePair<string, string>[]>.Fail().AsTask();
+        return Result<List<KeyValuePair<string, string>>>.Fail().AsTask();
     }
 
     public Task<Result<SessionModel>> GetSessionAsync()

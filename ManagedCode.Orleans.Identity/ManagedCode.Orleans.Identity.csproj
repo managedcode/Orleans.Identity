@@ -4,14 +4,22 @@
         <TargetFramework>net7.0</TargetFramework>
         <LangVersion>11</LangVersion>
         <OutputType>Library</OutputType>
+        <Nullable>enable</Nullable>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="ManagedCode.Communication" Version="1.0.3" />
+
+        <PackageReference Include="ManagedCode.Communication" Version="2.0.10" />
+        <PackageReference Include="ManagedCode.Communication.Orleans" Version="2.0.10" />
+
         <PackageReference Include="ManagedCode.Repository.Core" Version="1.0.18" />
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0" />
         <PackageReference Include="Microsoft.Orleans.Sdk" Version="7.0.0" />
 
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Properties" />
+    </ItemGroup>
+    
 </Project>

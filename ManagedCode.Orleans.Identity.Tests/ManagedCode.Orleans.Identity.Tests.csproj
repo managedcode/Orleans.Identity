@@ -43,12 +43,16 @@
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0" />
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="7.0.0" />
         <PackageReference Include="Microsoft.Orleans.Sdk" Version="7.0.0" />
+        <PackageReference Include="Microsoft.Orleans.Serialization.SystemTextJson" Version="7.0.0" />
         <PackageReference Include="Microsoft.Orleans.Serialization.TestKit" Version="7.0.0" />
+        <PackageReference Include="ManagedCode.Communication" Version="2.0.10" />
+        <PackageReference Include="ManagedCode.Communication.Orleans" Version="2.0.10" />
     </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\ManagedCode.Orleans.Identity\ManagedCode.Orleans.Identity.csproj" />
     </ItemGroup>
-    
+
+
 
 </Project>

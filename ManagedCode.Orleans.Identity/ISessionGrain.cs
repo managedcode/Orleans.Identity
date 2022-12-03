@@ -10,7 +10,7 @@ public interface ISessionGrain : IGrainWithStringKey
 {
     Task<Result<SessionModel>> CreateAsync(SessionInfo sessionInfo);
 
-    Task<Result<KeyValuePair<string, string>[]>> ValidateSessionAsync();
+   Task<Result<List<KeyValuePair<string, string>>>> ValidateSessionAsync();
 
     Task<Result<SessionModel>> GetSessionAsync();
     
