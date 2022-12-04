@@ -13,12 +13,15 @@ public class HttpHostProgram
         builder.Services.AddControllers();
         builder.Services.AddSignalR();
         
+        builder.Services.AddAuthenticationHandler(); /////////
+        
         var app = builder.Build();
 
         //Authentication should always be placed before Authorization.
         app.UseAuthentication();
         app.UseAuthorization();
-        app.UseOrleansAuthorization();
+        
+        app.UseOrleansAuthorization();/////////
 
         app.MapControllers();
         app.MapHub<TestAnonymousHub>(nameof(TestAnonymousHub));

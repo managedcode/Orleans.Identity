@@ -56,14 +56,15 @@ public static class ClaimsPrincipalExtensions
 
 public static class OrleansExtensions
 {
+    private const string Roles = "Roles";
     public static void SetOrleansContext(this ClaimsPrincipal user)
     {
-        RequestContext.Set("Roles", user.GetRoles());
+        RequestContext.Set(Roles, user.GetRoles());
     }
     
     public static string[] GetOrleansContext(this IIncomingGrainCallFilter filter)
     {
-        return RequestContext.Get("Roles") as string[];
+        return RequestContext.Get(Roles) as string[] ?? Array.Empty<string>();
     }
     
 }

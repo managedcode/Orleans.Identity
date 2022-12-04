@@ -26,7 +26,7 @@ public class OrleansIdentityAuthenticationHandler : AuthenticationHandler<Authen
 
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
         {
-            string sessionId = null;
+            string sessionId;
             if (!Request.Headers.TryGetValue(IdentityConstants.AUTH_TOKEN, out var values))
             {
                 if (Request.Headers.TryGetValue("Authorization", out var jwt))

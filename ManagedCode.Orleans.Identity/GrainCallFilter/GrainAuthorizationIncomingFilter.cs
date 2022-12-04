@@ -26,15 +26,14 @@ public class GrainAuthorizationIncomingFilter : IIncomingGrainCallFilter
             var roles = this.GetOrleansContext().ToHashSet();
             foreach (var attribute in attributes)
             {
-                var intersect = attribute.Roles?.Split(',').Intersect(roles).Count();
-                if (intersect.GetHashCode() > 0)
+                var intersect = attribute.Roles?.Split(',') ?? Array.Empty<string>();
+                if (intersect.Any(role => roles.Contains(role)))
                 {
                     await context.Invoke();
                 }
-                else
-                {
-                    throw new UnauthorizedAccessException();
-                }
+
+                throw new UnauthorizedAccessException();
+                
             }
         }
         else
