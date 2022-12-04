@@ -5,6 +5,15 @@
         <LangVersion>11</LangVersion>
         <OutputType>Library</OutputType>
         <Nullable>enable</Nullable>
+        <IsPackable>true</IsPackable>
+    </PropertyGroup>
+
+    <!--NuGet-->
+    <PropertyGroup>
+        <Title>ManagedCode.Orleans.Identity</Title>
+        <PackageId>ManagedCode.Orleans.Identity</PackageId>
+        <Description>Identity base on Orleans</Description>
+        <PackageTags>managedcode, orleans, identity</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>
