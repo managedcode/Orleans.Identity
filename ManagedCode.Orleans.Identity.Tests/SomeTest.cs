@@ -46,7 +46,7 @@ public class SomeTest
         anonymousHub.State.Should().Be(HubConnectionState.Connected);
         
         var authorizeHub = _testApp.CreateSignalRClient(nameof(TestAuthorizeHub));
-        await Assert.ThrowsAsync<Exception>(()=> authorizeHub.StartAsync());
+        await Assert.ThrowsAsync<System.Net.Http.HttpRequestException>(()=> authorizeHub.StartAsync());
     }
     
 }
