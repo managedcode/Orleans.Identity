@@ -18,8 +18,8 @@
 
     <ItemGroup>
 
-        <PackageReference Include="ManagedCode.Communication" Version="2.0.11" />
-        <PackageReference Include="ManagedCode.Communication.Orleans" Version="2.0.11" />
+        <PackageReference Include="ManagedCode.Communication" Version="2.0.13" />
+        <PackageReference Include="ManagedCode.Communication.Orleans" Version="2.0.13" />
 
         <PackageReference Include="ManagedCode.Database.Core" Version="2.0.1" />
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0" />
