@@ -7,22 +7,41 @@ using ManagedCode.Communication;
 using ManagedCode.Communication.Extensions;
 using ManagedCode.Orleans.Identity;
 using Orleans;
+using Orleans.Runtime;
 
 
 namespace ManagedCode.Orleans.Identity;
 
 public class SessionGrain : Grain, ISessionGrain
 {
-  //  private readonly AccountManager _accountManager;
+    private readonly IPersistentState<SessionModel> _sessionState;
+    private readonly SessionModel _sessionEntity;
+    
+    public SessionGrain([PersistentState("session", "sessionStore")]IPersistentState<SessionModel> sessionState)
+    {
+        _sessionState = sessionState;
+    }
+
+    public Task<Result<SessionModel>> GetSessionAsync()
+    {
+        return Task.FromResult(Result<SessionModel>.Succeed(_sessionEntity));
+    }
+    
+    public Task<Result<SessionModel>> CreateAsync(SessionInfo sessionInfo)
+    {
+        return Result<SessionModel>.Succeed(new SessionModel()).AsTask();
+    }
+    
+    //  private readonly AccountManager _accountManager;
   //  private readonly ISessionRepository _sessionRepository;
 
     //private SessionEntity _sessionEntity;
     
-    public SessionGrain()
-    {
-       // _accountManager = userManager;
-       // _sessionRepository = sessionRepository;
-    }
+    // public SessionGrain()
+    // {
+    //    // _accountManager = userManager;
+    //    // _sessionRepository = sessionRepository;
+    // }
     
     /*
     public async Task<Result<SessionModel>> CreateAsync(CreateSessionCommand command)
@@ -126,28 +145,7 @@ public class SessionGrain : Grain, ISessionGrain
         await SaveStateAsync();
 
         return Result.Succeed();
-    }
-
-    public Task<Result<SessionModel>> GetSessionAsync()
-    {
-        SessionModel sessionModel = new()
-        {
-            Id = _sessionEntity.Id,
-            DeviceId = _sessionEntity.DeviceId,
-            AppVersion = _sessionEntity.AppVersion,
-            DeviceName = _sessionEntity.DeviceName,
-            CreatedDate = _sessionEntity.CreatedDate,
-            LastAccess = _sessionEntity.LastAccess,
-            ClosedDate = _sessionEntity.ClosedDate,
-            DevicePlatform = _sessionEntity.DevicePlatform,
-            Status = _sessionEntity.Status,
-            AccountId = _sessionEntity.AccountId,
-            DevicePushToken = _sessionEntity.DevicePushToken,
-        };
-
-        return Task.FromResult<Result<SessionModel>>(sessionModel);
-    }
-    
+    }    
 
     public override async Task OnActivateAsync(CancellationToken cancellationToken)
     {
@@ -169,19 +167,10 @@ public class SessionGrain : Grain, ISessionGrain
     }
     
     */
-    public Task<Result<SessionModel>> CreateAsync(SessionInfo sessionInfo)
-    {
-        return Result<SessionModel>.Succeed(new SessionModel()).AsTask();
-    }
 
     public Task<Result<List<KeyValuePair<string, string>>>> ValidateSessionAsync()
     {
         return Result<List<KeyValuePair<string, string>>>.Fail().AsTask();
-    }
-
-    public Task<Result<SessionModel>> GetSessionAsync()
-    {
-        return Result<SessionModel>.Succeed(new SessionModel()).AsTask();
     }
 
     public Task<Result> CloseAsync()
