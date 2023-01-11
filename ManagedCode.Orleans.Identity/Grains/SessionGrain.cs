@@ -1,14 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Security.Claims;
-using System.Threading;
 using System.Threading.Tasks;
 using ManagedCode.Communication;
-using ManagedCode.Communication.Extensions;
-using ManagedCode.Orleans.Identity;
+using ManagedCode.Orleans.Identity.Entities;
 using ManagedCode.Orleans.Identity.Grains.Interfaces;
 using ManagedCode.Orleans.Identity.Models;
-using ManagedCode.Orleans.Identity.Models.Enums;
+using ManagedCode.Orleans.Identity.Shared.Enums;
 using Orleans;
 using Orleans.Runtime;
 
@@ -17,10 +15,10 @@ namespace ManagedCode.Orleans.Identity.Grains;
 
 public class SessionGrain : Grain, ISessionGrain
 {
-    private readonly IPersistentState<SessionModel> _sessionState;
-    private readonly SessionModel _sessionEntity;
+    private readonly IPersistentState<SessionEntity> _sessionState;
+    private readonly SessionEntity _sessionEntity;
     
-    public SessionGrain([PersistentState("session", "sessionStore")]IPersistentState<SessionModel> sessionState)
+    public SessionGrain([PersistentState("session", "sessionStore")]IPersistentState<SessionEntity> sessionState)
     {
         _sessionState = sessionState;
         _sessionEntity = _sessionState.State;
@@ -28,27 +26,45 @@ public class SessionGrain : Grain, ISessionGrain
 
     public Task<Result<SessionModel>> GetSessionAsync()
     {
-        return Task.FromResult(Result<SessionModel>.Succeed(_sessionEntity));
+        var result = new SessionModel
+        {
+            Id = _sessionEntity.Id,
+            Email = _sessionEntity.Email,
+            ClosedDate = _sessionEntity.ClosedDate,
+            CreatedDate = _sessionEntity.CreatedDate,
+            LastAccess = _sessionEntity.LastAccess,
+            Status = _sessionEntity.Status,
+            Roles = _sessionEntity.Roles
+        };
+
+        return Task.FromResult(Result<SessionModel>.Succeed(result));
     }
     
-    public async Task<Result<SessionModel>> CreateAsync(SessionInfo sessionInfo)
+    public async Task<Result<SessionModel>> CreateAsync(CreateSessionModal model)
     {
         if (_sessionState.State == null)
-            _sessionState.State = new SessionModel();
+            _sessionState.State = new SessionEntity();
         
         _sessionEntity.Id = Guid.NewGuid().ToString();
+        _sessionEntity.Email = model.Email;
         _sessionEntity.Status = SessionStatus.Active;
-        _sessionEntity.AppVersion = sessionInfo.AppVersion;
-        _sessionEntity.DeviceId = sessionInfo.DeviceId;
-        _sessionEntity.DeviceName = sessionInfo.DeviceName;
-        _sessionEntity.DevicePushToken = sessionInfo.DevicePushToken;
-        _sessionEntity.DevicePlatform = sessionInfo.DevicePlatform;
         _sessionEntity.CreatedDate = DateTime.UtcNow;
         _sessionEntity.LastAccess = DateTime.UtcNow;
+        _sessionEntity.Roles = model.Roles;
 
         await _sessionState.WriteStateAsync();
-        
-        return Result<SessionModel>.Succeed(_sessionEntity);
+
+        var result = new SessionModel
+        {
+            Id = _sessionEntity.Id,
+            ClosedDate = _sessionEntity.ClosedDate,
+            CreatedDate = _sessionEntity.CreatedDate,
+            LastAccess = _sessionEntity.LastAccess,
+            Status = _sessionEntity.Status,
+            Roles = _sessionEntity.Roles
+        };
+
+        return Result<SessionModel>.Succeed(result);
     }
     
     //  private readonly AccountManager _accountManager;

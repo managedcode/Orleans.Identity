@@ -4,7 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using ManagedCode.Orleans.Identity.Models.Constants;
+using ManagedCode.Orleans.Identity.Shared.Constants;
 using Orleans;
 using Orleans.Runtime;
 

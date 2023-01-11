@@ -1,4 +1,4 @@
-using ManagedCode.Orleans.Identity.Models.Constants;
+using ManagedCode.Orleans.Identity.Shared.Constants;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.DependencyInjection;

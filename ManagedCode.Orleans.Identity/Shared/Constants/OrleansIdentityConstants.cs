@@ -1,4 +1,4 @@
-namespace ManagedCode.Orleans.Identity.Models.Constants;
+﻿namespace ManagedCode.Orleans.Identity.Shared.Constants;
 
 public static class OrleansIdentityConstants
 {

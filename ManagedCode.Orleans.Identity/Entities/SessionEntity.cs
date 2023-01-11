@@ -1,12 +1,11 @@
+﻿using ManagedCode.Orleans.Identity.Shared.Enums;
+using Orleans;
 using System;
 using System.Collections.Generic;
-using ManagedCode.Orleans.Identity.Shared.Enums;
-using Orleans;
 
-namespace ManagedCode.Orleans.Identity.Models;
+namespace ManagedCode.Orleans.Identity.Entities;
 
-[GenerateSerializer]
-public class SessionModel
+public class SessionEntity
 {
     [Id(0)]
     public string Id { get; set; }
@@ -28,6 +27,4 @@ public class SessionModel
 
     [Id(6)]
     public List<string> Roles { get; set; }
-
 }
-
