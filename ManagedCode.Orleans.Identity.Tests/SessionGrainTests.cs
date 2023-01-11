@@ -50,20 +50,50 @@ namespace ManagedCode.Orleans.Identity.Tests
         [Fact]
         public async Task CreateSession_ReturnCreatedSession()
         {
+            // Arrange
             string sessionId = Guid.NewGuid().ToString();
             var createSessionModel = GetTestCreateSessionModel(sessionId);
-
             var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
 
+            // Act
             var result = await sessionGrain.CreateAsync(createSessionModel);
+            
+            // Assert
             result.IsSuccess.Should().BeTrue();
             result.Value.Should().NotBeNull();
         }
 
         [Fact]
-        public async Task ValidateSessionGrain_ReturnClaims()
+        public async Task ValidateSessionAndGetClaims_ReturnClaims()
         {
+            // Arrange
+            var sessionId = Guid.NewGuid().ToString();
+            var createSessionModel = GetTestCreateSessionModel(sessionId);
+            var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
+            await sessionGrain.CreateAsync(createSessionModel);
 
+            // Act
+            var result = await sessionGrain.ValidateAndGetClaimsAsync();
+
+            // Assert
+            result.IsSuccess.Should().BeTrue();
+            result.Value.Should().NotBeNull();
+            result.Value.Count.Should().Be(createSessionModel.UserData.Count);
+        }
+
+        [Fact]
+        public async Task ValidateSessionAndGetClaims_WhenSessionStateIsNull_ReturnFail()
+        {
+            // Arrange
+            var sessionId = Guid.NewGuid().ToString();
+            var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
+
+            // Act
+            var result = await sessionGrain.ValidateAndGetClaimsAsync();
+
+            // Assert
+            result.IsFailed.Should().BeTrue();
+            result.Value.Should().BeNull();
         }
     }
 }
