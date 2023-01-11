@@ -40,7 +40,7 @@ public class SessionGrain : Grain, ISessionGrain
         return Task.FromResult(Result<SessionModel>.Succeed(result));
     }
     
-    public async Task<Result<SessionModel>> CreateAsync(CreateSessionModal model)
+    public async Task<Result<SessionModel>> CreateAsync(CreateSessionModel model)
     {
         if (_sessionState.State == null)
             _sessionState.State = new SessionEntity();

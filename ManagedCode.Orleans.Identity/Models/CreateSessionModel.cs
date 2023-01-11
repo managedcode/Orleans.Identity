@@ -5,7 +5,7 @@ using System.Collections.Generic;
 namespace ManagedCode.Orleans.Identity.Models;
 
 [GenerateSerializer]
-public class CreateSessionModal 
+public class CreateSessionModel 
 {
 
     [Id(0)]

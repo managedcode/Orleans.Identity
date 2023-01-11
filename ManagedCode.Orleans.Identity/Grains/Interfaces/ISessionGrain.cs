@@ -9,7 +9,7 @@ namespace ManagedCode.Orleans.Identity.Grains.Interfaces;
 
 public interface ISessionGrain : IGrainWithStringKey
 {
-    Task<Result<SessionModel>> CreateAsync(CreateSessionModal sessionInfo);
+    Task<Result<SessionModel>> CreateAsync(CreateSessionModel sessionInfo);
     Task<Result> CloseAsync();
     Task<Result<SessionModel>> GetSessionAsync();
     ValueTask<Result<Dictionary<string, string>>> ValidateAndGetClaimsAsync();

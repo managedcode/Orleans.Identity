@@ -1,3 +1,5 @@
+using ManagedCode.Orleans.Identity.Grains.Interfaces;
+using ManagedCode.Orleans.Identity.Models;
 using ManagedCode.Orleans.Identity.Tests.Cluster;
 using Xunit;
 using Xunit.Abstractions;
@@ -16,9 +18,13 @@ public class ControllerTests
         _outputHelper = outputHelper;
     }
 
+    private async Task CreateSession()
+    {
+
+    }
+
     [Fact]
     public async Task CreateSession_ReturnOk()
     {
-        
     }
 }
