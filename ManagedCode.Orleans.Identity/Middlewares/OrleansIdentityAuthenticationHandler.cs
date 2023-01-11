@@ -57,7 +57,7 @@ public class OrleansIdentityAuthenticationHandler : AuthenticationHandler<Authen
             {
                 Logger.LogInformation($"Get Session info for sessionId: {sessionId}");
                 var sessionGrain = _client.GetGrain<ISessionGrain>(sessionId);
-                var result = await sessionGrain.ValidateSessionAsync();
+                var result = await sessionGrain.ValidateAndGetClaimsAsync();
 
                 if (result.IsSuccess)
                 {

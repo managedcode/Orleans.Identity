@@ -10,20 +10,17 @@ namespace ManagedCode.Orleans.Identity.Grains.Interfaces;
 public interface ISessionGrain : IGrainWithStringKey
 {
     Task<Result<SessionModel>> CreateAsync(CreateSessionModal sessionInfo);
-
-   Task<Result<List<KeyValuePair<string, string>>>> ValidateSessionAsync();
-
-    Task<Result<SessionModel>> GetSessionAsync();
-    
     Task<Result> CloseAsync();
-    Task<Result<SessionModel>> PauseSessionAsync();
-    Task<Result<SessionModel>> ResumeSessionAsync();
-    
-    
-    Task<Result> AddRole(string role);
-    Task<Result> AddClaim(Claim claim);
-    
-    Task<Result> RemoveRole(string role);
-    Task<Result> RemoveClaim(Claim claim);
+    Task<Result<SessionModel>> GetSessionAsync();
+    ValueTask<Result<Dictionary<string, string>>> ValidateAndGetClaimsAsync();
+
+    ValueTask<Result> PauseSessionAsync();
+    ValueTask<Result> ResumeSessionAsync();
+
+    ValueTask<Result> AddRoleAsync(string role);
+    ValueTask<Result> AddClaim(Claim claim);
+
+    ValueTask<Result> RemoveRole(string role);
+    ValueTask<Result> RemoveClaim(Claim claim);
 
 }
