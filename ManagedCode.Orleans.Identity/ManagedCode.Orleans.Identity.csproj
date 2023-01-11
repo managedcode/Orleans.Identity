@@ -31,5 +31,21 @@
     <ItemGroup>
       <Folder Include="Properties" />
     </ItemGroup>
+
+    <ItemGroup>
+      <Compile Remove="old\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Remove="old\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="old\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Remove="old\**" />
+    </ItemGroup>
     
 </Project>

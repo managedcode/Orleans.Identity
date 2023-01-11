@@ -1,6 +1,7 @@
+using ManagedCode.Orleans.Identity.Models.Enums;
 using Orleans;
 
-namespace ManagedCode.Orleans.Identity;
+namespace ManagedCode.Orleans.Identity.Models;
 
 [GenerateSerializer]
 public class SessionInfo 

@@ -1,8 +1,9 @@
 using System;
 using ManagedCode.Communication;
+using ManagedCode.Orleans.Identity.Models.Enums;
 using Orleans;
 
-namespace ManagedCode.Orleans.Identity;
+namespace ManagedCode.Orleans.Identity.Models;
 
 [GenerateSerializer]
 public class SessionModel

@@ -9,13 +9,11 @@ public class TestSiloConfigurations : ISiloConfigurator
     {
         siloBuilder.Services.AddSerializer(serializerBuilder =>
         {
-            //serializerBuilder.AddJsonSerializer();
+            serializerBuilder.AddJsonSerializer();
         });
-        //siloBuilder.ConfigureApplicationParts(parts =>
-        //{
-        //    parts.AddFrameworkPart(typeof(IRequestTrackerGrain).Assembly);
-        //    parts.AddFrameworkPart(typeof(RequestTrackerGrain).Assembly);
-        //});
+
+        // For test purpose
+        siloBuilder.AddMemoryGrainStorage("sessionStore");
 
         siloBuilder.ConfigureServices(services =>
         {

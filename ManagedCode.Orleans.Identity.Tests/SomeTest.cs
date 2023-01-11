@@ -3,6 +3,7 @@ using System.Security.Claims;
 using FluentAssertions;
 using ManagedCode.Communication;
 using ManagedCode.Orleans.Identity;
+using ManagedCode.Orleans.Identity.Grains.Interfaces;
 using ManagedCode.Orleans.Identity.Tests.Cluster;
 using Microsoft.AspNetCore.SignalR.Client;
 using Xunit;

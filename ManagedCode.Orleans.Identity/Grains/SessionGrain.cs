@@ -6,11 +6,14 @@ using System.Threading.Tasks;
 using ManagedCode.Communication;
 using ManagedCode.Communication.Extensions;
 using ManagedCode.Orleans.Identity;
+using ManagedCode.Orleans.Identity.Grains.Interfaces;
+using ManagedCode.Orleans.Identity.Models;
+using ManagedCode.Orleans.Identity.Models.Enums;
 using Orleans;
 using Orleans.Runtime;
 
 
-namespace ManagedCode.Orleans.Identity;
+namespace ManagedCode.Orleans.Identity.Grains;
 
 public class SessionGrain : Grain, ISessionGrain
 {
@@ -20,6 +23,7 @@ public class SessionGrain : Grain, ISessionGrain
     public SessionGrain([PersistentState("session", "sessionStore")]IPersistentState<SessionModel> sessionState)
     {
         _sessionState = sessionState;
+        _sessionEntity = _sessionState.State;
     }
 
     public Task<Result<SessionModel>> GetSessionAsync()
@@ -27,9 +31,24 @@ public class SessionGrain : Grain, ISessionGrain
         return Task.FromResult(Result<SessionModel>.Succeed(_sessionEntity));
     }
     
-    public Task<Result<SessionModel>> CreateAsync(SessionInfo sessionInfo)
+    public async Task<Result<SessionModel>> CreateAsync(SessionInfo sessionInfo)
     {
-        return Result<SessionModel>.Succeed(new SessionModel()).AsTask();
+        if (_sessionState.State == null)
+            _sessionState.State = new SessionModel();
+        
+        _sessionEntity.Id = Guid.NewGuid().ToString();
+        _sessionEntity.Status = SessionStatus.Active;
+        _sessionEntity.AppVersion = sessionInfo.AppVersion;
+        _sessionEntity.DeviceId = sessionInfo.DeviceId;
+        _sessionEntity.DeviceName = sessionInfo.DeviceName;
+        _sessionEntity.DevicePushToken = sessionInfo.DevicePushToken;
+        _sessionEntity.DevicePlatform = sessionInfo.DevicePlatform;
+        _sessionEntity.CreatedDate = DateTime.UtcNow;
+        _sessionEntity.LastAccess = DateTime.UtcNow;
+
+        await _sessionState.WriteStateAsync();
+        
+        return Result<SessionModel>.Succeed(_sessionEntity);
     }
     
     //  private readonly AccountManager _accountManager;

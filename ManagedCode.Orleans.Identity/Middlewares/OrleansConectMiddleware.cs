@@ -30,8 +30,6 @@ public static class OrleansContextMiddlewareExtensions
     
     public static IApplicationBuilder UseOrleansAuthorization(this IApplicationBuilder builder)
     {
-        builder.UseAuthentication();
-        builder.UseAuthorization();
         return builder.UseMiddleware<OrleansContextMiddleware>();
     }
 }
