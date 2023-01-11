@@ -11,7 +11,7 @@ public class TestController : ControllerBase
     [HttpGet("authorize")]
     public ActionResult<string> Authorize()
     {
-       // User.SetOrleansContext();
+        User.SetOrleansContext();
         return "Authorize";
     }
     

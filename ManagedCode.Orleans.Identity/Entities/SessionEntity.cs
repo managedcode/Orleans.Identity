@@ -6,6 +6,7 @@ using System.Collections.Generic;
 
 namespace ManagedCode.Orleans.Identity.Entities;
 
+[GenerateSerializer]
 public class SessionEntity
 {
     [Id(0)]
