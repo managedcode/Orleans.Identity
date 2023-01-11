@@ -21,31 +21,39 @@ namespace ManagedCode.Orleans.Identity.Tests
             _outputHelper = outputHelper;
         }
 
-        private Dictionary<string, string> SetTestClaims() =>
+        private Dictionary<string, string> SetTestClaims(string sessionId) =>
             new Dictionary<string, string>
             {
                 { ClaimTypes.MobilePhone, "+380500000" },
                 { ClaimTypes.Email, "test@gmail.com" },
-                { ClaimTypes.Sid, Guid.NewGuid().ToString() },
+                { ClaimTypes.Sid, sessionId },
                 { ClaimTypes.Actor, Guid.NewGuid().ToString() },
                 { ClaimTypes.Role, "admin" }
             };
+
+        private CreateSessionModel GetTestCreateSessionModel(string sessionId)
+        {
+            string userId = Guid.NewGuid().ToString();
+
+            GrainId userGrainId = GrainId.Create("UserGrain", userId);
+            
+            CreateSessionModel createSessionModel = new CreateSessionModel
+            {
+                UserData = SetTestClaims(sessionId),
+                UserGrainId = userGrainId
+            };
+
+            return createSessionModel;
+        }
+            
 
         [Fact]
         public async Task CreateSession_ReturnCreatedSession()
         {
             string sessionId = Guid.NewGuid().ToString();
-            string userId = Guid.NewGuid().ToString();
-
-            GrainId userGrainId = GrainId.Create("UserGrain", userId);
+            var createSessionModel = GetTestCreateSessionModel(sessionId);
 
             var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
-
-            CreateSessionModel createSessionModel = new CreateSessionModel
-            {
-                UserData = SetTestClaims(),
-                UserGrainId = userGrainId
-            };
 
             var result = await sessionGrain.CreateAsync(createSessionModel);
             result.IsSuccess.Should().BeTrue();
