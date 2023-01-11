@@ -1,6 +1,7 @@
 ﻿using FluentAssertions;
 using ManagedCode.Orleans.Identity.Grains.Interfaces;
 using ManagedCode.Orleans.Identity.Models;
+using ManagedCode.Orleans.Identity.Shared.Enums;
 using ManagedCode.Orleans.Identity.Tests.Cluster;
 using Orleans.Runtime;
 using System.Security.Claims;
@@ -48,7 +49,7 @@ namespace ManagedCode.Orleans.Identity.Tests
             
 
         [Fact]
-        public async Task CreateSession_ReturnCreatedSession()
+        public async Task CreateSessionAsync_ReturnCreatedSession()
         {
             // Arrange
             string sessionId = Guid.NewGuid().ToString();
@@ -64,7 +65,7 @@ namespace ManagedCode.Orleans.Identity.Tests
         }
 
         [Fact]
-        public async Task ValidateSessionAndGetClaims_ReturnClaims()
+        public async Task ValidateSessionAndGetClaimsAsync_ReturnClaims()
         {
             // Arrange
             var sessionId = Guid.NewGuid().ToString();
@@ -82,7 +83,7 @@ namespace ManagedCode.Orleans.Identity.Tests
         }
 
         [Fact]
-        public async Task ValidateSessionAndGetClaims_WhenSessionStateIsNull_ReturnFail()
+        public async Task ValidateSessionAndGetClaimsAsync_WhenSessionStateIsNull_ReturnFail()
         {
             // Arrange
             var sessionId = Guid.NewGuid().ToString();
@@ -94,6 +95,24 @@ namespace ManagedCode.Orleans.Identity.Tests
             // Assert
             result.IsFailed.Should().BeTrue();
             result.Value.Should().BeNull();
+        }
+
+        [Fact]
+        public async Task PauseSessionAsync_ReturnSuccess()
+        {
+            // Arrange
+            var sessionId = Guid.NewGuid().ToString();
+            var createSessionModel = GetTestCreateSessionModel(sessionId);
+            var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
+            await sessionGrain.CreateAsync(createSessionModel);
+
+            // Act
+            var result = await sessionGrain.PauseSessionAsync();
+            
+            // Assert
+            var session = await sessionGrain.GetSessionAsync();
+            result.IsSuccess.Should().BeTrue();
+            session.Value.Status.Should().Be(SessionStatus.Paused);
         }
     }
 }
