@@ -6,6 +6,7 @@ using ManagedCode.Orleans.Identity.Tests.Cluster;
 using ManagedCode.Orleans.Identity.Tests.Constants;
 using ManagedCode.Orleans.Identity.Tests.Helpers;
 using System.Net;
+using System.Security.Claims;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -23,12 +24,14 @@ public class ControllerTests
         _outputHelper = outputHelper;
     }
 
-    private async Task CreateSession(string sessionId)
+    private async Task CreateSession(string sessionId, Dictionary<string, string> claims = null, bool excludeAdmin = false)
     {
-        var createSessionModel = SessionHelper.GetTestCreateSessionModel(sessionId);
+        var createSessionModel = SessionHelper.GetTestCreateSessionModel(sessionId, claims);
         var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
         await sessionGrain.CreateAsync(createSessionModel);
     }
+
+    #region Route tests
 
     [Fact]
     public async Task SendRequestToUnauthorizedRoute_ReturnOk()
@@ -90,7 +93,7 @@ public class ControllerTests
     }
 
     [Fact]
-    public async Task SendRequestToAuthorizedRouteWithRole_WhenAuthorizedWithoutRole_ReturnUnauthorized()
+    public async Task SendRequestToAuthorizedRouteWithRole_WhenAuthorizedWithoutRole_ReturnForbidden()
     {
         // Arrange
         var client = _testApp.CreateClient();
@@ -105,4 +108,76 @@ public class ControllerTests
         response.IsSuccessStatusCode.Should().BeFalse();
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
+
+    [Fact]
+    public async Task SendRequestToAuthorizedRouteWitheRoles_WhenAuthorizedWithRoles_ReturnOk()
+    {
+        // Arrange
+        var client = _testApp.CreateClient();
+        var sessionId = Guid.NewGuid().ToString();
+        var roles = new Dictionary<string, string>()
+        {
+            { ClaimTypes.Role, "moderator" }
+        };
+        await CreateSession(sessionId, roles);
+        client.DefaultRequestHeaders.Add(OrleansIdentityConstants.AUTH_TOKEN, sessionId);
+
+        // Act
+        var response = await client.GetAsync(TestControllerRoutes.COMMON_ROUTE);
+
+        // Assert
+        response.IsSuccessStatusCode.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task SendRequestToAuthorizedRouteWitheRoles_WhenAuthorizedWithNotAllRoles_ReturnOk()
+    {
+        // Arrange
+        var client = _testApp.CreateClient();
+        var sessionId = Guid.NewGuid().ToString();
+        await CreateSession(sessionId);
+        client.DefaultRequestHeaders.Add(OrleansIdentityConstants.AUTH_TOKEN, sessionId);
+
+        // Act
+        var response = await client.GetAsync(TestControllerRoutes.COMMON_ROUTE);
+
+        // Assert
+        response.IsSuccessStatusCode.Should().BeTrue();
+    }
+    
+    #endregion
+
+    #region Controller tests
+
+    [Fact]
+    public async Task SendRequestToAuthorizedController_WhenHasRole_ReturnOk()
+    {
+        // Arrange
+        var client = _testApp.CreateClient();
+        var sessionId = Guid.NewGuid().ToString();
+        await CreateSession(sessionId);
+        client.DefaultRequestHeaders.Add(OrleansIdentityConstants.AUTH_TOKEN, sessionId);
+        
+        // Act
+        var response = await client.GetAsync(TestControllerRoutes.ADMIN_CONTROLLER_DEFAULT_ROUTE);
+        
+        // Assert
+        response.IsSuccessStatusCode.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task SendRequestToAuthorizedControllerToUnauthorizedRoute_WithoutRole_ReturnOk()
+    {
+        // Arrange
+        var client = _testApp.CreateClient();
+        var sessionId = Guid.NewGuid().ToString();
+        await CreateSession(sessionId);
+        client.DefaultRequestHeaders.Add(OrleansIdentityConstants.AUTH_TOKEN, sessionId);
+
+        // Act
+        
+        // Assert
+    }
+
+    #endregion
 }

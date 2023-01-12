@@ -16,15 +16,24 @@ namespace ManagedCode.Orleans.Identity.Tests.Helpers
                 { ClaimTypes.Role, "admin" }
             };
 
-        public static CreateSessionModel GetTestCreateSessionModel(string sessionId)
+        public static CreateSessionModel GetTestCreateSessionModel(string sessionId, Dictionary<string, string> claims = null)
         {
             string userId = Guid.NewGuid().ToString();
 
             GrainId userGrainId = GrainId.Create("UserGrain", userId);
+            var userClaims = SetTestClaims(sessionId);
 
+            if (claims != null)
+            {
+                foreach (var claim in claims)
+                {
+                    userClaims.TryAdd(claim.Key, claim.Value);
+                }
+            }
+            
             CreateSessionModel createSessionModel = new CreateSessionModel
             {
-                UserData = SetTestClaims(sessionId),
+                UserData = userClaims,
                 UserGrainId = userGrainId
             };
 

@@ -6,5 +6,9 @@
         public const string AUTHORIZE_ROUTE = "/authorize";
         public const string ADMIN_ROUTE = "/admin";
         public const string MODERATOR_ROUTE = "/moderator";
+        public const string COMMON_ROUTE = "/common";
+
+        public const string ADMIN_CONTROLLER_DEFAULT_ROUTE = "/adminController";
+        public const string ADMIN_CONTROLLER_ADMINS_LIST = "/adminController/adminsList";
     }
 }
