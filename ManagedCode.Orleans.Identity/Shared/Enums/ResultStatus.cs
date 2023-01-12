@@ -7,6 +7,6 @@ namespace ManagedCode.Orleans.Identity.Shared.Enums;
 public enum ResultStatus
 {
     Unknown,
-    ThereIsSuchRoleAlready,
-    SuchRoleDoesNotExist
+    PropertyWithThisKeyAlreadyExists,
+    PropertyWithThisKeyDoesNotExist
 }

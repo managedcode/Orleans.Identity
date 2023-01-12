@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using ManagedCode.Communication;
@@ -35,6 +34,11 @@ public class SessionGrain : Grain, ISessionGrain
 
     public Task<Result<SessionModel>> GetSessionAsync()
     {
+        if (_sessionState.State is null)
+        {
+            _sessionState.State = new SessionEntity();
+        }
+
         var result = GetSessionModel();
 
         return Task.FromResult(Result<SessionModel>.Succeed(result));
@@ -47,7 +51,7 @@ public class SessionGrain : Grain, ISessionGrain
 
         _sessionState.State.IsActive = true;
         _sessionState.State.UserGrainId = model.UserGrainId;
-        _sessionState.State.UserData = model.UserData;
+        _sessionState.State.UserData = model.UserData ?? new();
         _sessionState.State.Status = SessionStatus.Active;
         _sessionState.State.CreatedDate = DateTime.UtcNow;
         _sessionState.State.LastAccess = DateTime.UtcNow;
@@ -128,50 +132,36 @@ public class SessionGrain : Grain, ISessionGrain
         return Result.Succeed().AsValueTask();
     }
 
-    public ValueTask<Result> AddRoleAsync(string role)
+    public ValueTask<Result> AddProperty(string key, string value)
     {
-        var claimsPrincipal = ClaimsPrincipal.Current;
-
-        if (claimsPrincipal!.IsInRole(role))
+        if (_sessionState.State is null)
         {
-            return Result.Fail(ResultStatus.ThereIsSuchRoleAlready).AsValueTask();
+            return Result.Fail().AsValueTask();
         }
 
-        var identity = claimsPrincipal.Identity as ClaimsIdentity;
-        identity!.AddClaim(new Claim(ClaimTypes.Role, role));
-
-        return Result.Succeed().AsValueTask();
-    }
-
-    public ValueTask<Result> AddClaim(Claim claim)
-    {
-        var claimsIdentity = ClaimsPrincipal.Current!.Identity as ClaimsIdentity;
-
-        claimsIdentity!.AddClaim(claim);
-
-        return Result.Succeed().AsValueTask();
-    }
-
-    public ValueTask<Result> RemoveRole(string role)
-    {
-        var claimsPrincipal = ClaimsPrincipal.Current;
-
-        if (!claimsPrincipal!.IsInRole(role))
+        if (_sessionState.State.UserData.ContainsKey(key))
         {
-            return Result.Fail(ResultStatus.SuchRoleDoesNotExist).AsValueTask();
+            return Result.Fail(ResultStatus.PropertyWithThisKeyAlreadyExists).AsValueTask();
         }
 
-        var identity = claimsPrincipal.Identity as ClaimsIdentity;
-        identity!.RemoveClaim(new Claim(ClaimTypes.Role, role));
+        _sessionState.State.UserData.Add(key, value);
 
         return Result.Succeed().AsValueTask();
     }
 
-    public ValueTask<Result> RemoveClaim(Claim claim)
+    public ValueTask<Result> RemoveProperty(string key)
     {
-        var claimsIdentity = ClaimsPrincipal.Current!.Identity as ClaimsIdentity;
+        if (_sessionState.State is null)
+        {
+            return Result.Fail().AsValueTask();
+        }
 
-        claimsIdentity!.RemoveClaim(claim);
+        if (!_sessionState.State.UserData.ContainsKey(key))
+        {
+            return Result.Fail(ResultStatus.PropertyWithThisKeyDoesNotExist).AsValueTask();
+        }
+
+        _sessionState.State.UserData.Remove(key);
 
         return Result.Succeed().AsValueTask();
     }

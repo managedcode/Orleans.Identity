@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Security.Claims;
 using System.Threading.Tasks;
 using ManagedCode.Communication;
 using ManagedCode.Orleans.Identity.Models;
@@ -17,10 +16,7 @@ public interface ISessionGrain : IGrainWithStringKey
     ValueTask<Result> PauseSessionAsync();
     ValueTask<Result> ResumeSessionAsync();
 
-    ValueTask<Result> AddRoleAsync(string role);
-    ValueTask<Result> AddClaim(Claim claim);
-
-    ValueTask<Result> RemoveRole(string role);
-    ValueTask<Result> RemoveClaim(Claim claim);
+    ValueTask<Result> AddProperty(string key, string value);
+    ValueTask<Result> RemoveProperty(string key);
 
 }
