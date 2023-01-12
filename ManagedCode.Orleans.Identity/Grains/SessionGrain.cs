@@ -103,6 +103,7 @@ public class SessionGrain : Grain, ISessionGrain
 
     public ValueTask<Result> PauseSessionAsync()
     {
+        // TODO:  check state in a propriate way
         if (_sessionState.State is null)
         {
             return Result.Fail().AsValueTask();

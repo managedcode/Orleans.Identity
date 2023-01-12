@@ -114,5 +114,20 @@ namespace ManagedCode.Orleans.Identity.Tests
             result.IsSuccess.Should().BeTrue();
             session.Value.Status.Should().Be(SessionStatus.Paused);
         }
+
+        [Fact]
+        public async Task PauseSessionAsync_WhanSessionStateIsNull_ReturnFailed()
+        {
+
+            // Arrange
+            var sessionId = Guid.NewGuid().ToString();
+            var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
+
+            // Act
+            var result = await sessionGrain.PauseSessionAsync();
+
+            // Assert
+            result.IsFailed.Should().BeTrue();
+        }
     }
 }
