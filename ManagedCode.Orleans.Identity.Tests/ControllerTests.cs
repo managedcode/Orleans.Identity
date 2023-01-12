@@ -4,6 +4,7 @@ using ManagedCode.Orleans.Identity.Models;
 using ManagedCode.Orleans.Identity.Tests.Cluster;
 using ManagedCode.Orleans.Identity.Tests.Constants;
 using ManagedCode.Orleans.Identity.Tests.Helpers;
+using System.Net;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -29,12 +30,10 @@ public class ControllerTests
     }
 
     [Fact]
-    public async Task SendRequestToUnAuthorizedRoute_ReturnOk()
+    public async Task SendRequestToUnauthorizedRoute_ReturnOk()
     {
         // Arrange
-        var sessionId = Guid.NewGuid().ToString();
         var client = _testApp.CreateClient();
-        await CreateSession(sessionId);
 
         // Act
         var response = await client.GetAsync(TestControllerRoutes.ANONYMOUS_ROUTE);
@@ -42,4 +41,19 @@ public class ControllerTests
         // Assert
         response.IsSuccessStatusCode.Should().BeTrue();
     }
+
+    [Fact]
+    public async Task SendRequestToAuthorizedRoute_WhenNotAuthorized_ReturnUnauthorizedCode()
+    {
+        // Arrange
+        var client = _testApp.CreateClient();
+
+        // Act
+        var response = await client.GetAsync(TestControllerRoutes.AUTHORIZE_ROUTE);
+
+        // Assert
+        response.IsSuccessStatusCode.Should().BeFalse();
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
 }
