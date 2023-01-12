@@ -340,6 +340,23 @@ namespace ManagedCode.Orleans.Identity.Tests
         }
 
         [Fact]
+        public async Task RemoveProperty_WhenPropertyIsNotExists_ReturnFail()
+        {
+            // Arrange
+            var sessionId = Guid.NewGuid().ToString();
+            var createSessionModel = GetTestCreateSessionModel(sessionId);
+            var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
+            await sessionGrain.CreateAsync(createSessionModel);
+
+            // Act
+            var result = await sessionGrain.RemoveProperty(ClaimTypes.WindowsDeviceGroup);
+
+            // Assert
+            result.IsFailed.Should().BeTrue();
+
+        }
+
+        [Fact]
         public async Task RemoveProperty_WhenSessionIsNotExists_ReturnFail()
         {
             // Arrange

@@ -165,9 +165,12 @@ public class SessionGrain : Grain, ISessionGrain
         if (_sessionState.State.UserData.ContainsKey(key))
         {
             _sessionState.State.UserData.Remove(key);
+            return Result.Succeed().AsValueTask();
         }
-
-        return Result.Succeed().AsValueTask();
+        else
+        {
+            return Result.Fail().AsValueTask();
+        }
     }
 
     private SessionModel GetSessionModel()
