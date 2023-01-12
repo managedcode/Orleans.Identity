@@ -245,14 +245,42 @@ namespace ManagedCode.Orleans.Identity.Tests
         [Fact]
         public async Task ResumeSessionAsync_WhenSessionIsNotExists_ReturnFail()
         {
+            // Arrange
             var sessionId = Guid.NewGuid().ToString();
             var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
 
+            // Act
             var result = await sessionGrain.ResumeSessionAsync();
 
+            // Assert
             result.IsFailed.Should().BeTrue();
         }
         
+        #endregion
+
+        #region AddOrUpdateProperty
+
+        [Fact]
+        public async Task AddOrUpdateProperty_WhenRecordIsExists_ReturnSuccess()
+        {
+            // Arrange
+            var sessionId = Guid.NewGuid().ToString();
+            string newPropertyValue = "user data"; 
+            var createSessionModel = GetTestCreateSessionModel(sessionId);
+            var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
+            await sessionGrain.CreateAsync(createSessionModel);
+
+            // Act
+            var result = await sessionGrain.AddOrUpdateProperty(ClaimTypes.UserData, newPropertyValue);
+
+            // Assert
+            var claims = await sessionGrain.ValidateAndGetClaimsAsync();
+            result.IsSuccess.Should().BeTrue();
+            claims.IsSuccess.Should().BeTrue();
+            claims.Value.Should().ContainKey(ClaimTypes.UserData);
+            claims.Value.Should().ContainValue(newPropertyValue);
+        }
+
         #endregion
     }
 }
