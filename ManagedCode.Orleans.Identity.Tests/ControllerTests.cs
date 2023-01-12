@@ -192,12 +192,31 @@ public class ControllerTests
     {
         // Arrange
         var client = _testApp.CreateClient();
+
         // Act
         var response = await client.GetAsync(TestControllerRoutes.ADMIN_CONTROLLER_ADMINS_LIST);
 
         // Assert
         response.IsSuccessStatusCode.Should().BeTrue();
     }
+
+    [Fact]
+    public async Task SendRequestToAuthorizedControllerToAuthorizedRoute_WhenAutorized_ReturnForbidden()
+    {
+        // Arrange
+        var client = _testApp.CreateClient();
+        var sessionId = Guid.NewGuid().ToString();
+        await CreateSession(sessionId, claimsForAdminController, true);
+        client.DefaultRequestHeaders.Add(OrleansIdentityConstants.AUTH_TOKEN, sessionId);
+
+        // Act
+        var response = await client.GetAsync(TestControllerRoutes.ADMIN_CONTROLLER_ADMIN_GET_ADMIN);
+
+        // Assert
+        response.IsSuccessStatusCode.Should().BeFalse();
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
 
     #endregion
 }

@@ -19,4 +19,11 @@ public class AdminController : ControllerBase
     {
         return "adminsList";
     }
+
+    [HttpGet("getAdmin")]
+    [Authorize]
+    public ActionResult<string> GetAdmin() 
+    {
+        return "admin";
+    }
 }
