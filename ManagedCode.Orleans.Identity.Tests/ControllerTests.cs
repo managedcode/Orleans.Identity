@@ -18,15 +18,21 @@ public class ControllerTests
     private readonly TestClusterApplication _testApp;
     private readonly ITestOutputHelper _outputHelper;
 
+    private Dictionary<string, string> claimsForAdminController = new Dictionary<string, string>()
+    {
+        { ClaimTypes.Role, "Moderator" },
+        { ClaimTypes.Email, "test2@gmail.com" }
+    };
+
     public ControllerTests(TestClusterApplication testApp, ITestOutputHelper outputHelper)
     {
         _testApp = testApp;
         _outputHelper = outputHelper;
     }
 
-    private async Task CreateSession(string sessionId, Dictionary<string, string> claims = null, bool excludeAdmin = false)
+    private async Task CreateSession(string sessionId, Dictionary<string, string> claims = null, bool replaceClaims = false)
     {
-        var createSessionModel = SessionHelper.GetTestCreateSessionModel(sessionId, claims);
+        var createSessionModel = SessionHelper.GetTestCreateSessionModel(sessionId, claims, replaceClaims);
         var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
         await sessionGrain.CreateAsync(createSessionModel);
     }
@@ -171,12 +177,26 @@ public class ControllerTests
         // Arrange
         var client = _testApp.CreateClient();
         var sessionId = Guid.NewGuid().ToString();
-        await CreateSession(sessionId);
+        await CreateSession(sessionId, claimsForAdminController, true);
         client.DefaultRequestHeaders.Add(OrleansIdentityConstants.AUTH_TOKEN, sessionId);
 
         // Act
-        
+        var response = await client.GetAsync(TestControllerRoutes.ADMIN_CONTROLLER_ADMINS_LIST);
+
         // Assert
+        response.IsSuccessStatusCode.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task SendRequestToAuthorizedControllerToUnauthorizedRoute_NotAuthorized_ReturnOk()
+    {
+        // Arrange
+        var client = _testApp.CreateClient();
+        // Act
+        var response = await client.GetAsync(TestControllerRoutes.ADMIN_CONTROLLER_ADMINS_LIST);
+
+        // Assert
+        response.IsSuccessStatusCode.Should().BeTrue();
     }
 
     #endregion
