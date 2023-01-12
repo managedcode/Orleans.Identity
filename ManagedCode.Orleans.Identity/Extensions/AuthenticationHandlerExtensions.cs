@@ -1,3 +1,4 @@
+using ManagedCode.Orleans.Identity.Options;
 using ManagedCode.Orleans.Identity.Shared.Constants;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
@@ -7,8 +8,10 @@ namespace ManagedCode.Orleans.Identity.Middlewares;
 
 public static class AuthenticationHandlerExtensions
 {
-    public static void AddAuthenticationHandler(this IServiceCollection services)
+    public static void AddAuthenticationHandler(this IServiceCollection services, SessionOption sessionOption = null!)
     {
+        sessionOption ??= new();
+
         services.AddAuthentication(options => options.DefaultScheme = OrleansIdentityConstants.AUTHENTICATION_TYPE)
             .AddScheme<AuthenticationSchemeOptions, OrleansIdentityAuthenticationHandler>(OrleansIdentityConstants.AUTHENTICATION_TYPE, op => { });
        

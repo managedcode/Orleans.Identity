@@ -6,6 +6,7 @@ using ManagedCode.Communication;
 using ManagedCode.Orleans.Identity.Entities;
 using ManagedCode.Orleans.Identity.Grains.Interfaces;
 using ManagedCode.Orleans.Identity.Models;
+using ManagedCode.Orleans.Identity.Options;
 using ManagedCode.Orleans.Identity.Shared.Enums;
 using Orleans;
 using Orleans.Runtime;
@@ -15,10 +16,14 @@ namespace ManagedCode.Orleans.Identity.Grains;
 public class SessionGrain : Grain, ISessionGrain
 {
     private readonly IPersistentState<SessionEntity> _sessionState;
+    private SessionOption _sessionOption;
     
-    public SessionGrain([PersistentState("session", "sessionStore")]IPersistentState<SessionEntity> sessionState)
+    public SessionGrain(
+        [PersistentState("session", "sessionStore")]IPersistentState<SessionEntity> sessionState,
+        SessionOption sessionOption)
     {
         _sessionState = sessionState;
+        _sessionOption = sessionOption;
     }
 
     public override Task OnActivateAsync(CancellationToken cancellationToken)
@@ -34,9 +39,9 @@ public class SessionGrain : Grain, ISessionGrain
 
     public Task<Result<SessionModel>> GetSessionAsync()
     {
-        if (_sessionState.State is null)
+        if (!_sessionState.RecordExists)
         {
-            _sessionState.State = new SessionEntity();
+            return Task.FromResult(Result<SessionModel>.Fail());
         }
 
         var result = GetSessionModel();
@@ -95,10 +100,16 @@ public class SessionGrain : Grain, ISessionGrain
             return Result.Fail();
         }
 
+        if (_sessionOption.ClearStateOnClose)
+        {
+            await _sessionState.ClearStateAsync();
+            return Result.Succeed();
+        }
+
         _sessionState.State.ClosedDate = DateTime.UtcNow;
         _sessionState.State.Status = SessionStatus.Closed;
         _sessionState.State.IsActive = false;
-        //_sessionState.ClearStateAsync(); //TODO: clear state
+
         await _sessionState.WriteStateAsync();
 
         return Result.Succeed();
