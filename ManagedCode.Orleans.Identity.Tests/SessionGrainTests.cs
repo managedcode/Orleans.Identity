@@ -67,6 +67,8 @@ namespace ManagedCode.Orleans.Identity.Tests
 
         #endregion
 
+        #region ValidateSessionAndGetClaimsAsync
+        
         [Fact]
         public async Task ValidateSessionAndGetClaimsAsync_ReturnClaims()
         {
@@ -118,6 +120,10 @@ namespace ManagedCode.Orleans.Identity.Tests
             result.Value.Should().BeNull();
         }
 
+        #endregion
+
+        #region PauseSessionAsync
+        
         [Fact]
         public async Task PauseSessionAsync_ReturnSuccess()
         {
@@ -149,7 +155,11 @@ namespace ManagedCode.Orleans.Identity.Tests
             // Assert
             result.IsFailed.Should().BeTrue();
         }
+        
+        #endregion
 
+        #region CloseSessionAsync
+        
         [Fact]
         public async Task CloseSessionAsync_WhenSessionExistsAndClearStateIsTrue_ReturnSuccessAndClearState()
         {
@@ -205,7 +215,11 @@ namespace ManagedCode.Orleans.Identity.Tests
             // Assert
             result.IsFailed.Should().BeTrue();
         }
+        
+        #endregion
 
+        #region ResumeSessionAsync
+        
         [Fact]
         public async Task ResumeSessionAsync_WhenSessionExists_ReturnSuccess()
         {
@@ -236,5 +250,7 @@ namespace ManagedCode.Orleans.Identity.Tests
 
             result.IsFailed.Should().BeTrue();
         }
+        
+        #endregion
     }
 }
