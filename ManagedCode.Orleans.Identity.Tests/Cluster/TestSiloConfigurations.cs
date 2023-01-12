@@ -1,4 +1,6 @@
+using ManagedCode.Orleans.Identity.Options;
 using ManagedCode.Orleans.Identity.Shared.Constants;
+using Microsoft.Extensions.DependencyInjection;
 using Orleans.Serialization;
 using Orleans.TestingHost;
 
@@ -18,8 +20,9 @@ public class TestSiloConfigurations : ISiloConfigurator
 
         siloBuilder.ConfigureServices(services =>
         {
+            services.AddSingleton<SessionOption>(new SessionOption());
             // services.AddGrpcOrleansScaling();
-          //  services.AddApiOrleansScaling();
+            //  services.AddApiOrleansScaling();
         });
     }
 }

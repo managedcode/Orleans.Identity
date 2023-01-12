@@ -46,8 +46,7 @@ namespace ManagedCode.Orleans.Identity.Tests
 
             return createSessionModel;
         }
-            
-
+        
         [Fact]
         public async Task CreateSessionAsync_ReturnCreatedSession()
         {
@@ -83,7 +82,7 @@ namespace ManagedCode.Orleans.Identity.Tests
         }
 
         [Fact]
-        public async Task ValidateSessionAndGetClaimsAsync_WhenSessionStateIsNull_ReturnFail()
+        public async Task ValidateSessionAndGetClaimsAsync_WhenSessionStateIsNotExist_ReturnFail()
         {
             // Arrange
             var sessionId = Guid.NewGuid().ToString();
@@ -105,7 +104,14 @@ namespace ManagedCode.Orleans.Identity.Tests
             var createSessionModel = GetTestCreateSessionModel(sessionId);
             var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
             await sessionGrain.CreateAsync(createSessionModel);
-            await sessionGrain.PauseSessionAsync();
+            await sessionGrain.CloseAsync();
+            
+            // Act
+            var result = await sessionGrain.ValidateAndGetClaimsAsync();
+
+            // Assert
+            result.IsFailed.Should().BeTrue();
+            result.Value.Should().BeNull();
         }
 
         [Fact]
@@ -127,9 +133,8 @@ namespace ManagedCode.Orleans.Identity.Tests
         }
 
         [Fact]
-        public async Task PauseSessionAsync_WhanSessionStateIsNull_ReturnFailed()
+        public async Task PauseSessionAsync_WhenSessionStateIsNotExist_ReturnFailed()
         {
-
             // Arrange
             var sessionId = Guid.NewGuid().ToString();
             var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
@@ -139,6 +144,22 @@ namespace ManagedCode.Orleans.Identity.Tests
 
             // Assert
             result.IsFailed.Should().BeTrue();
+        }
+
+        [Fact]
+        public async Task CloseSessionAsync_WhenSessionExist_ReturnSuccess()
+        {
+            // Arrange
+            var sessionId = Guid.NewGuid().ToString();
+            var createSessionModel = GetTestCreateSessionModel(sessionId);
+            var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
+            await sessionGrain.CreateAsync(createSessionModel);   
+            
+            // Act
+            var result = await sessionGrain.CloseAsync();
+            
+            // Arrange
+            result.IsSuccess.Should().BeTrue();
         }
     }
 }
