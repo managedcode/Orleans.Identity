@@ -261,7 +261,7 @@ namespace ManagedCode.Orleans.Identity.Tests
         #region AddOrUpdateProperty
 
         [Fact]
-        public async Task AddOrUpdateProperty_WhenRecordIsExists_ReturnSuccess()
+        public async Task AddOrUpdateProperty_WhenSessionIsExists_ReturnSuccess()
         {
             // Arrange
             var sessionId = Guid.NewGuid().ToString();
@@ -278,6 +278,41 @@ namespace ManagedCode.Orleans.Identity.Tests
             result.IsSuccess.Should().BeTrue();
             claims.IsSuccess.Should().BeTrue();
             claims.Value.Should().ContainKey(ClaimTypes.UserData);
+            claims.Value.Should().ContainValue(newPropertyValue);
+        }
+
+        [Fact]
+        public async Task AddOrUpdateProperty_WhenSessionIsNotExists_ReturnSuccess()
+        {
+            // Arrange
+            var sessionId = Guid.NewGuid().ToString();
+            var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
+            
+            // Act
+            var result = await sessionGrain.AddOrUpdateProperty(ClaimTypes.UserData, "value");
+
+            // Assert
+            result.IsFailed.Should().BeTrue();
+        }
+
+        [Fact]
+        public async Task AddOrUpdateProperty_UpdateProperty_ReturnSuccess()
+        {
+            // Arrange
+            var sessionId = Guid.NewGuid().ToString();
+            string newPropertyValue = "test20230@gmail.com"; 
+            var createSessionModel = GetTestCreateSessionModel(sessionId);
+            var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
+            await sessionGrain.CreateAsync(createSessionModel);
+            
+            // Act
+            var result = await sessionGrain.AddOrUpdateProperty(ClaimTypes.Email, newPropertyValue);
+
+            // Assert
+            var claims = await sessionGrain.ValidateAndGetClaimsAsync();
+            result.IsSuccess.Should().BeTrue();
+            claims.IsSuccess.Should().BeTrue();
+            claims.Value.Should().ContainKey(ClaimTypes.Email);
             claims.Value.Should().ContainValue(newPropertyValue);
         }
 
