@@ -22,5 +22,18 @@ public class TestController : ControllerBase
 
         return "Anonymous";
     }
-    
+
+    [Authorize(Roles = "admin")]
+    [HttpGet("admin")]
+    public ActionResult<string> Admin()
+    {
+        return "admin";
+    }
+
+    [Authorize(Roles = "moderator")]
+    [HttpGet("moderator")]
+    public ActionResult<string> Moderator()
+    {
+        return "moderator";
+    }
 }
