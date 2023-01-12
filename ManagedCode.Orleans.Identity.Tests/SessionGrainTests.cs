@@ -109,6 +109,7 @@ namespace ManagedCode.Orleans.Identity.Tests
             var sessionId = Guid.NewGuid().ToString();
             var createSessionModel = GetTestCreateSessionModel(sessionId);
             var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
+            TestSiloOptions.SessionOption.ClearStateOnClose = false;
             await sessionGrain.CreateAsync(createSessionModel);
             await sessionGrain.CloseAsync();
             
@@ -118,6 +119,7 @@ namespace ManagedCode.Orleans.Identity.Tests
             // Assert
             result.IsFailed.Should().BeTrue();
             result.Value.Should().BeNull();
+            TestSiloOptions.SessionOption.ClearStateOnClose = false;
         }
 
         #endregion
