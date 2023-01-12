@@ -1,6 +1,7 @@
 using FluentAssertions;
 using ManagedCode.Orleans.Identity.Grains.Interfaces;
 using ManagedCode.Orleans.Identity.Models;
+using ManagedCode.Orleans.Identity.Shared.Constants;
 using ManagedCode.Orleans.Identity.Tests.Cluster;
 using ManagedCode.Orleans.Identity.Tests.Constants;
 using ManagedCode.Orleans.Identity.Tests.Helpers;
@@ -56,4 +57,19 @@ public class ControllerTests
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
+    [Fact]
+    public async Task SendRequestToAuthorizedRoute_WhenAuthorized_ReturnOk()
+    {
+        // Arrange
+        var client = _testApp.CreateClient();
+        var sessionId = Guid.NewGuid().ToString();
+        await CreateSession(sessionId);
+        client.DefaultRequestHeaders.Add(OrleansIdentityConstants.AUTH_TOKEN, sessionId);
+
+        // Act
+        var response = await client.GetAsync(TestControllerRoutes.AUTHORIZE_ROUTE);
+
+        // Assert
+        response.IsSuccessStatusCode.Should().BeTrue();
+    }
 }
