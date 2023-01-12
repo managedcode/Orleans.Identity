@@ -98,6 +98,17 @@ namespace ManagedCode.Orleans.Identity.Tests
         }
 
         [Fact]
+        public async Task ValidateSessionAndGetClaimsAsync_WhenSessionIsNotActive_ReturnFail()
+        {
+            // Arrange
+            var sessionId = Guid.NewGuid().ToString();
+            var createSessionModel = GetTestCreateSessionModel(sessionId);
+            var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
+            await sessionGrain.CreateAsync(createSessionModel);
+            await sessionGrain.PauseSessionAsync();
+        }
+
+        [Fact]
         public async Task PauseSessionAsync_ReturnSuccess()
         {
             // Arrange

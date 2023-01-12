@@ -28,7 +28,7 @@ public class SomeTest
     public async Task OneRequest()
     {
         var gr = _testApp.Cluster.Client.GetGrain<ISessionGrain>("123");
-        await gr.AddClaimAsync(new Claim("1", "2"));
+        //await gr.AddClaimAsync(new Claim("1", "2"));
         var xx = await gr.GetSessionAsync();
         
         var anonymous = await _testApp.CreateClient().GetAsync("/anonymous");

@@ -71,7 +71,7 @@ public class SessionGrain : Grain, ISessionGrain
             return Result<Dictionary<string, string>>.Fail().AsValueTask();
         }
 
-        if (!_sessionState.State.IsActive)
+        if (_sessionState.State.IsActive is false)
         {
             return Result<Dictionary<string, string>>.Fail().AsValueTask();
         }
