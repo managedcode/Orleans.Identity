@@ -317,5 +317,42 @@ namespace ManagedCode.Orleans.Identity.Tests
         }
 
         #endregion
+
+        #region RemoveProperty
+
+        [Fact]
+        public async Task RemoveProperty_WhenPropertyExists_ReturnSuccess()
+        {
+            // Arrange
+            var sessionId = Guid.NewGuid().ToString();
+            var createSessionModel = GetTestCreateSessionModel(sessionId);
+            var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
+            await sessionGrain.CreateAsync(createSessionModel);
+            
+            // Act
+            var result = await sessionGrain.RemoveProperty(ClaimTypes.MobilePhone);
+
+            // Assert
+            var claims = await sessionGrain.ValidateAndGetClaimsAsync();
+            result.IsSuccess.Should().BeTrue();
+            claims.IsSuccess.Should().BeTrue();
+            claims.Value.Should().NotContainKey(ClaimTypes.MobilePhone);
+        }
+
+        [Fact]
+        public async Task RemoveProperty_WhenSessionIsNotExists_ReturnFail()
+        {
+            // Arrange
+            var sessionId = Guid.NewGuid().ToString();
+            var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
+
+            // Act
+            var result = await sessionGrain.RemoveProperty(ClaimTypes.MobilePhone);
+            
+            // Assert
+            result.IsFailed.Should().BeTrue();
+        }
+
+        #endregion
     }
 }
