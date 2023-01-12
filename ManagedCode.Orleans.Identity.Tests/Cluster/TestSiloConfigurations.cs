@@ -1,3 +1,4 @@
+using ManagedCode.Orleans.Identity.Shared.Constants;
 using Orleans.Serialization;
 using Orleans.TestingHost;
 
@@ -13,7 +14,7 @@ public class TestSiloConfigurations : ISiloConfigurator
         });
 
         // For test purpose
-        siloBuilder.AddMemoryGrainStorage("sessionStore");
+        siloBuilder.AddMemoryGrainStorage(OrleansIdentityConstants.SESSION_STORAGE_NAME);
 
         siloBuilder.ConfigureServices(services =>
         {

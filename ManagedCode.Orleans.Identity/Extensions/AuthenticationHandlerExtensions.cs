@@ -8,7 +8,7 @@ namespace ManagedCode.Orleans.Identity.Middlewares;
 
 public static class AuthenticationHandlerExtensions
 {
-    public static void AddAuthenticationHandler(this IServiceCollection services, SessionOption sessionOption = null!)
+    public static void AddOrleansIdentity(this IServiceCollection services, SessionOption sessionOption = null!)
     {
         sessionOption ??= new();
 

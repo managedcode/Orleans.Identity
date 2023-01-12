@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using ManagedCode.Orleans.Identity.Shared.Enums;
 using Orleans;
+using Orleans.Runtime;
 
 namespace ManagedCode.Orleans.Identity.Models;
 
@@ -23,6 +25,12 @@ public class SessionModel
     public SessionStatus Status { get; set; }
 
     [Id(5)]
+    public GrainId UserGrainId { get; set; }
+
+    [Id(6)]
+    public Dictionary<string, string> UserData { get; set; } = new();
+
+    [Id(7)]
     public bool IsActive { get; set; }
 
 }

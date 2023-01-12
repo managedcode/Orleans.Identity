@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Threading.Tasks;
 using ManagedCode.Communication;
 using ManagedCode.Orleans.Identity.Models;
@@ -10,13 +11,13 @@ public interface ISessionGrain : IGrainWithStringKey
 {
     Task<Result<SessionModel>> CreateAsync(CreateSessionModel sessionInfo);
     Task<Result> CloseAsync();
-    Task<Result<SessionModel>> GetSessionAsync();
-    ValueTask<Result<Dictionary<string, string>>> ValidateAndGetClaimsAsync();
+    ValueTask<Result<SessionModel>> GetSessionAsync();
+    ValueTask<Result<ImmutableDictionary<string, string>>> ValidateAndGetClaimsAsync();
 
     ValueTask<Result> PauseSessionAsync();
     ValueTask<Result> ResumeSessionAsync();
 
-    ValueTask<Result> AddProperty(string key, string value);
+    ValueTask<Result> AddOrUpdateProperty(string key, string value);
     ValueTask<Result> RemoveProperty(string key);
 
 }
