@@ -20,7 +20,7 @@ public class TestSiloConfigurations : ISiloConfigurator
 
         siloBuilder.ConfigureServices(services =>
         {
-            services.AddSingleton<SessionOption>(new SessionOption());
+            services.AddSingleton<SessionOption>(TestSiloOptions.SessionOption);
             // services.AddGrpcOrleansScaling();
             //  services.AddApiOrleansScaling();
         });

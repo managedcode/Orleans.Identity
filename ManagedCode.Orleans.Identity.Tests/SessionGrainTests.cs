@@ -46,7 +46,9 @@ namespace ManagedCode.Orleans.Identity.Tests
 
             return createSessionModel;
         }
-        
+
+        #region CreateSession
+
         [Fact]
         public async Task CreateSessionAsync_ReturnCreatedSession()
         {
@@ -62,6 +64,8 @@ namespace ManagedCode.Orleans.Identity.Tests
             result.IsSuccess.Should().BeTrue();
             result.Value.Should().NotBeNull();
         }
+
+        #endregion
 
         [Fact]
         public async Task ValidateSessionAndGetClaimsAsync_ReturnClaims()
@@ -82,7 +86,7 @@ namespace ManagedCode.Orleans.Identity.Tests
         }
 
         [Fact]
-        public async Task ValidateSessionAndGetClaimsAsync_WhenSessionStateIsNotExist_ReturnFail()
+        public async Task ValidateSessionAndGetClaimsAsync_WhenSessionStateIsNotExists_ReturnFail()
         {
             // Arrange
             var sessionId = Guid.NewGuid().ToString();
@@ -133,7 +137,7 @@ namespace ManagedCode.Orleans.Identity.Tests
         }
 
         [Fact]
-        public async Task PauseSessionAsync_WhenSessionStateIsNotExist_ReturnFailed()
+        public async Task PauseSessionAsync_WhenSessionStateIsNotExists_ReturnFailed()
         {
             // Arrange
             var sessionId = Guid.NewGuid().ToString();
@@ -147,7 +151,7 @@ namespace ManagedCode.Orleans.Identity.Tests
         }
 
         [Fact]
-        public async Task CloseSessionAsync_WhenSessionExist_ReturnSuccess()
+        public async Task CloseSessionAsync_WhenSessionExistsAndClearStateIsTrue_ReturnSuccessAndClearState()
         {
             // Arrange
             var sessionId = Guid.NewGuid().ToString();
@@ -157,9 +161,80 @@ namespace ManagedCode.Orleans.Identity.Tests
             
             // Act
             var result = await sessionGrain.CloseAsync();
+            var session = await sessionGrain.GetSessionAsync();
+                
+            // Arrange
+            result.IsSuccess.Should().BeTrue();
+            session.IsFailed.Should().BeTrue();
+        }
+        
+        [Fact]
+        public async Task CloseSessionAsync_WhenSessionExistsAndClearStateIsFalse_ReturnSuccess()
+        {
+            // Arrange
+            var sessionId = Guid.NewGuid().ToString();
+            var createSessionModel = GetTestCreateSessionModel(sessionId);
+            var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
+            await sessionGrain.CreateAsync(createSessionModel);
+            TestSiloOptions.SessionOption.ClearStateOnClose = false;
+            
+            // Act
+            var result = await sessionGrain.CloseAsync();
+            var session = await sessionGrain.GetSessionAsync();
             
             // Arrange
             result.IsSuccess.Should().BeTrue();
+            session.IsSuccess.Should().BeTrue();
+            session.Value.Should().NotBeNull();
+            session.Value.Status.Should().Be(SessionStatus.Closed);
+            
+            TestSiloOptions.SessionOption.ClearStateOnClose = true;
+        }
+
+        [Fact]
+        public async Task CloseSessionAsync_WhenSessionIsNotExists_ReturnFail()
+        {
+            // Arrange
+            var sessionId = Guid.NewGuid().ToString();
+            var createSessionModel = GetTestCreateSessionModel(sessionId);
+            var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
+            
+            // Act
+            var result = await sessionGrain.CloseAsync();
+
+            // Assert
+            result.IsFailed.Should().BeTrue();
+        }
+
+        [Fact]
+        public async Task ResumeSessionAsync_WhenSessionExists_ReturnSuccess()
+        {
+            // Arrange
+            var sessionId = Guid.NewGuid().ToString();
+            var createSessionModel = GetTestCreateSessionModel(sessionId);
+            var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
+            await sessionGrain.CreateAsync(createSessionModel);
+            await sessionGrain.PauseSessionAsync();
+
+            // Act
+            var result = await sessionGrain.ResumeSessionAsync();
+
+            // Assert
+            var session = await sessionGrain.GetSessionAsync();
+            result.IsSuccess.Should().BeTrue();
+            session.IsSuccess.Should().BeTrue();
+            session.Value.Status.Should().Be(SessionStatus.Active);
+        }
+
+        [Fact]
+        public async Task ResumeSessionAsync_WhenSessionIsNotExists_ReturnFail()
+        {
+            var sessionId = Guid.NewGuid().ToString();
+            var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
+
+            var result = await sessionGrain.ResumeSessionAsync();
+
+            result.IsFailed.Should().BeTrue();
         }
     }
 }
