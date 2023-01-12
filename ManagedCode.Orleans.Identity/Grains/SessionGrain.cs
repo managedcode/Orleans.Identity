@@ -46,7 +46,7 @@ public class SessionGrain : Grain, ISessionGrain
     
     public async Task<Result<SessionModel>> CreateAsync(CreateSessionModel model)
     {
-        if (_sessionState.State == null)
+        if (!_sessionState.RecordExists)
             _sessionState.State = new SessionEntity();
 
         _sessionState.State.IsActive = true;
@@ -65,7 +65,7 @@ public class SessionGrain : Grain, ISessionGrain
 
     public ValueTask<Result<Dictionary<string, string>>> ValidateAndGetClaimsAsync()
     {
-        if (_sessionState.State is null)
+        if (!_sessionState.RecordExists)
         {
             DeactivateOnIdle();
             return Result<Dictionary<string, string>>.Fail().AsValueTask();
@@ -90,7 +90,7 @@ public class SessionGrain : Grain, ISessionGrain
 
     public async Task<Result> CloseAsync()
     {
-        if (_sessionState.State is null)
+        if (!_sessionState.RecordExists)
         {
             return Result.Fail();
         }
@@ -107,8 +107,7 @@ public class SessionGrain : Grain, ISessionGrain
 
     public ValueTask<Result> PauseSessionAsync()
     {
-        // TODO:  check state in a propriate way
-        if (_sessionState.State is null)
+        if (!_sessionState.RecordExists)
         {
             return Result.Fail().AsValueTask();
         }
@@ -121,7 +120,7 @@ public class SessionGrain : Grain, ISessionGrain
 
     public ValueTask<Result> ResumeSessionAsync()
     {
-        if (_sessionState.State is null)
+        if (!_sessionState.RecordExists)
         {
             return Result.Fail().AsValueTask();
         }
