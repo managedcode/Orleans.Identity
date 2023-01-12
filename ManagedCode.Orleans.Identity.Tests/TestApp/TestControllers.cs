@@ -15,8 +15,7 @@ public class TestController : ControllerBase
         return "Authorize";
     }
     
-    [AllowAnonymous]
-    
+    [AllowAnonymous]   
     [HttpGet("anonymous")]
     public ActionResult<string> Anonymous()
     {
