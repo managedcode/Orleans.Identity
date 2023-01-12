@@ -33,8 +33,8 @@ public class SessionGrain : Grain, ISessionGrain
 
     public override async Task OnDeactivateAsync(DeactivationReason reason, CancellationToken cancellationToken)
     {
-        //TODO: check is exist
-        await _sessionState.WriteStateAsync();
+        if(_sessionState.RecordExists)
+            await _sessionState.WriteStateAsync();
     }
 
     public Task<Result<SessionModel>> GetSessionAsync()
@@ -51,7 +51,7 @@ public class SessionGrain : Grain, ISessionGrain
     
     public async Task<Result<SessionModel>> CreateAsync(CreateSessionModel model)
     {
-        if (!_sessionState.RecordExists)
+        if (_sessionState.RecordExists is false)
             _sessionState.State = new SessionEntity();
 
         _sessionState.State.IsActive = true;
@@ -70,13 +70,13 @@ public class SessionGrain : Grain, ISessionGrain
 
     public ValueTask<Result<Dictionary<string, string>>> ValidateAndGetClaimsAsync()
     {
-        if (!_sessionState.RecordExists)
+        if (_sessionState.RecordExists is false)
         {
             DeactivateOnIdle();
             return Result<Dictionary<string, string>>.Fail().AsValueTask();
         }
 
-        if (!_sessionState.State.IsActive)
+        if (_sessionState.State.IsActive is false)
         {
             return Result<Dictionary<string, string>>.Fail().AsValueTask();
         }
@@ -95,7 +95,7 @@ public class SessionGrain : Grain, ISessionGrain
 
     public async Task<Result> CloseAsync()
     {
-        if (!_sessionState.RecordExists)
+        if (_sessionState.RecordExists is false)
         {
             return Result.Fail();
         }
@@ -118,7 +118,7 @@ public class SessionGrain : Grain, ISessionGrain
 
     public ValueTask<Result> PauseSessionAsync()
     {
-        if (!_sessionState.RecordExists)
+        if (_sessionState.RecordExists is false)
         {
             return Result.Fail().AsValueTask();
         }
@@ -131,7 +131,7 @@ public class SessionGrain : Grain, ISessionGrain
 
     public ValueTask<Result> ResumeSessionAsync()
     {
-        if (!_sessionState.RecordExists)
+        if (_sessionState.RecordExists is false)
         {
             return Result.Fail().AsValueTask();
         }
