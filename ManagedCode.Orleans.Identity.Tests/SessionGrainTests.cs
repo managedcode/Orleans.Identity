@@ -454,6 +454,51 @@ namespace ManagedCode.Orleans.Identity.Tests
             result.IsFailed.Should().BeTrue();
         }
 
+        [Fact]
+        public async Task ReplaceProperty_WithValues_WhenPropertyExists_ReturnSuccess()
+        {
+            // Arrange
+            var sessionId = Guid.NewGuid().ToString();
+            var newPropertyValues = new List<string> { "admin", "moderator" };
+            var sessionCreateModel = SessionHelper.GetTestCreateSessionModel(sessionId);
+            var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
+            await sessionGrain.CreateAsync(sessionCreateModel);
+
+            // Act
+            var result = await sessionGrain.ReplaceProperty(ClaimTypes.Role, newPropertyValues);
+
+            // Assert
+            var userData = await sessionGrain.ValidateAndGetClaimsAsync();
+            result.IsSuccess.Should().BeTrue();
+            userData.IsSuccess.Should().BeTrue();
+            userData.Value.Should().ContainKey(ClaimTypes.Role).WhoseValue.Should().BeEquivalentTo(newPropertyValues);
+        }
+
+        [Fact]
+        public async Task ReplaceProperty_WithValuesThatHaveDuplicates_WhenPropertyExists_ReturnSuccess()
+        {
+            // Arrange
+            var sessionId = Guid.NewGuid().ToString();
+            var newPropertyValues = new List<string> { "admin", "moderator", "moderator" };
+            var expectedPropertyValues = new List<string> { "admin", "moderator" };
+            var sessionCreateModel = SessionHelper.GetTestCreateSessionModel(sessionId);
+            var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
+            await sessionGrain.CreateAsync(sessionCreateModel);
+
+            // Act
+            var result = await sessionGrain.ReplaceProperty(ClaimTypes.Role, newPropertyValues);
+
+            // Assert
+            var userData = await sessionGrain.ValidateAndGetClaimsAsync();
+            result.IsSuccess.Should().BeTrue();
+            userData.IsSuccess.Should().BeTrue();
+            userData.Value.Should().ContainKey(ClaimTypes.Role).WhoseValue.Should().BeEquivalentTo(expectedPropertyValues);
+        }
+
+        #endregion
+
+        #region RemoveValueFromProperty
+
         #endregion
     }
 }
