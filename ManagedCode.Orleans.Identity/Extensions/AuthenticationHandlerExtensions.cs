@@ -14,12 +14,5 @@ public static class AuthenticationHandlerExtensions
 
         services.AddAuthentication(options => options.DefaultScheme = OrleansIdentityConstants.AUTHENTICATION_TYPE)
             .AddScheme<AuthenticationSchemeOptions, OrleansIdentityAuthenticationHandler>(OrleansIdentityConstants.AUTHENTICATION_TYPE, op => { });
-       
-        services.AddAuthorizationCore(options =>
-        {
-            var defaultAuthorizationPolicyBuilder = new AuthorizationPolicyBuilder(OrleansIdentityConstants.AUTHENTICATION_TYPE);
-            defaultAuthorizationPolicyBuilder = defaultAuthorizationPolicyBuilder.RequireAuthenticatedUser();
-            options.DefaultPolicy = defaultAuthorizationPolicyBuilder.Build();
-        });
     }
 }
