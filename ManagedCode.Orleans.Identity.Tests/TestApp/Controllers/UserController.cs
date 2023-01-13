@@ -23,4 +23,9 @@ public class UserController : ControllerBase
         var userGrain = _clusterClient.GetGrain<IUserGrain>(userId);
         return await userGrain.GetUser();
     }
+
+    [HttpGet("anonymous")]
+    [AllowAnonymous]
+    public async Task<ActionResult<string>> TryGetUser() =>
+        await GetUser();
 }

@@ -28,6 +28,8 @@ public class GrainFilterTests
         await sessionGrain.CreateAsync(createSessionModel);
     }
 
+    #region User authorized
+
     [Fact]
     public async Task SendRequestToAuthorizedGrain_WhenAuthorized_ReturnOk()
     {
@@ -43,4 +45,22 @@ public class GrainFilterTests
         // Assert
         response.IsSuccessStatusCode.Should().BeTrue();
     }
+
+    [Fact]
+    public async Task SendRequestToAuthorizedRoute_WhenGrainAndUserAreAuthorized_ReturnOk()
+    {
+        // Arrange
+        var client = _testApp.CreateClient();
+        var sessionId = Guid.NewGuid().ToString();
+        await CreateSession(sessionId);
+        client.DefaultRequestHeaders.Add(OrleansIdentityConstants.AUTH_TOKEN, sessionId);
+        
+        // Act
+        var response = await client.GetAsync(TestControllerRoutes.USER_CONTROLLER_ANONYMOUS_ROUTE);
+
+        // Assert
+        response.IsSuccessStatusCode.Should().BeTrue();
+    }
+
+    #endregion
 }
