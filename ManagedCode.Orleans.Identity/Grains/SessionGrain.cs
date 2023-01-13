@@ -142,7 +142,7 @@ public class SessionGrain : Grain, ISessionGrain
         return Result.Succeed().AsValueTask();
     }
 
-    public ValueTask<Result> AddOrUpdateProperty(string key, string value, bool replaceClaim = false)
+    public ValueTask<Result> AddOrUpdateProperty(string key, string value, bool replace = false)
     {
         if (_sessionState.RecordExists is false)
         {
@@ -150,8 +150,13 @@ public class SessionGrain : Grain, ISessionGrain
             return Result.Fail().AsValueTask();
         }
 
-        if (_sessionState.State.UserData.ContainsKey(key) is false)
-            _sessionState.State.UserData[key].Add(key);
+        if (_sessionState.State.UserData.ContainsKey(key))
+        {
+            if(replace)
+                _sessionState.State.UserData[key] = new HashSet<string> { value };
+            else
+                _sessionState.State.UserData[key].Add(key);
+        }
         else
             _sessionState.State.UserData.Add(key, new HashSet<string> { value });
 
