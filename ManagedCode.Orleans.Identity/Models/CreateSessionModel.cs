@@ -13,5 +13,5 @@ public class CreateSessionModel
 
     // TODO: Do smth with dictionary user cant have more than one role
     [Id(1)]
-    public Dictionary<string, string> UserData { get; set; }
+    public Dictionary<string, HashSet<string>> UserData { get; set; }
 }

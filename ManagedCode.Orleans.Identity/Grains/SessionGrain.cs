@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Threading;
 using System.Threading.Tasks;
@@ -71,23 +72,23 @@ public class SessionGrain : Grain, ISessionGrain
         return Result<SessionModel>.Succeed(result);
     }
 
-    public ValueTask<Result<ImmutableDictionary<string, string>>> ValidateAndGetClaimsAsync()
+    public ValueTask<Result<ImmutableDictionary<string, HashSet<string>>>> ValidateAndGetClaimsAsync()
     {
         if (_sessionState.RecordExists is false)
         {
             DeactivateOnIdle();
-            return Result<ImmutableDictionary<string, string>>.Fail().AsValueTask();
+            return Result<ImmutableDictionary<string, HashSet<string>>>.Fail().AsValueTask();
         }
 
         if (_sessionState.State.IsActive is false)
         {
             DeactivateOnIdle();
-            return Result<ImmutableDictionary<string, string>>.Fail().AsValueTask();
+            return Result<ImmutableDictionary<string, HashSet<string>>>.Fail().AsValueTask();
         }
             
         _sessionState.State.LastAccess = DateTime.UtcNow;
 
-        return Result<ImmutableDictionary<string, string>>.Succeed(_sessionState.State.UserData.ToImmutableDictionary()).AsValueTask();
+        return Result<ImmutableDictionary<string, HashSet<string>>>.Succeed(_sessionState.State.UserData.ToImmutableDictionary()).AsValueTask();
     }
 
     public async Task<Result> CloseAsync()
@@ -141,7 +142,7 @@ public class SessionGrain : Grain, ISessionGrain
         return Result.Succeed().AsValueTask();
     }
 
-    public ValueTask<Result> AddOrUpdateProperty(string key, string value)
+    public ValueTask<Result> AddOrUpdateProperty(string key, string value, bool replaceClaim = false)
     {
         if (_sessionState.RecordExists is false)
         {
@@ -149,7 +150,10 @@ public class SessionGrain : Grain, ISessionGrain
             return Result.Fail().AsValueTask();
         }
 
-        _sessionState.State.UserData[key] = value;
+        if (_sessionState.State.UserData.ContainsKey(key) is false)
+            _sessionState.State.UserData[key].Add(key);
+        else
+            _sessionState.State.UserData.Add(key, new HashSet<string> { value });
 
         return Result.Succeed().AsValueTask();
     }

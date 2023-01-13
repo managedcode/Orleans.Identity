@@ -12,7 +12,7 @@ public interface ISessionGrain : IGrainWithStringKey
     Task<Result<SessionModel>> CreateAsync(CreateSessionModel sessionInfo);
     Task<Result> CloseAsync();
     ValueTask<Result<SessionModel>> GetSessionAsync();
-    ValueTask<Result<ImmutableDictionary<string, string>>> ValidateAndGetClaimsAsync();
+    ValueTask<Result<ImmutableDictionary<string, HashSet<string>>>> ValidateAndGetClaimsAsync();
 
     ValueTask<Result> PauseSessionAsync();
     ValueTask<Result> ResumeSessionAsync();
