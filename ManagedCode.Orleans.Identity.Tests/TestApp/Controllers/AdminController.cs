@@ -26,4 +26,11 @@ public class AdminController : ControllerBase
     {
         return "admin";
     }
+
+    [HttpGet("editAdmin")]
+    [Authorize("moderator")]
+    public ActionResult<string> EditAdmins()
+    {
+        return "edits admins";
+    }
 }

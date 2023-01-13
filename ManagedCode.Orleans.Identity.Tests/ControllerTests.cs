@@ -217,6 +217,28 @@ public class ControllerTests
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
+    [Fact]
+    public async Task SendRequestToToAuthorizedControllerToAuthorizedRouteWithRole_WhenAutorizedWithRole_ReturnOk()
+    {
+        // Arrange
+        var client = _testApp.CreateClient();
+        var sessionId = Guid.NewGuid().ToString();
+        var userClaims = new Dictionary<string, string>
+        {
+            { ClaimTypes.Role, "admin" },
+            { ClaimTypes.Role, "moderator" }
+        };
+
+        await CreateSession(sessionId, userClaims, true);
+        client.DefaultRequestHeaders.Add(OrleansIdentityConstants.AUTH_TOKEN, sessionId);
+
+        // Act
+        var response = await client.GetAsync(TestControllerRoutes.ADMIN_CONTROLLER_ADMIN_GET_ADMIN);
+
+        // Assert
+        response.IsSuccessStatusCode.Should().BeTrue();
+    }
+
 
     #endregion
 }
