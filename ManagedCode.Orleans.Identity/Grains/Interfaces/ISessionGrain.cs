@@ -17,7 +17,8 @@ public interface ISessionGrain : IGrainWithStringKey
     ValueTask<Result> PauseSessionAsync();
     ValueTask<Result> ResumeSessionAsync();
 
-    ValueTask<Result> AddOrUpdateProperty(string key, string value);
+    ValueTask<Result> AddOrUpdateProperty(string key, string value, bool replace = false);
+    ValueTask<Result> AddOrUpdateProperty(string key, List<string> values, bool replace = false);
     ValueTask<Result> RemoveProperty(string key);
 
 }

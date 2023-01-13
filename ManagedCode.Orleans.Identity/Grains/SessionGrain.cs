@@ -9,6 +9,7 @@ using ManagedCode.Orleans.Identity.Models;
 using ManagedCode.Orleans.Identity.Options;
 using ManagedCode.Orleans.Identity.Shared.Constants;
 using ManagedCode.Orleans.Identity.Shared.Enums;
+using Newtonsoft.Json.Linq;
 using Orleans;
 using Orleans.Runtime;
 
@@ -150,15 +151,39 @@ public class SessionGrain : Grain, ISessionGrain
             return Result.Fail().AsValueTask();
         }
 
-        if (_sessionState.State.UserData.ContainsKey(key))
+        if (_sessionState.State.UserData.TryGetValue(key, out var hashSet))
         {
             if(replace)
                 _sessionState.State.UserData[key] = new HashSet<string> { value };
             else
-                _sessionState.State.UserData[key].Add(key);
+                hashSet.Add(value);
         }
         else
             _sessionState.State.UserData.Add(key, new HashSet<string> { value });
+
+        return Result.Succeed().AsValueTask();
+    }
+
+    public ValueTask<Result> AddOrUpdateProperty(string key, List<string> values, bool replace = false)
+    {
+        if (_sessionState.RecordExists is false)
+        {
+            DeactivateOnIdle();
+            return Result.Fail().AsValueTask();
+        }
+
+        if (_sessionState.State.UserData.TryGetValue(key, out var hashSet))
+        {
+            if (replace)
+                _sessionState.State.UserData[key] = hashSet;
+            else
+            {
+                foreach(var value in values)
+                    hashSet.Add(value);
+            }    
+        }
+        else
+            _sessionState.State.UserData.Add(key, new HashSet<string>(values));
 
         return Result.Succeed().AsValueTask();
     }
