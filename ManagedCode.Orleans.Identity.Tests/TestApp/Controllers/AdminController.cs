@@ -22,7 +22,7 @@ public class AdminController : ControllerBase
 
     [HttpGet("getAdmin")]
     [Authorize]
-    public ActionResult<string> GetAdmin() 
+    public ActionResult<string> GetAdmin()
     {
         return "admin";
     }

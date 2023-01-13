@@ -19,7 +19,7 @@ namespace ManagedCode.Orleans.Identity.Grains;
 public class SessionGrain : Grain, ISessionGrain
 {
     private readonly IPersistentState<SessionModel> _sessionState;
-    private SessionOption _sessionOption;
+    private readonly SessionOption _sessionOption;
     
     public SessionGrain(
         [PersistentState("sessions", OrleansIdentityConstants.SESSION_STORAGE_NAME)]IPersistentState<SessionModel> sessionState,
@@ -57,15 +57,16 @@ public class SessionGrain : Grain, ISessionGrain
     {
         var date = DateTime.UtcNow;
 
-        _sessionState.State = new SessionModel();
-
-        _sessionState.State.Id = this.GetPrimaryKeyString();
-        _sessionState.State.IsActive = true;
-        _sessionState.State.UserGrainId = model.UserGrainId;
-        _sessionState.State.UserData = model.UserData ?? new();
-        _sessionState.State.Status = SessionStatus.Active;
-        _sessionState.State.CreatedDate = date;
-        _sessionState.State.LastAccess = date;
+        _sessionState.State = new SessionModel
+        {
+            Id = this.GetPrimaryKeyString(),
+            IsActive = true,
+            UserGrainId = model.UserGrainId,
+            UserData = model.UserData ?? new(),
+            Status = SessionStatus.Active,
+            CreatedDate = date,
+            LastAccess = date
+        };
 
         await _sessionState.WriteStateAsync();
 
@@ -219,10 +220,8 @@ public class SessionGrain : Grain, ISessionGrain
                 Result.Succeed().AsValueTask() :
                 Result.Fail().AsValueTask();
         }
-        else
-        {
-            return Result.Fail().AsValueTask();
-        }
+
+        return Result.Fail().AsValueTask();
     }
 
     public ValueTask<Result> RemoveProperty(string key)
@@ -238,10 +237,9 @@ public class SessionGrain : Grain, ISessionGrain
             _sessionState.State.UserData.Remove(key);
             return Result.Succeed().AsValueTask();
         }
-        else
-        {
-            return Result.Fail().AsValueTask();
-        }
+
+        return Result.Fail().AsValueTask();
+        
     }
 
     public ValueTask<Result> RemoveValueFromProperty(string key, string value)
@@ -258,10 +256,8 @@ public class SessionGrain : Grain, ISessionGrain
                 Result.Succeed().AsValueTask() :
                 Result.Fail().AsValueTask();
         }
-        else
-        {
-            return Result.Fail().AsValueTask();
-        }
+
+        return Result.Fail().AsValueTask();
     }
 
 

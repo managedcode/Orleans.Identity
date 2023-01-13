@@ -1,13 +1,12 @@
+using System.Collections.Generic;
 using Orleans;
 using Orleans.Runtime;
-using System.Collections.Generic;
 
 namespace ManagedCode.Orleans.Identity.Models;
 
 [GenerateSerializer]
-public class CreateSessionModel 
+public class CreateSessionModel
 {
-    
     [Id(0)]
     public GrainId UserGrainId { get; set; }
 

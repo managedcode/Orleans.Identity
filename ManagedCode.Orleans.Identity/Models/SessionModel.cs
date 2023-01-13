@@ -32,6 +32,4 @@ public class SessionModel
 
     [Id(7)]
     public bool IsActive { get; set; }
-
 }
-

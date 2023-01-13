@@ -1,12 +1,5 @@
-using FluentAssertions;
-using ManagedCode.Orleans.Identity.Grains.Interfaces;
-using ManagedCode.Orleans.Identity.Models;
-using ManagedCode.Orleans.Identity.Shared.Constants;
-using ManagedCode.Orleans.Identity.Tests.Cluster;
-using ManagedCode.Orleans.Identity.Tests.Constants;
-using ManagedCode.Orleans.Identity.Tests.Helpers;
-using System.Net;
 using System.Security.Claims;
+using ManagedCode.Orleans.Identity.Tests.Cluster;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -15,10 +8,10 @@ namespace ManagedCode.Orleans.Identity.Tests;
 [Collection(nameof(TestClusterApplication))]
 public class ControllerTests
 {
-    private readonly TestClusterApplication _testApp;
     private readonly ITestOutputHelper _outputHelper;
+    private readonly TestClusterApplication _testApp;
 
-    private Dictionary<string, string> claimsForAdminController = new Dictionary<string, string>()
+    private Dictionary<string, string> claimsForAdminController = new()
     {
         { ClaimTypes.Role, "Moderator" },
         { ClaimTypes.Email, "test2@gmail.com" }
@@ -150,7 +143,7 @@ public class ControllerTests
     //    // Assert
     //    response.IsSuccessStatusCode.Should().BeTrue();
     //}
-    
+
     //#endregion
 
     //#region Controller tests
@@ -163,10 +156,10 @@ public class ControllerTests
     //    var sessionId = Guid.NewGuid().ToString();
     //    await CreateSession(sessionId);
     //    client.DefaultRequestHeaders.AddProperty(OrleansIdentityConstants.AUTH_TOKEN, sessionId);
-        
+
     //    // Act
     //    var response = await client.GetAsync(TestControllerRoutes.ADMIN_CONTROLLER_DEFAULT_ROUTE);
-        
+
     //    // Assert
     //    response.IsSuccessStatusCode.Should().BeTrue();
     //}
@@ -238,7 +231,6 @@ public class ControllerTests
     //    // Assert
     //    response.IsSuccessStatusCode.Should().BeTrue();
     //}
-
 
     //#endregion
 }

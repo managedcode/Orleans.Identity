@@ -1,9 +1,6 @@
-using System;
 using System.Linq;
 using System.Security.Claims;
 using ManagedCode.Orleans.Identity.Shared.Constants;
-using Orleans;
-using Orleans.Runtime;
 
 namespace ManagedCode.Orleans.Identity.Middlewares;
 
@@ -51,19 +48,3 @@ public static class ClaimsPrincipalExtensions
     
     
 }
-
-public static class OrleansExtensions
-{
-    private const string Roles = "Roles";
-    public static void SetOrleansContext(this ClaimsPrincipal user)
-    {
-        RequestContext.Set(Roles, user.GetRoles());
-    }
-    
-    public static string[] GetOrleansContext(this IIncomingGrainCallFilter filter)
-    {
-        return RequestContext.Get(Roles) as string[] ?? Array.Empty<string>();
-    }
-    
-}
-

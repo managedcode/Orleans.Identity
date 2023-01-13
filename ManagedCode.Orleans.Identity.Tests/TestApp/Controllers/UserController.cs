@@ -26,6 +26,8 @@ public class UserController : ControllerBase
 
     [HttpGet("anonymous")]
     [AllowAnonymous]
-    public async Task<ActionResult<string>> TryGetUser() =>
-        await GetUser();
+    public async Task<ActionResult<string>> TryGetUser()
+    {
+        return await GetUser();
+    }
 }
