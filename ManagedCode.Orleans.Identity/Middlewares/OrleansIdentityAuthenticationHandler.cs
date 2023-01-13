@@ -27,57 +27,56 @@ public class OrleansIdentityAuthenticationHandler : AuthenticationHandler<Authen
     }
 
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
+    {
+        string sessionId;
+        if (!Request.Headers.TryGetValue(OrleansIdentityConstants.AUTH_TOKEN, out var values))
         {
-            string sessionId;
-            if (!Request.Headers.TryGetValue(OrleansIdentityConstants.AUTH_TOKEN, out var values))
+            if (Request.Headers.TryGetValue("Authorization", out var jwt))
             {
-                if (Request.Headers.TryGetValue("Authorization", out var jwt))
-                {
-                    sessionId = jwt.ToString().Replace("Bearer", "").Trim();
-                }
-                else if (Request.Query.TryGetValue(OrleansIdentityConstants.AUTH_TOKEN, out var queryValues))
-                {
-                    sessionId = queryValues.ToString().Trim();
-                }
-                else
-                {
-                    return AuthenticateResult.NoResult();
-                }
+                sessionId = jwt.ToString().Replace("Bearer", "").Trim();
+            }
+            else if (Request.Query.TryGetValue(OrleansIdentityConstants.AUTH_TOKEN, out var queryValues))
+            {
+                sessionId = queryValues.ToString().Trim();
             }
             else
             {
-                sessionId = values.ToString().Trim();
-            }
-            
-            if (string.IsNullOrEmpty(sessionId))
-            {
                 return AuthenticateResult.NoResult();
             }
-
-            try
-            {
-                Logger.LogInformation($"Get Session info for sessionId: {sessionId}");
-                var sessionGrain = _client.GetGrain<ISessionGrain>(sessionId);
-                var result = await sessionGrain.ValidateAndGetClaimsAsync();
-
-                if (result.IsSuccess)
-                {
-                    ClaimsIdentity claimsIdentity = new(OrleansIdentityConstants.AUTHENTICATION_TYPE);
-
-                    foreach (var claim in result.Value)
-                    {
-                        claimsIdentity.AddClaim(new Claim(claim.Key, claim.Value.AsString()));
-                    }
-                    
-                    var ticket = new AuthenticationTicket(new ClaimsPrincipal(claimsIdentity), Scheme.Name);
-                    return AuthenticateResult.Success(ticket);
-                }
-            }
-            catch (Exception e)
-            {
-                Logger.LogError(e, "HandleAuthenticateAsync.SessionId Validation");
-            }
-            
-            return AuthenticateResult.Fail($"Unauthorized request. SessionId: {sessionId};");
         }
+        else
+        {
+            sessionId = values.ToString().Trim();
+        }
+
+        if (string.IsNullOrEmpty(sessionId))
+        {
+            return AuthenticateResult.NoResult();
+        }
+
+        try
+        {
+            var sessionGrain = _client.GetGrain<ISessionGrain>(sessionId);
+            var result = await sessionGrain.ValidateAndGetClaimsAsync();
+
+            if (result.IsSuccess)
+            {
+                ClaimsIdentity claimsIdentity = new(OrleansIdentityConstants.AUTHENTICATION_TYPE);
+
+                foreach (var claim in result.Value)
+                {
+                    claimsIdentity.AddClaim(new Claim(claim.Key, claim.Value.AsString()));
+                }
+
+                var ticket = new AuthenticationTicket(new ClaimsPrincipal(claimsIdentity), Scheme.Name);
+                return AuthenticateResult.Success(ticket);
+            }
+        }
+        catch (Exception e)
+        {
+            Logger.LogError(e, "HandleAuthenticateAsync.SessionId Validation");
+        }
+
+        return AuthenticateResult.Fail($"Unauthorized request. SessionId: {sessionId};");
+    }
 }

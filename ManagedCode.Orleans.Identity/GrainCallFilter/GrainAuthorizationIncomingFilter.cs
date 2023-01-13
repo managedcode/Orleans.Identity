@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using ManagedCode.Orleans.Identity.Middlewares;
 using Microsoft.AspNetCore.Authorization;
 using Orleans;
-using Orleans.Runtime;
 
 namespace ManagedCode.Orleans.Identity.GrainCallFilter;
 
@@ -33,7 +32,6 @@ public class GrainAuthorizationIncomingFilter : IIncomingGrainCallFilter
                 }
 
                 throw new UnauthorizedAccessException();
-                
             }
         }
         else
@@ -41,29 +39,28 @@ public class GrainAuthorizationIncomingFilter : IIncomingGrainCallFilter
             await context.Invoke();
         }
     }
-    
-    
+
     private static bool IsAuthorize(MemberInfo methodInfo, out List<AuthorizeAttribute> attributes)
     {
-        attributes = new();
+        attributes = new List<AuthorizeAttribute>();
 
         // for method
         if (Attribute.IsDefined(methodInfo, typeof(AllowAnonymousAttribute)))
+        {
             return false;
-        
-        
-        if(methodInfo.DeclaringType != null && Attribute.IsDefined(methodInfo.DeclaringType, typeof(AuthorizeAttribute)))
-        {
-            attributes.AddRange(Attribute.GetCustomAttributes(methodInfo.DeclaringType, typeof(AuthorizeAttribute)).Select(s=> (AuthorizeAttribute)s));
         }
-        
-        if(Attribute.IsDefined(methodInfo, typeof(AuthorizeAttribute)))
+
+        if (methodInfo.DeclaringType != null && Attribute.IsDefined(methodInfo.DeclaringType, typeof(AuthorizeAttribute)))
         {
-            attributes.AddRange(Attribute.GetCustomAttributes(methodInfo, typeof(AuthorizeAttribute)).Select(s=> (AuthorizeAttribute)s));
+            attributes.AddRange(Attribute.GetCustomAttributes(methodInfo.DeclaringType, typeof(AuthorizeAttribute)).Select(s => (AuthorizeAttribute)s));
+        }
+
+        if (Attribute.IsDefined(methodInfo, typeof(AuthorizeAttribute)))
+        {
+            attributes.AddRange(Attribute.GetCustomAttributes(methodInfo, typeof(AuthorizeAttribute)).Select(s => (AuthorizeAttribute)s));
             return true;
         }
-        
+
         return attributes.Any();
     }
-    
 }

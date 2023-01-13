@@ -18,34 +18,34 @@
 
     <ItemGroup>
 
-        <PackageReference Include="ManagedCode.Communication" Version="2.0.13" />
-        <PackageReference Include="ManagedCode.Communication.Orleans" Version="2.0.13" />
+        <PackageReference Include="ManagedCode.Communication" Version="2.0.13"/>
+        <PackageReference Include="ManagedCode.Communication.Orleans" Version="2.0.13"/>
 
-        <PackageReference Include="ManagedCode.Database.Core" Version="2.0.1" />
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0" />
-        <PackageReference Include="Microsoft.Orleans.Runtime" Version="7.0.0" />
-        <PackageReference Include="Microsoft.Orleans.Sdk" Version="7.0.0" />
+        <PackageReference Include="ManagedCode.Database.Core" Version="2.0.1"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0"/>
+        <PackageReference Include="Microsoft.Orleans.Runtime" Version="7.0.0"/>
+        <PackageReference Include="Microsoft.Orleans.Sdk" Version="7.0.0"/>
 
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Properties" />
+        <Folder Include="Properties"/>
     </ItemGroup>
 
     <ItemGroup>
-      <Compile Remove="old\**" />
+        <Compile Remove="old\**"/>
     </ItemGroup>
 
     <ItemGroup>
-      <EmbeddedResource Remove="old\**" />
+        <EmbeddedResource Remove="old\**"/>
     </ItemGroup>
 
     <ItemGroup>
-      <None Remove="old\**" />
+        <None Remove="old\**"/>
     </ItemGroup>
 
     <ItemGroup>
-      <Content Remove="old\**" />
+        <Content Remove="old\**"/>
     </ItemGroup>
-    
+
 </Project>

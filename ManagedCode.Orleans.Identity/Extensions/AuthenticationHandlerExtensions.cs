@@ -16,14 +16,14 @@ public static class AuthenticationHandlerExtensions
         sessionOption?.Invoke(option);
         AddOrleansIdentity(services, option);
     }
-    
+
     public static void AddOrleansIdentity(this IServiceCollection services, SessionOption sessionOption = null!)
     {
-        sessionOption ??= new();
+        sessionOption ??= new SessionOption();
 
         services.AddAuthentication(options => options.DefaultScheme = OrleansIdentityConstants.AUTHENTICATION_TYPE)
             .AddScheme<AuthenticationSchemeOptions, OrleansIdentityAuthenticationHandler>(OrleansIdentityConstants.AUTHENTICATION_TYPE, op => { });
-       
+
         services.AddAuthorization(options =>
         {
             var defaultAuthorizationPolicyBuilder = new AuthorizationPolicyBuilder(OrleansIdentityConstants.AUTHENTICATION_TYPE);

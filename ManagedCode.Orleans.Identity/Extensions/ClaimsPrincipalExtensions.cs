@@ -15,36 +15,34 @@ public static class ClaimsPrincipalExtensions
     {
         return user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
     }
-    
+
     public static string GetEmail(this ClaimsPrincipal user)
     {
         return user.FindFirst(ClaimTypes.Email)?.Value ?? string.Empty;
     }
-        
+
     public static string GetPhone(this ClaimsPrincipal user)
     {
         return user.FindFirst(ClaimTypes.HomePhone)?.Value ?? string.Empty;
     }
-        
+
     public static string GetSessionId(this ClaimsPrincipal user)
     {
         return user.FindFirst(ClaimTypes.Sid)?.Value ?? string.Empty;
     }
-        
+
     public static string GetGrainId(this ClaimsPrincipal user)
     {
         return user.FindFirst(ClaimTypes.Actor)?.Value ?? string.Empty;
     }
-        
+
     public static string[] GetRoles(this ClaimsPrincipal user)
     {
         return user.FindAll(ClaimTypes.Role).Select(s => s.Value).ToArray();
     }
-        
+
     public static bool IsUnauthorizedClient(this ClaimsPrincipal user)
     {
         return user.GetGrainId() == OrleansIdentityConstants.AUTH_TOKEN;
     }
-    
-    
 }

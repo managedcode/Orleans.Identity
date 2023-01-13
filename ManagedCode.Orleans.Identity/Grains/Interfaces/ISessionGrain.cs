@@ -22,7 +22,7 @@ public interface ISessionGrain : IGrainWithStringKey
 
     ValueTask<Result> ReplaceProperty(string key, string value);
     ValueTask<Result> ReplaceProperty(string key, List<string> values);
-    
+
     ValueTask<Result> RemoveProperty(string key);
 
     ValueTask<Result> RemoveValueFromProperty(string key, string value);
