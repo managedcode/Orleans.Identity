@@ -310,7 +310,7 @@ namespace ManagedCode.Orleans.Identity.Tests
         {
             // Arrange
             var sessionId = Guid.NewGuid().ToString();
-            string propertyValue = "Nancy";
+            string propertyValue = "Name";
             var sessionCreateModel = SessionHelper.GetTestCreateSessionModel(sessionId);
             var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
             await sessionGrain.CreateAsync(sessionCreateModel);
@@ -330,7 +330,7 @@ namespace ManagedCode.Orleans.Identity.Tests
         {
             // Arrange
             var sessionId = Guid.NewGuid().ToString();
-            string propertyValue = "Nancy";
+            string propertyValue = "Name";
             var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
 
             // Act
@@ -345,7 +345,7 @@ namespace ManagedCode.Orleans.Identity.Tests
         {
             // Arrange
             var sessionId = Guid.NewGuid().ToString();
-            string propertyValue = "Nancy";
+            string propertyValue = "Name";
             var sessionCreateModel = SessionHelper.GetTestCreateSessionModel(sessionId);
             var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
             await sessionGrain.CreateAsync(sessionCreateModel);
@@ -354,7 +354,103 @@ namespace ManagedCode.Orleans.Identity.Tests
             var result = await sessionGrain.AddProperty(ClaimTypes.Email, propertyValue);
 
             // Assert
+            result.IsFailed.Should().BeTrue();
+        }
+
+        [Fact]
+        public async Task AddProperty_WithValues_WhenSessionExist_ReturnSuccess()
+        {
+            // Arrange
+            var sessionId = Guid.NewGuid().ToString();
+            var propertyValues = new List<string> { "one", "two" };
+            var sessionCreateModel = SessionHelper.GetTestCreateSessionModel(sessionId);
+            var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
+            await sessionGrain.CreateAsync(sessionCreateModel);
+
+            // Act
+            var result = await sessionGrain.AddProperty(ClaimTypes.System, propertyValues);
+
+            // Assert
             var userData = await sessionGrain.ValidateAndGetClaimsAsync();
+            result.IsSuccess.Should().BeTrue();
+            userData.IsSuccess.Should().BeTrue();
+            userData.Value.Should().ContainKey(ClaimTypes.System).WhoseValue.Should().BeEquivalentTo(propertyValues);
+        }
+
+        [Fact]
+        public async Task AddProperty_WithValuesThatHaveDuplicates_WhenSessionExist_ReturnSuccess()
+        {
+            // Arrange
+            var sessionId = Guid.NewGuid().ToString();
+            var propertyValues = new List<string> { "one", "two", "two" };
+            var expectedpropertyValues = new List<string> { "one", "two" };
+            var sessionCreateModel = SessionHelper.GetTestCreateSessionModel(sessionId);
+            var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
+            await sessionGrain.CreateAsync(sessionCreateModel);
+
+            // Act
+            var result = await sessionGrain.AddProperty(ClaimTypes.System, propertyValues);
+
+            // Assert
+            var userData = await sessionGrain.ValidateAndGetClaimsAsync();
+            result.IsSuccess.Should().BeTrue();
+            userData.IsSuccess.Should().BeTrue();
+            userData.Value.Should().ContainKey(ClaimTypes.System).WhoseValue.Should().BeEquivalentTo(expectedpropertyValues);
+        }
+
+        #endregion
+
+        #region ReplaceProperty
+
+        [Fact]
+        public async Task ReplaceProperty_WhenPropertyExists_ReturnSuccess()
+        {
+            // Arrange
+            var sessionId = Guid.NewGuid().ToString();
+            string newPropertyValue = "test22@gmail.com";
+            var sessionCreateModel = SessionHelper.GetTestCreateSessionModel(sessionId);
+            var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
+            await sessionGrain.CreateAsync(sessionCreateModel);
+
+            // Act
+            var result = await sessionGrain.ReplaceProperty(ClaimTypes.Email, newPropertyValue);
+
+            // Assert
+            var userData = await sessionGrain.ValidateAndGetClaimsAsync();
+            result.IsSuccess.Should().BeTrue();
+            userData.IsSuccess.Should().BeTrue();
+            userData.Value.Should().ContainKey(ClaimTypes.Email).WhoseValue.Should().BeEquivalentTo(newPropertyValue);
+        }
+
+        [Fact]
+        public async Task ReplaceProperty_WhenPropertyNotExist_ReturnFail()
+        {
+            // Arrange
+            var sessionId = Guid.NewGuid().ToString();
+            string newPropertyValue = "new name";
+            var sessionCreateModel = SessionHelper.GetTestCreateSessionModel(sessionId);
+            var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
+            await sessionGrain.CreateAsync(sessionCreateModel);
+
+            // Act
+            var result = await sessionGrain.ReplaceProperty(ClaimTypes.Name, newPropertyValue);
+
+            // Assert
+            result.IsFailed.Should().BeTrue();
+        }
+
+        [Fact]
+        public async Task ReplaceProperty_WhenSessionNotExists_ReturnFail()
+        {
+            // Arrange
+            var sessionId = Guid.NewGuid().ToString();
+            string newPropertyValue = "test22@gmail.com";
+            var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
+
+            // Act
+            var result = await sessionGrain.ReplaceProperty(ClaimTypes.Email, newPropertyValue);
+
+            // Assert
             result.IsFailed.Should().BeTrue();
         }
 
