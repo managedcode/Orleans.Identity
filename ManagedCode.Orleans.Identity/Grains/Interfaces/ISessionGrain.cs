@@ -19,6 +19,8 @@ public interface ISessionGrain : IGrainWithStringKey
 
     ValueTask<Result> AddOrUpdateProperty(string key, string value, bool replace = false);
     ValueTask<Result> AddOrUpdateProperty(string key, List<string> values, bool replace = false);
-    ValueTask<Result> RemoveProperty(string key);
 
+    ValueTask<Result> RemoveProperty(string key);
+    //ValueTask<Result> RemoveValueFromProperty(string key, string value);
+    //ValueTask<Result> ClearUserData();
 }

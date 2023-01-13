@@ -2,6 +2,7 @@ using System;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
+using ManagedCode.Orleans.Identity.Extensions;
 using ManagedCode.Orleans.Identity.Grains.Interfaces;
 using ManagedCode.Orleans.Identity.Shared.Constants;
 using Microsoft.AspNetCore.Authentication;
@@ -65,7 +66,7 @@ public class OrleansIdentityAuthenticationHandler : AuthenticationHandler<Authen
 
                     foreach (var claim in result.Value)
                     {
-                        claimsIdentity.AddClaim(new Claim(claim.Key, claim.Value));
+                        claimsIdentity.AddClaim(new Claim(claim.Key, claim.Value.AsString()));
                     }
                     
                     var ticket = new AuthenticationTicket(new ClaimsPrincipal(claimsIdentity), Scheme.Name);
