@@ -11,5 +11,7 @@
         public const string ADMIN_CONTROLLER_DEFAULT_ROUTE = "/adminController";
         public const string ADMIN_CONTROLLER_ADMINS_LIST = "/adminController/adminsList";
         public const string ADMIN_CONTROLLER_ADMIN_GET_ADMIN = "/adminController/getAdmin";
+
+        public const string USER_CONTROLLER_DEFAULT_ROUTE = "/userController";
     }
 }
