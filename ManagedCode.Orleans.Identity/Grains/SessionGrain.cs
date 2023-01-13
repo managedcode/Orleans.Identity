@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using ManagedCode.Communication;
@@ -143,37 +144,68 @@ public class SessionGrain : Grain, ISessionGrain
         return Result.Succeed().AsValueTask();
     }
 
-    public ValueTask<Result> Add(string key, string value)
+    public ValueTask<Result> AddProperty(string key, string value)
     {
-        throw new NotImplementedException();
+        if (_sessionState.RecordExists is false)
+        {
+            DeactivateOnIdle();
+            return Result.Fail().AsValueTask();
+        }
+
+        if(_sessionState.State.UserData.ContainsKey(key))
+            return Result.Fail().AsValueTask();
+
+        _sessionState.State.UserData[key] = new HashSet<string> { value };
+        return Result.Succeed().AsValueTask();
     }
 
-    public ValueTask<Result> Add(string key, List<string> values)
+    public ValueTask<Result> AddProperty(string key, List<string> values)
     {
-        throw new NotImplementedException();
+
+        if (_sessionState.RecordExists is false)
+        {
+            DeactivateOnIdle();
+            return Result.Fail().AsValueTask();
+        }
+
+        if (_sessionState.State.UserData.ContainsKey(key))
+            return Result.Fail().AsValueTask();
+
+        _sessionState.State.UserData[key] = values.ToHashSet();
+        return Result.Succeed().AsValueTask();
     }
 
     public ValueTask<Result> ReplaceProperty(string key, string value)
     {
-        throw new NotImplementedException();
+        if (_sessionState.RecordExists is false)
+        {
+            DeactivateOnIdle();
+            return Result.Fail().AsValueTask();
+        }
+
+        if (_sessionState.State.UserData.ContainsKey(key) is false)
+            return Result.Fail().AsValueTask();
+
+        _sessionState.State.UserData[key] = new HashSet<string>() { value };
+        return Result.Succeed().AsValueTask();
     }
 
     public ValueTask<Result> ReplaceProperty(string key, List<string> values)
     {
-        throw new NotImplementedException();
+        if (_sessionState.RecordExists is false)
+        {
+            DeactivateOnIdle();
+            return Result.Fail().AsValueTask();
+        }
+
+        if (_sessionState.State.UserData.ContainsKey(key) is false)
+            return Result.Fail().AsValueTask();
+
+        _sessionState.State.UserData[key] = values.ToHashSet();
+        return Result.Succeed().AsValueTask();
     }
 
-    public ValueTask<Result> Update(string key, string value)
-    {
-        throw new NotImplementedException();
-    }
-
-    public ValueTask<Result> Update(string key, List<string> value)
-    {
-        throw new NotImplementedException();
-    }
-
-    public ValueTask<Result> AddOrUpdateProperty(string key, string value)
+    public ValueTask<Result> AddValueToProperty(string key, string value)
     {
         if (_sessionState.RecordExists is false)
         {
@@ -181,33 +213,16 @@ public class SessionGrain : Grain, ISessionGrain
             return Result.Fail().AsValueTask();
         }
 
-        if (_sessionState.State.UserData.TryGetValue(key, out var hashSet))
+        if (_sessionState.State.UserData.TryGetValue(key, out var hashset))
         {
-            hashSet.Add(value);
+            return hashset.Add(value) ?
+                Result.Succeed().AsValueTask() :
+                Result.Fail().AsValueTask();
         }
         else
-            _sessionState.State.UserData.Add(key, new HashSet<string> { value });
-
-        return Result.Succeed().AsValueTask();
-    }
-
-    public ValueTask<Result> AddOrUpdateProperty(string key, List<string> values)
-    {
-        if (_sessionState.RecordExists is false)
         {
-            DeactivateOnIdle();
             return Result.Fail().AsValueTask();
         }
-
-        if (_sessionState.State.UserData.TryGetValue(key, out var hashSet))
-        {
-            foreach(var value in values)
-                hashSet.Add(value);
-        }
-        else
-            _sessionState.State.UserData.Add(key, new HashSet<string>(values));
-
-        return Result.Succeed().AsValueTask();
     }
 
     public ValueTask<Result> RemoveProperty(string key)
@@ -231,12 +246,35 @@ public class SessionGrain : Grain, ISessionGrain
 
     public ValueTask<Result> RemoveValueFromProperty(string key, string value)
     {
-        throw new NotImplementedException();
+        if (_sessionState.RecordExists is false)
+        {
+            DeactivateOnIdle();
+            return Result.Fail().AsValueTask();
+        }
+
+        if (_sessionState.State.UserData.TryGetValue(key, out var hashset))
+        {
+            return hashset.Remove(value) ? 
+                Result.Succeed().AsValueTask() :
+                Result.Fail().AsValueTask();
+        }
+        else
+        {
+            return Result.Fail().AsValueTask();
+        }
     }
+
 
     public ValueTask<Result> ClearUserData()
     {
-        throw new NotImplementedException();
+        if (_sessionState.RecordExists is false)
+        {
+            DeactivateOnIdle();
+            return Result.Fail().AsValueTask();
+        }
+
+        _sessionState.State.UserData.Clear();
+        return Result.Succeed().AsValueTask();
     }
 
     private SessionModel GetSessionModel()

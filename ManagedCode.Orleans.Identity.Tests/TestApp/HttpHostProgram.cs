@@ -14,12 +14,12 @@ public class HttpHostProgram
         builder.Services.AddControllers();
         builder.Services.AddSignalR();
 
-        // Add it for using Orleans Identity
+        // AddProperty it for using Orleans Identity
         builder.Services.AddOrleansIdentity(); 
 
         var app = builder.Build();
 
-        // Add it for using Orleans Identity
+        // AddProperty it for using Orleans Identity
         // Authentication and Authorization already use
         app.UseAuthenticationAndOrleansIdentity(); 
 
