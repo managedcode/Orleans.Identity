@@ -58,26 +58,6 @@ public class SessionGrainTests
 
     #endregion
 
-    #region RemoveValueFromProperty
-
-    [Fact]
-    public async Task RemoveValueFromProperty_WhenSessionExists_ReturnSuccess()
-    {
-        // Arrange
-        var sessionId = Guid.NewGuid().ToString();
-        var rolesClaims = new HashSet<string> { "admin", "moderator" };
-        var sessionCreateModel =
-            SessionHelper.GetTestCreateSessionModel(sessionId, new Dictionary<string, HashSet<string>> { { ClaimTypes.Role, rolesClaims } }, true);
-        var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
-        await sessionGrain.CreateAsync(sessionCreateModel);
-
-        // Act
-
-        // Assert
-    }
-
-    #endregion
-
     #region ValidateSessionAndGetClaimsAsync
 
     [Fact]
@@ -512,6 +492,66 @@ public class SessionGrainTests
         result.IsSuccess.Should().BeTrue();
         userData.IsSuccess.Should().BeTrue();
         userData.Value.Should().ContainKey(ClaimTypes.Role).WhoseValue.Should().BeEquivalentTo(expectedPropertyValues);
+    }
+
+    [Fact]
+    public async Task ReplaceProperty_WithValues_WhenPropertyIsNotExists_ReturnFail()
+    {
+        // Arrange
+        var sessionId = Guid.NewGuid().ToString();
+        var newPropertyValues = new List<string> { "admin", "moderator" };
+        var sessionCreateModel = SessionHelper.GetTestCreateSessionModel(sessionId);
+        var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
+        await sessionGrain.CreateAsync(sessionCreateModel);
+
+        // Act
+        var result = await sessionGrain.ReplaceProperty(ClaimTypes.Authentication, newPropertyValues);
+
+        result.IsFailed.Should().BeTrue();
+    }
+
+
+    #endregion
+
+    #region RemoveValueFromProperty
+
+    [Fact]
+    public async Task RemoveValueFromProperty_WhenPropertyExists_ReturnSuccess()
+    {
+        // Arrange
+        var sessionId = Guid.NewGuid().ToString();
+        var valueToRemove = "moderator";
+        var rolesClaims = new HashSet<string> { "admin", valueToRemove };
+        var sessionCreateModel =
+            SessionHelper.GetTestCreateSessionModel(sessionId, new Dictionary<string, HashSet<string>> { { ClaimTypes.Role, rolesClaims } }, true);
+        var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
+        await sessionGrain.CreateAsync(sessionCreateModel);
+
+        // Act
+        var result = await sessionGrain.RemoveValueFromProperty(ClaimTypes.Role, valueToRemove);
+
+        // Assert
+        var userData = await sessionGrain.ValidateAndGetClaimsAsync();
+        result.IsSuccess.Should().BeTrue();
+        userData.IsSuccess.Should().BeTrue();
+        userData.Value.Should().ContainKey(ClaimTypes.Role).WhoseValue.Should().NotContain(valueToRemove);
+    }
+
+    [Fact]
+    public async Task RemoveValueFromProperty_WhenPropertyIsNotExists_ReturnFailture()
+    {
+        // Arrange
+        var sessionId = Guid.NewGuid().ToString();
+        var valueToRemove = "c#@gmail.com";
+        var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
+        var sessionCreateModel = SessionHelper.GetTestCreateSessionModel(sessionId);
+        await sessionGrain.CreateAsync(sessionCreateModel);
+
+        // Act
+        var result = await sessionGrain.RemoveValueFromProperty(ClaimTypes.Name, valueToRemove);
+
+        // Assert
+        result.IsFailed.Should().BeTrue();
     }
 
     #endregion
