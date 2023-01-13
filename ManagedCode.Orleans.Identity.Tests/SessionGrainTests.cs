@@ -499,6 +499,21 @@ namespace ManagedCode.Orleans.Identity.Tests
 
         #region RemoveValueFromProperty
 
+        [Fact]
+        public async Task RemoveValueFromProperty_WhenSessionExists_ReturnSuccess()
+        {
+            // Arrange
+            var sessionId = Guid.NewGuid().ToString();
+            var rolesClaims = new HashSet<string> { "admin", "moderator" };
+            var sessionCreateModel = SessionHelper.GetTestCreateSessionModel(sessionId, new Dictionary<string, HashSet<string>> { { ClaimTypes.Role, rolesClaims } }, true);
+            var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
+            await sessionGrain.CreateAsync(sessionCreateModel);
+
+            // Act
+
+            // Assert
+        }
+
         #endregion
     }
 }
