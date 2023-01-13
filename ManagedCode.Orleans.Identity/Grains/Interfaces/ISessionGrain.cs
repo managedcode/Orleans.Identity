@@ -17,10 +17,17 @@ public interface ISessionGrain : IGrainWithStringKey
     ValueTask<Result> PauseSessionAsync();
     ValueTask<Result> ResumeSessionAsync();
 
-    ValueTask<Result> AddOrUpdateProperty(string key, string value, bool replace = false);
-    ValueTask<Result> AddOrUpdateProperty(string key, List<string> values, bool replace = false);
+    ValueTask<Result> Add(string key, string value);
+    ValueTask<Result> Add(string key, List<string> values);
+    
+    ValueTask<Result> ReplaceProperty(string key, string value);
+    ValueTask<Result> ReplaceProperty(string key, List<string> values);
 
+    ValueTask<Result> Update(string key, string value);
+    ValueTask<Result> Update(string key, List<string> value);
+    
     ValueTask<Result> RemoveProperty(string key);
-    //ValueTask<Result> RemoveValueFromProperty(string key, string value);
-    //ValueTask<Result> ClearUserData();
+    ValueTask<Result> RemoveValueFromProperty(string key, string value);
+    
+    ValueTask<Result> ClearUserData();
 }
