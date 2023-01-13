@@ -2,10 +2,11 @@ using System;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
+using ManagedCode.Orleans.Identity.Grains.Interfaces;
+using ManagedCode.Orleans.Identity.Shared.Constants;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.VisualBasic;
 using Orleans;
 
 namespace ManagedCode.Orleans.Identity.Middlewares;
@@ -27,13 +28,13 @@ public class OrleansIdentityAuthenticationHandler : AuthenticationHandler<Authen
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
         {
             string sessionId;
-            if (!Request.Headers.TryGetValue(IdentityConstants.AUTH_TOKEN, out var values))
+            if (!Request.Headers.TryGetValue(OrleansIdentityConstants.AUTH_TOKEN, out var values))
             {
                 if (Request.Headers.TryGetValue("Authorization", out var jwt))
                 {
                     sessionId = jwt.ToString().Replace("Bearer", "").Trim();
                 }
-                else if (Request.Query.TryGetValue(IdentityConstants.AUTH_TOKEN, out var queryValues))
+                else if (Request.Query.TryGetValue(OrleansIdentityConstants.AUTH_TOKEN, out var queryValues))
                 {
                     sessionId = queryValues.ToString().Trim();
                 }
@@ -56,11 +57,11 @@ public class OrleansIdentityAuthenticationHandler : AuthenticationHandler<Authen
             {
                 Logger.LogInformation($"Get Session info for sessionId: {sessionId}");
                 var sessionGrain = _client.GetGrain<ISessionGrain>(sessionId);
-                var result = await sessionGrain.ValidateSessionAsync();
+                var result = await sessionGrain.ValidateAndGetClaimsAsync();
 
                 if (result.IsSuccess)
                 {
-                    ClaimsIdentity claimsIdentity = new(IdentityConstants.AUTHENTICATION_TYPE);
+                    ClaimsIdentity claimsIdentity = new(OrleansIdentityConstants.AUTHENTICATION_TYPE);
 
                     foreach (var claim in result.Value)
                     {

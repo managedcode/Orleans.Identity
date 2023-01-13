@@ -1,9 +1,7 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Security.Claims;
-using System.Threading.Tasks;
+using ManagedCode.Orleans.Identity.Shared.Constants;
 using Orleans;
 using Orleans.Runtime;
 
@@ -48,7 +46,7 @@ public static class ClaimsPrincipalExtensions
         
     public static bool IsUnauthorizedClient(this ClaimsPrincipal user)
     {
-        return user.GetGrainId() == IdentityConstants.AUTH_TOKEN;
+        return user.GetGrainId() == OrleansIdentityConstants.AUTH_TOKEN;
     }
     
     

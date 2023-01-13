@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -18,20 +17,5 @@ public class OrleansContextMiddleware
     {
         context.User.SetOrleansContext();
         await _next(context);
-    }
-}
-
-public static class OrleansContextMiddlewareExtensions
-{
-    // public static IApplicationBuilder UseOrleansContextMiddleware(this IApplicationBuilder builder)
-    // {
-    //     return builder.UseMiddleware<OrleansContextMiddleware>();
-    // }
-    
-    public static IApplicationBuilder UseOrleansAuthorization(this IApplicationBuilder builder)
-    {
-        builder.UseAuthentication();
-        builder.UseAuthorization();
-        return builder.UseMiddleware<OrleansContextMiddleware>();
     }
 }

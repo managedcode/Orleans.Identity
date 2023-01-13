@@ -3,6 +3,7 @@ using System.Security.Claims;
 using FluentAssertions;
 using ManagedCode.Communication;
 using ManagedCode.Orleans.Identity;
+using ManagedCode.Orleans.Identity.Grains.Interfaces;
 using ManagedCode.Orleans.Identity.Tests.Cluster;
 using Microsoft.AspNetCore.SignalR.Client;
 using Xunit;
@@ -27,7 +28,7 @@ public class SomeTest
     public async Task OneRequest()
     {
         var gr = _testApp.Cluster.Client.GetGrain<ISessionGrain>("123");
-        await gr.AddClaim(new Claim("1", "2"));
+        //await gr.AddClaimAsync(new Claim("1", "2"));
         var xx = await gr.GetSessionAsync();
         
         var anonymous = await _testApp.CreateClient().GetAsync("/anonymous");

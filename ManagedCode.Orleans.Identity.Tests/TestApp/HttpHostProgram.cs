@@ -1,3 +1,4 @@
+using ManagedCode.Orleans.Identity.Extensions;
 using ManagedCode.Orleans.Identity.Middlewares;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,16 +13,15 @@ public class HttpHostProgram
         
         builder.Services.AddControllers();
         builder.Services.AddSignalR();
-        
-        builder.Services.AddAuthenticationHandler(); /////////
-        
+
+        // Add it for using Orleans Identity
+        builder.Services.AddOrleansIdentity(); 
+
         var app = builder.Build();
 
-        //Authentication should always be placed before Authorization.
-        app.UseAuthentication();
-        app.UseAuthorization();
-        
-        app.UseOrleansAuthorization();/////////
+        // Add it for using Orleans Identity
+        // Authentication and Authorization already use
+        app.UseAuthenticationAndOrleansIdentity(); 
 
         app.MapControllers();
         app.MapHub<TestAnonymousHub>(nameof(TestAnonymousHub));

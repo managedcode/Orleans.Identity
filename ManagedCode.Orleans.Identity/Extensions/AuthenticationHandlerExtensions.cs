@@ -1,3 +1,5 @@
+using ManagedCode.Orleans.Identity.Options;
+using ManagedCode.Orleans.Identity.Shared.Constants;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.DependencyInjection;
@@ -6,14 +8,16 @@ namespace ManagedCode.Orleans.Identity.Middlewares;
 
 public static class AuthenticationHandlerExtensions
 {
-    public static void AddAuthenticationHandler(this IServiceCollection services)
+    public static void AddOrleansIdentity(this IServiceCollection services, SessionOption sessionOption = null!)
     {
-        services.AddAuthentication(options => options.DefaultScheme = IdentityConstants.AUTHENTICATION_TYPE)
-            .AddScheme<AuthenticationSchemeOptions, OrleansIdentityAuthenticationHandler>(IdentityConstants.AUTHENTICATION_TYPE, op => { });
+        sessionOption ??= new();
+
+        services.AddAuthentication(options => options.DefaultScheme = OrleansIdentityConstants.AUTHENTICATION_TYPE)
+            .AddScheme<AuthenticationSchemeOptions, OrleansIdentityAuthenticationHandler>(OrleansIdentityConstants.AUTHENTICATION_TYPE, op => { });
        
         services.AddAuthorizationCore(options =>
         {
-            var defaultAuthorizationPolicyBuilder = new AuthorizationPolicyBuilder(IdentityConstants.AUTHENTICATION_TYPE);
+            var defaultAuthorizationPolicyBuilder = new AuthorizationPolicyBuilder(OrleansIdentityConstants.AUTHENTICATION_TYPE);
             defaultAuthorizationPolicyBuilder = defaultAuthorizationPolicyBuilder.RequireAuthenticatedUser();
             options.DefaultPolicy = defaultAuthorizationPolicyBuilder.Build();
         });
