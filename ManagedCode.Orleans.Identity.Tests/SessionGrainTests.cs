@@ -590,4 +590,34 @@ public class SessionGrainTests
     }
 
     #endregion
+
+    #region AddValueToProperty
+
+    [Fact]
+    public async Task AddValueToProperty_WhenPropertyExists_ReturnSuccess()
+    {
+        // Arrange
+        var sessionId = Guid.NewGuid().ToString();
+        var createSessionModel = SessionHelper.GetTestCreateSessionModel(sessionId);
+        string valueToAdd = "moderator";
+        var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
+        await sessionGrain.CreateAsync(createSessionModel);
+
+        // Act
+        var result = await sessionGrain.AddValueToProperty(ClaimTypes.Role, valueToAdd);
+
+        // Assert
+        var userData = await sessionGrain.ValidateAndGetClaimsAsync();
+        result.IsSuccess.Should().BeTrue();
+        userData.IsSuccess.Should().BeTrue();
+        userData.Value.Should().ContainKey(ClaimTypes.Role).WhoseValue.Should().Contain(valueToAdd);
+    }
+
+    [Fact]
+    public async Task AddValueToProperty_WhenPropertyNotExists_ReturnFail()
+    {
+
+    }
+
+    #endregion
 }
