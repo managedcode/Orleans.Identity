@@ -616,7 +616,87 @@ public class SessionGrainTests
     [Fact]
     public async Task AddValueToProperty_WhenPropertyNotExists_ReturnFail()
     {
+        // Arrange
+        var sessionId = Guid.NewGuid().ToString();
+        var createSessionModel = SessionHelper.GetTestCreateSessionModel(sessionId);
+        string valueToAdd = "moderator";
+        var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
+        await sessionGrain.CreateAsync(createSessionModel);
 
+        // Act
+        var result = await sessionGrain.AddValueToProperty(ClaimTypes.Country, valueToAdd);
+
+        // Assert
+        result.IsFailed.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task AddValueToProperty_WhenValueAlreadyExists_ReturnFail()
+    {
+        // Arrange
+        var sessionId = Guid.NewGuid().ToString();
+        var createSessionModel = SessionHelper.GetTestCreateSessionModel(sessionId);
+        string valueToAdd = "admin";
+        var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
+        await sessionGrain.CreateAsync(createSessionModel);
+
+        // Act
+        var result = await sessionGrain.AddValueToProperty(ClaimTypes.Role, valueToAdd);
+
+        // Assert
+        result.IsFailed.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task AddValueToProperty_WhenSessionIsNotExsist_ReturFail()
+    {
+        // Arrange
+        var sessionId = Guid.NewGuid().ToString();
+        string valueToAdd = "moderator";
+        var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
+
+        // Act
+        var result = await sessionGrain.AddValueToProperty(ClaimTypes.Role, valueToAdd);
+
+        // Assert
+        result.IsFailed.Should().BeTrue();
+    }
+
+    #endregion
+
+    #region ClearUserData
+
+    [Fact]
+    public async Task ClearUserData_WhenUserDataIsNotEmpty_ReturnSuccess()
+    {
+        // Arrange
+        var sessionId = Guid.NewGuid().ToString();
+        var createSessionModel = SessionHelper.GetTestCreateSessionModel(sessionId);
+        var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
+        await sessionGrain.CreateAsync(createSessionModel);
+
+        // Act
+        var result = await sessionGrain.ClearUserData();
+
+        // Assert
+        var userData = await sessionGrain.ValidateAndGetClaimsAsync();
+        result.IsSuccess.Should().BeTrue();
+        userData.IsSuccess.Should().BeTrue();
+        userData.Value.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task ClearUserData_WhenSesionIsNotExsist_ReturnFail()
+    {
+        // Arrange
+        var sessionId = Guid.NewGuid().ToString();
+        var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
+
+        // Act
+        var result = await sessionGrain.ClearUserData();
+
+        // Assert
+        result.IsFailed.Should().BeTrue();
     }
 
     #endregion
