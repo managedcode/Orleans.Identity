@@ -35,7 +35,7 @@ public class TestController : ControllerBase
         return "moderator";
     }
 
-    [Authorize(Roles = "admin, moderator")]
+    //[Authorize(Roles = "admin")]
     [HttpGet("common")]
     public ActionResult<string> Common()
     {

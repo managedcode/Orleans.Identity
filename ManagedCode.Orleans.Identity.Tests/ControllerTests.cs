@@ -2,10 +2,12 @@ using System.Net;
 using System.Security.Claims;
 using FluentAssertions;
 using ManagedCode.Orleans.Identity.Grains.Interfaces;
+using ManagedCode.Orleans.Identity.Models;
 using ManagedCode.Orleans.Identity.Shared.Constants;
 using ManagedCode.Orleans.Identity.Tests.Cluster;
 using ManagedCode.Orleans.Identity.Tests.Constants;
 using ManagedCode.Orleans.Identity.Tests.Helpers;
+using Orleans.Runtime;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -32,6 +34,12 @@ public class ControllerTests
     private async Task CreateSession(string sessionId, Dictionary<string, HashSet<string>> claims = null, bool replaceClaims = false)
     {
         var createSessionModel = SessionHelper.GetTestCreateSessionModel(sessionId, claims, replaceClaims);
+        var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
+        await sessionGrain.CreateAsync(createSessionModel);
+    }
+
+    private async Task CreateSession(string sessionId, CreateSessionModel createSessionModel)
+    {
         var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
         await sessionGrain.CreateAsync(createSessionModel);
     }
@@ -117,17 +125,15 @@ public class ControllerTests
     [Fact]
     public async Task SendRequestToAuthorizedRouteWitheRoles_WhenAuthorizedWithRoles_ReturnOk()
     {
-        // TODO: Add overload 
-        
+        // TODO: do smth with roles probably it is not stored in propriate way now it's "role1;role2"
         // Arrange
         var client = _testApp.CreateClient();
         var sessionId = Guid.NewGuid().ToString();
-        // var roles = new Dictionary<string, Hash>()
-        // {
-        //     { ClaimTypes.Role, "moderator" }
-        // };
-        // await CreateSession(sessionId, roles);
-        // client.DefaultRequestHeaders.Add(OrleansIdentityConstants.AUTH_TOKEN, sessionId);
+        CreateSessionModel createSessionModel = new CreateSessionModel();
+        createSessionModel.AddUserGrainId(SessionHelper.GetTestUserGrainId());
+        createSessionModel.AddProperty(ClaimTypes.Role, new List<string> { TestRoles.ADMIN, TestRoles.MODERATOR });
+        await CreateSession(sessionId, createSessionModel);
+        client.DefaultRequestHeaders.Add(OrleansIdentityConstants.AUTH_TOKEN, sessionId);
 
         // Act
         var response = await client.GetAsync(TestControllerRoutes.COMMON_ROUTE);

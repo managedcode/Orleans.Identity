@@ -41,4 +41,10 @@ public static class SessionHelper
 
         return createSessionModel;
     }
+
+    public static GrainId GetTestUserGrainId()
+    {
+        var userId = Guid.NewGuid().ToString();
+        return GrainId.Create("UserGrain", userId);
+    }
 }
