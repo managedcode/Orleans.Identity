@@ -554,5 +554,40 @@ public class SessionGrainTests
         result.IsFailed.Should().BeTrue();
     }
 
+    [Fact]
+    public async Task RemoveValueFromProperty_WhenSessionIsNotExists_ReturnFailture()
+    {
+        // Arrange
+        var sessionId = Guid.NewGuid().ToString();
+        var valueToRemove = "c#@gmail.com";
+        var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
+
+        // Act
+        var result = await sessionGrain.RemoveValueFromProperty(ClaimTypes.Role, valueToRemove);
+
+        // Assert
+        result.IsFailed.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task RemoveValueFromProperty_WhenValueNotExists_ReturnFail()
+    {
+        // Arrange
+        var sessionId = Guid.NewGuid().ToString();
+        var valueToRemove = "moderator";
+        var rolesClaims = new HashSet<string> { "admin" };
+        var sessionCreateModel =
+            SessionHelper.GetTestCreateSessionModel(sessionId, new Dictionary<string, HashSet<string>> { { ClaimTypes.Role, rolesClaims } }, true);
+        var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
+        await sessionGrain.CreateAsync(sessionCreateModel);
+
+        // Act
+        var result = await sessionGrain.RemoveValueFromProperty(ClaimTypes.Role, valueToRemove);
+
+        // Assert
+        var userData = await sessionGrain.ValidateAndGetClaimsAsync();
+        result.IsFailed.Should().BeTrue();
+    }
+
     #endregion
 }
