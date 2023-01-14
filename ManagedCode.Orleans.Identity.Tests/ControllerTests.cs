@@ -125,9 +125,6 @@ public class ControllerTests
     [Fact]
     public async Task SendRequestToAuthorizedRouteWitheRoles_WhenAuthorizedWithRoles_ReturnOk()
     {
-        // TODO: do smth with roles probably it is not stored in propriate way now it's "role1;role2"
-        // TODO: So roles are stored in separate claims like role1 is separated claim and role2 is another claim in collection,
-        //          try separate roles and add it to 2 claims in auth handler
         // Arrange
         var client = _testApp.CreateClient();
         var sessionId = Guid.NewGuid().ToString();
