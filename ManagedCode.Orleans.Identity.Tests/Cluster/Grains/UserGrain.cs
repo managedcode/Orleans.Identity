@@ -1,5 +1,5 @@
-using ManagedCode.Orleans.Identity.Server.Tests.Cluster.Grains.Interfaces;
-using ManagedCode.Orleans.Identity.Server.Tests.Constants;
+using ManagedCode.Orleans.Identity.Tests.Cluster.Grains.Interfaces;
+using ManagedCode.Orleans.Identity.Tests.Constants;
 using Microsoft.AspNetCore.Authorization;
 
 namespace ManagedCode.Orleans.Identity.Tests.Cluster.Grains;

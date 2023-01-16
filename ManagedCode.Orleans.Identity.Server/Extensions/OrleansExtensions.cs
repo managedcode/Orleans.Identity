@@ -1,10 +1,11 @@
 using System;
 using System.Security.Claims;
-using ManagedCode.Orleans.Identity.Server.Shared.Constants;
+using ManagedCode.Orleans.Identity.Constants;
+using ManagedCode.Orleans.Identity.Extensions;
 using Orleans;
 using Orleans.Runtime;
 
-namespace ManagedCode.Orleans.Identity.Server.Middlewares;
+namespace ManagedCode.Orleans.Identity.Server.Extensions;
 
 public static class OrleansExtensions
 {

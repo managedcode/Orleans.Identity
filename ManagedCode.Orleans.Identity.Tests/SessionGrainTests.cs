@@ -1,10 +1,10 @@
 ﻿using System.Security.Claims;
 using FluentAssertions;
-using ManagedCode.Orleans.Identity.Server.Grains.Interfaces;
-using ManagedCode.Orleans.Identity.Server.Models;
-using ManagedCode.Orleans.Identity.Server.Shared.Enums;
-using ManagedCode.Orleans.Identity.Server.Tests.Cluster;
-using ManagedCode.Orleans.Identity.Server.Tests.Helpers;
+using ManagedCode.Orleans.Identity.Enums;
+using ManagedCode.Orleans.Identity.Interfaces;
+using ManagedCode.Orleans.Identity.Models;
+using ManagedCode.Orleans.Identity.Tests.Cluster;
+using ManagedCode.Orleans.Identity.Tests.Helpers;
 using Orleans.Runtime;
 using Xunit;
 using Xunit.Abstractions;

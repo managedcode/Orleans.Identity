@@ -1,4 +1,4 @@
-﻿namespace ManagedCode.Orleans.Identity.Server.Options;
+﻿namespace ManagedCode.Orleans.Identity.Options;
 
 public class SessionOption
 {

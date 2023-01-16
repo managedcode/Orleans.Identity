@@ -1,12 +1,12 @@
 using System;
-using ManagedCode.Orleans.Identity.Server.Middlewares;
-using ManagedCode.Orleans.Identity.Server.Options;
-using ManagedCode.Orleans.Identity.Server.Shared.Constants;
+using ManagedCode.Orleans.Identity.Client.Middlewares;
+using ManagedCode.Orleans.Identity.Constants;
+using ManagedCode.Orleans.Identity.Options;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace ManagedCode.Orleans.Identity.Server.Extensions;
+namespace ManagedCode.Orleans.Identity.Client.Extensions;
 
 public static class AuthenticationHandlerExtensions
 {

@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Orleans;
 using Orleans.Runtime;
 
-namespace ManagedCode.Orleans.Identity.Server.Models;
+namespace ManagedCode.Orleans.Identity.Models;
 
 [GenerateSerializer]
 public class CreateSessionModel

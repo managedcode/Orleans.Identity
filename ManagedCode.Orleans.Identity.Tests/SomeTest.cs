@@ -1,7 +1,8 @@
 using System.Net;
 using FluentAssertions;
-using ManagedCode.Orleans.Identity.Server.Grains.Interfaces;
-using ManagedCode.Orleans.Identity.Server.Tests.Cluster;
+using ManagedCode.Orleans.Identity.Interfaces;
+using ManagedCode.Orleans.Identity.Tests.Cluster;
+using ManagedCode.Orleans.Identity.Tests.TestApp;
 using Microsoft.AspNetCore.SignalR.Client;
 using Xunit;
 using Xunit.Abstractions;

@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using Orleans;
 
-namespace ManagedCode.Orleans.Identity.Server.Serializations;
+namespace ManagedCode.Orleans.Identity.Serializations;
 
 [RegisterConverter]
 public sealed class ClaimSurrogateConverter : IConverter<Claim, ClaimSurrogate>

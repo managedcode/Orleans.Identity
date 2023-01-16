@@ -5,11 +5,11 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using ManagedCode.Communication;
-using ManagedCode.Orleans.Identity.Server.Grains.Interfaces;
-using ManagedCode.Orleans.Identity.Server.Models;
-using ManagedCode.Orleans.Identity.Server.Options;
-using ManagedCode.Orleans.Identity.Server.Shared.Constants;
-using ManagedCode.Orleans.Identity.Server.Shared.Enums;
+using ManagedCode.Orleans.Identity.Constants;
+using ManagedCode.Orleans.Identity.Enums;
+using ManagedCode.Orleans.Identity.Interfaces;
+using ManagedCode.Orleans.Identity.Models;
+using ManagedCode.Orleans.Identity.Options;
 using Orleans;
 using Orleans.Runtime;
 

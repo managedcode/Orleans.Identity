@@ -2,10 +2,10 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Threading.Tasks;
 using ManagedCode.Communication;
-using ManagedCode.Orleans.Identity.Server.Models;
+using ManagedCode.Orleans.Identity.Models;
 using Orleans;
 
-namespace ManagedCode.Orleans.Identity.Server.Grains.Interfaces;
+namespace ManagedCode.Orleans.Identity.Interfaces;
 
 public interface ISessionGrain : IGrainWithStringKey
 {

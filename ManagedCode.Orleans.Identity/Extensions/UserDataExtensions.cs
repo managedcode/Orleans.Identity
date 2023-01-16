@@ -1,8 +1,7 @@
 ﻿using System.Collections.Generic;
-using System.Data;
 using System.Security.Claims;
 
-namespace ManagedCode.Orleans.Identity.Server.Extensions;
+namespace ManagedCode.Orleans.Identity.Extensions;
 
 public static class UserDataExtensions
 {

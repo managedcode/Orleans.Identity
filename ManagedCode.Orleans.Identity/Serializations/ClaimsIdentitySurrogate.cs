@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Security.Claims;
 using Orleans;
 
-namespace ManagedCode.Orleans.Identity.Server.Serializations;
+namespace ManagedCode.Orleans.Identity.Serializations;
 
 // This is the surrogate which will act as a stand-in for the foreign type.
 // Surrogates should use plain fields instead of properties for better perfomance.

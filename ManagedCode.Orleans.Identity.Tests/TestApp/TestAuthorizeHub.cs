@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 
-namespace ManagedCode.Orleans.Identity.Tests.Cluster;
+namespace ManagedCode.Orleans.Identity.Tests.TestApp;
 
 [Authorize]
 public class TestAuthorizeHub : Hub

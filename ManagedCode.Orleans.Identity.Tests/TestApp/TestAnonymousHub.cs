@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.SignalR;
 
-namespace ManagedCode.Orleans.Identity.Tests.Cluster;
+namespace ManagedCode.Orleans.Identity.Tests.TestApp;
 
 public class TestAnonymousHub : Hub
 {

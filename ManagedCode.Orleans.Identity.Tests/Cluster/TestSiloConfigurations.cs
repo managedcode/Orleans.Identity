@@ -1,5 +1,5 @@
+using ManagedCode.Orleans.Identity.Constants;
 using ManagedCode.Orleans.Identity.Server.GrainCallFilter;
-using ManagedCode.Orleans.Identity.Server.Shared.Constants;
 using Microsoft.Extensions.DependencyInjection;
 using Orleans.Serialization;
 using Orleans.TestingHost;

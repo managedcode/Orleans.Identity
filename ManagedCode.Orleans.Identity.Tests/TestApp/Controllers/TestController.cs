@@ -1,8 +1,8 @@
-using ManagedCode.Orleans.Identity.Server.Middlewares;
+using ManagedCode.Orleans.Identity.Server.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace ManagedCode.Orleans.Identity.Tests.Cluster;
+namespace ManagedCode.Orleans.Identity.Tests.TestApp.Controllers;
 
 [Authorize]
 public class TestController : ControllerBase

@@ -1,8 +1,8 @@
-using ManagedCode.Orleans.Identity.Server.Middlewares;
-using ManagedCode.Orleans.Identity.Server.Tests.Cluster.Grains.Interfaces;
+using ManagedCode.Orleans.Identity.Extensions;
+using ManagedCode.Orleans.Identity.Tests.Cluster.Grains.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
-namespace ManagedCode.Orleans.Identity.Tests.Cluster;
+namespace ManagedCode.Orleans.Identity.Tests.TestApp.Controllers;
 
 [Route("publicController")]
 public class PublicController : ControllerBase

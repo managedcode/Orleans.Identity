@@ -1,8 +1,8 @@
-using ManagedCode.Orleans.Identity.Server.Extensions;
+using ManagedCode.Orleans.Identity.Client.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace ManagedCode.Orleans.Identity.Tests.Cluster;
+namespace ManagedCode.Orleans.Identity.Tests.TestApp;
 
 public class HttpHostProgram
 {

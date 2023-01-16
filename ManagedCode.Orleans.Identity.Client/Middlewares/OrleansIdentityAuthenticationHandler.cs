@@ -2,15 +2,14 @@ using System;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
-using ManagedCode.Orleans.Identity.Server.Extensions;
-using ManagedCode.Orleans.Identity.Server.Grains.Interfaces;
-using ManagedCode.Orleans.Identity.Server.Shared.Constants;
+using ManagedCode.Orleans.Identity.Constants;
+using ManagedCode.Orleans.Identity.Interfaces;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
 
-namespace ManagedCode.Orleans.Identity.Server.Middlewares;
+namespace ManagedCode.Orleans.Identity.Client.Middlewares;
 
 public class OrleansIdentityAuthenticationHandler : AuthenticationHandler<AuthenticationSchemeOptions>
 {

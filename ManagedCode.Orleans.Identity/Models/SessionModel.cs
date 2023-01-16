@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using ManagedCode.Orleans.Identity.Server.Shared.Enums;
+using ManagedCode.Orleans.Identity.Enums;
 using Orleans;
 using Orleans.Runtime;
 
-namespace ManagedCode.Orleans.Identity.Server.Models;
+namespace ManagedCode.Orleans.Identity.Models;
 
 [GenerateSerializer]
 public class SessionModel

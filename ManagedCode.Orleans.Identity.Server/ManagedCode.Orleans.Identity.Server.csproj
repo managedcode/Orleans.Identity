@@ -11,7 +11,7 @@
     <!--NuGet-->
     <PropertyGroup>
         <Title>ManagedCode.Orleans.Identity.Server</Title>
-        <PackageId>ManagedCode.Orleans.Identity.Server.Server</PackageId>
+        <PackageId>ManagedCode.Orleans.Identity.Server</PackageId>
         <Description>Identity base on Orleans</Description>
         <PackageTags>managedcode, orleans, identity, session</PackageTags>
     </PropertyGroup>
@@ -23,6 +23,10 @@
         
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0" />
         <PackageReference Include="Microsoft.Orleans.Server" Version="7.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\ManagedCode.Orleans.Identity\ManagedCode.Orleans.Identity.csproj" />
     </ItemGroup>
     
 </Project>

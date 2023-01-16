@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Orleans.Identit
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Orleans.Identity.Client", "ManagedCode.Orleans.Identity.Client\ManagedCode.Orleans.Identity.Client.csproj", "{C9756AF9-94EA-4267-BFA8-908565879B23}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Orleans.Identity", "ManagedCode.Orleans.Identity\ManagedCode.Orleans.Identity.csproj", "{78288A9B-7263-47B5-842C-0D1A8B65122F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{C9756AF9-94EA-4267-BFA8-908565879B23}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C9756AF9-94EA-4267-BFA8-908565879B23}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C9756AF9-94EA-4267-BFA8-908565879B23}.Release|Any CPU.Build.0 = Release|Any CPU
+		{78288A9B-7263-47B5-842C-0D1A8B65122F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{78288A9B-7263-47B5-842C-0D1A8B65122F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{78288A9B-7263-47B5-842C-0D1A8B65122F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{78288A9B-7263-47B5-842C-0D1A8B65122F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

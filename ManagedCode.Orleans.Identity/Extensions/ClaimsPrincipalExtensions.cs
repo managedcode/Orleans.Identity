@@ -1,8 +1,8 @@
 using System.Linq;
 using System.Security.Claims;
-using ManagedCode.Orleans.Identity.Server.Shared.Constants;
+using ManagedCode.Orleans.Identity.Constants;
 
-namespace ManagedCode.Orleans.Identity.Server.Middlewares;
+namespace ManagedCode.Orleans.Identity.Extensions;
 
 public static class ClaimsPrincipalExtensions
 {
