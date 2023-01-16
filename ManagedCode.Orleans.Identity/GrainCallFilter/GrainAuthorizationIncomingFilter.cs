@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using ManagedCode.Orleans.Identity.Grains.Interfaces;
 using ManagedCode.Orleans.Identity.Middlewares;
 using Microsoft.AspNetCore.Authorization;
 using Orleans;
@@ -12,28 +13,40 @@ namespace ManagedCode.Orleans.Identity.GrainCallFilter;
 public class GrainAuthorizationIncomingFilter : IIncomingGrainCallFilter
 {
     private readonly IClusterClient _client;
+    private readonly IGrainFactory _grainFactory;
 
-    public GrainAuthorizationIncomingFilter(IClusterClient client)
+    public GrainAuthorizationIncomingFilter(IClusterClient client, IGrainFactory grainFactory)
     {
         _client = client;
+        _grainFactory = grainFactory;
     }
 
     public async Task Invoke(IIncomingGrainCallContext context)
     {
-        if (IsAuthorize(context.ImplementationMethod, out var attributes))
+        if (IsGrainAuthorized(context.ImplementationMethod, out var attributes))
         {
-            var roles = this.GetOrleansContext().ToHashSet();
-            foreach (var attribute in attributes)
+            var isSessionExists = await IsAuthorized();
+            if (isSessionExists)
             {
-                var intersect = attribute.Roles?.Split(',') ?? Array.Empty<string>();
-                if (intersect.Any(role => roles.Contains(role)))
+                if (attributes.All(attributes => string.IsNullOrWhiteSpace(attributes.Roles)))
                 {
                     await context.Invoke();
                     return;
                 }
+                var roles = this.GetOrleansContext().ToHashSet();
+                foreach (var attribute in attributes)
+                {
+                    var intersect = attribute.Roles?.Split(',') ?? Array.Empty<string>();
+                    if (intersect.Any(role => roles.Contains(role)))
+                    {
+                        await context.Invoke();
+                        return;
+                    }
 
-                throw new UnauthorizedAccessException();
+                    throw new UnauthorizedAccessException();
+                }
             }
+            throw new UnauthorizedAccessException();
         }
         else
         {
@@ -41,7 +54,19 @@ public class GrainAuthorizationIncomingFilter : IIncomingGrainCallFilter
         }
     }
 
-    private static bool IsAuthorize(MemberInfo methodInfo, out List<AuthorizeAttribute> attributes)
+    private async Task<bool> IsAuthorized()
+    {
+        var sessionId = this.GetSessionId();
+        if (string.IsNullOrWhiteSpace(sessionId) is false)
+        {
+            var sessionGrain = _grainFactory.GetGrain<ISessionGrain>(sessionId);
+            var result = await sessionGrain.ValidateAndGetClaimsAsync();
+            return result.IsSuccess;
+        }
+        return false;
+    }
+
+    private static bool IsGrainAuthorized(MemberInfo methodInfo, out List<AuthorizeAttribute> attributes)
     {
         attributes = new List<AuthorizeAttribute>();
 

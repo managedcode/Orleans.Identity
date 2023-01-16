@@ -7,11 +7,12 @@ using System.Threading.Tasks;
 using ManagedCode.Orleans.Identity.Shared.Constants;
 using Microsoft.AspNetCore.Authorization;
 using Orleans.Runtime;
+using ManagedCode.Orleans.Identity.Grains.Interfaces;
+using ManagedCode.Orleans.Identity.Middlewares;
 
 namespace ManagedCode.Orleans.Identity.GrainCallFilter
 {
     // Test filter
-    // TODO: Get sessionID from request context and check if session valid
     public class GrainAuthorizationFilter : IIncomingGrainCallFilter
     {
         private readonly IGrainFactory _grainFactory;
@@ -21,19 +22,45 @@ namespace ManagedCode.Orleans.Identity.GrainCallFilter
             _grainFactory = grainFactory;
         }
 
-        public Task Invoke(IIncomingGrainCallContext context)
+        public async Task Invoke(IIncomingGrainCallContext context)
         {
-            IsAuthorized();
-            return Task.FromResult(0);
+            if(IsGrainAuthorized(context.ImplementationMethod, out var attributes))
+            {
+                var isSessionExists = await IsAuthorized();
+                if(isSessionExists)
+                {
+                    if (attributes.All(attributes => string.IsNullOrWhiteSpace(attributes.Roles)))
+                    {
+                        await context.Invoke();
+                        return;
+                    }
+                    var roles = this.GetOrleansContext().ToHashSet();
+                    foreach (var attribute in attributes)
+                    {
+                        var intersect = attribute.Roles?.Split(',') ?? Array.Empty<string>();
+                        if (intersect.Any(role => roles.Contains(role)))
+                        {
+                            await context.Invoke();
+                            return;
+                        }
+
+                        throw new UnauthorizedAccessException();
+                    }
+                }
+            }
+            await context.Invoke();
         }
 
-        private Task<bool> IsAuthorized()
+        private async Task<bool> IsAuthorized()
         {
-            var sessionId = RequestContext.Get(OrleansIdentityConstants.SESSION_ID_CLAIM_NAME);
-            string session;
-            if (sessionId != null) 
-                session = sessionId.ToString();
-            return Task.FromResult(true);
+            var sessionId = this.GetSessionId();
+            if (string.IsNullOrWhiteSpace(sessionId) is false)
+            {
+                var sessionGrain = _grainFactory.GetGrain<ISessionGrain>(sessionId);
+                var result = await sessionGrain.ValidateAndGetClaimsAsync();
+                return result.IsSuccess;
+            }
+            return false;
         }
 
         private static bool IsGrainAuthorized(MemberInfo methodInfo, out List<AuthorizeAttribute> attributes)

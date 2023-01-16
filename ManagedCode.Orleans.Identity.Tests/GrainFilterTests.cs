@@ -84,7 +84,6 @@ public class GrainFilterTests
     [Fact]
     public async Task SendRequestToUnauthorizedRoute_WhenGrainIsAuthorized_ReturnOk()
     {
-        // TODO: Probably filter for grains is not working, like if claims are empty it still valid also check setting up grain request context
         // Arrange
         var client = _testApp.CreateClient();
         
