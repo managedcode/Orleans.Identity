@@ -1,7 +1,7 @@
-﻿using ManagedCode.Orleans.Identity.Middlewares;
+﻿using ManagedCode.Orleans.Identity.Client.Middlewares;
 using Microsoft.AspNetCore.Builder;
 
-namespace ManagedCode.Orleans.Identity.Extensions;
+namespace ManagedCode.Orleans.Identity.Client.Extensions;
 
 public static class OrleansContextMiddlewareExtensions
 {

@@ -14,8 +14,8 @@
         <PackageReference Include="FluentAssertions" Version="6.8.0" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.4.1" />
         <PackageReference Include="Microsoft.Orleans.Analyzers" Version="7.0.0">
-          <PrivateAssets>all</PrivateAssets>
-          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="Microsoft.Orleans.Serialization" Version="7.0.0" />
         <PackageReference Include="Microsoft.Orleans.TestingHost" Version="7.0.0" />
@@ -50,9 +50,9 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\ManagedCode.Orleans.Identity\ManagedCode.Orleans.Identity.csproj" />
+        <ProjectReference Include="..\ManagedCode.Orleans.Identity.Client\ManagedCode.Orleans.Identity.Client.csproj" />
+        <ProjectReference Include="..\ManagedCode.Orleans.Identity.Server\ManagedCode.Orleans.Identity.Server.csproj" />
     </ItemGroup>
-
 
 
 </Project>

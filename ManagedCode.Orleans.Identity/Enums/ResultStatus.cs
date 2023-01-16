@@ -1,7 +1,7 @@
-﻿using Newtonsoft.Json.Converters;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
+using Newtonsoft.Json.Converters;
 
-namespace ManagedCode.Orleans.Identity.Shared.Enums;
+namespace ManagedCode.Orleans.Identity.Enums;
 
 [JsonConverter(typeof(StringEnumConverter))]
 public enum ResultStatus

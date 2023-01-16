@@ -1,27 +1,26 @@
-using ManagedCode.Orleans.Identity.Extensions;
-using ManagedCode.Orleans.Identity.Middlewares;
+using ManagedCode.Orleans.Identity.Client.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace ManagedCode.Orleans.Identity.Tests.Cluster;
+namespace ManagedCode.Orleans.Identity.Tests.TestApp;
 
 public class HttpHostProgram
 {
     public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
-        
+
         builder.Services.AddControllers();
         builder.Services.AddSignalR();
 
-        // Add it for using Orleans Identity
-        builder.Services.AddOrleansIdentity(); 
+        // AddProperty it for using Orleans Identity
+        builder.Services.AddOrleansIdentity();
 
         var app = builder.Build();
 
-        // Add it for using Orleans Identity
+        // AddProperty it for using Orleans Identity
         // Authentication and Authorization already use
-        app.UseAuthenticationAndOrleansIdentity(); 
+        app.UseAuthenticationAndOrleansIdentity();
 
         app.MapControllers();
         app.MapHub<TestAnonymousHub>(nameof(TestAnonymousHub));

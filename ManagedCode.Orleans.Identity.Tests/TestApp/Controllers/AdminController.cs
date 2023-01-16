@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace ManagedCode.Orleans.Identity.Tests.Cluster;
+namespace ManagedCode.Orleans.Identity.Tests.TestApp.Controllers;
 
 [Authorize(Roles = "admin")]
 [Route("adminController")]
@@ -22,13 +22,13 @@ public class AdminController : ControllerBase
 
     [HttpGet("getAdmin")]
     [Authorize]
-    public ActionResult<string> GetAdmin() 
+    public ActionResult<string> GetAdmin()
     {
         return "admin";
     }
 
     [HttpGet("editAdmin")]
-    [Authorize("moderator")]
+    [Authorize(Roles = "moderator")]
     public ActionResult<string> EditAdmins()
     {
         return "edits admins";

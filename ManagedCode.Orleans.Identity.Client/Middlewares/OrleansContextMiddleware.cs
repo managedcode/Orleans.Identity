@@ -1,8 +1,7 @@
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 
-namespace ManagedCode.Orleans.Identity.Middlewares;
+namespace ManagedCode.Orleans.Identity.Client.Middlewares;
 
 public class OrleansContextMiddleware
 {

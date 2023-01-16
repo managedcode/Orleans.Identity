@@ -1,8 +1,12 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Orleans.Identity", "ManagedCode.Orleans.Identity\ManagedCode.Orleans.Identity.csproj", "{B1F8DB62-B1FF-4BA0-A856-CBBBC23BF7F3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Orleans.Identity.Server", "ManagedCode.Orleans.Identity.Server\ManagedCode.Orleans.Identity.Server.csproj", "{B1F8DB62-B1FF-4BA0-A856-CBBBC23BF7F3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Orleans.Identity.Tests", "ManagedCode.Orleans.Identity.Tests\ManagedCode.Orleans.Identity.Tests.csproj", "{6FD1A8A0-E36B-467E-99C8-0E7220B8643B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Orleans.Identity.Client", "ManagedCode.Orleans.Identity.Client\ManagedCode.Orleans.Identity.Client.csproj", "{C9756AF9-94EA-4267-BFA8-908565879B23}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedCode.Orleans.Identity", "ManagedCode.Orleans.Identity\ManagedCode.Orleans.Identity.csproj", "{78288A9B-7263-47B5-842C-0D1A8B65122F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -18,5 +22,13 @@ Global
 		{6FD1A8A0-E36B-467E-99C8-0E7220B8643B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6FD1A8A0-E36B-467E-99C8-0E7220B8643B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6FD1A8A0-E36B-467E-99C8-0E7220B8643B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C9756AF9-94EA-4267-BFA8-908565879B23}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C9756AF9-94EA-4267-BFA8-908565879B23}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C9756AF9-94EA-4267-BFA8-908565879B23}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C9756AF9-94EA-4267-BFA8-908565879B23}.Release|Any CPU.Build.0 = Release|Any CPU
+		{78288A9B-7263-47B5-842C-0D1A8B65122F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{78288A9B-7263-47B5-842C-0D1A8B65122F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{78288A9B-7263-47B5-842C-0D1A8B65122F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{78288A9B-7263-47B5-842C-0D1A8B65122F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

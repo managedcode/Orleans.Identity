@@ -10,8 +10,8 @@
 
     <!--NuGet-->
     <PropertyGroup>
-        <Title>ManagedCode.Orleans.Identity</Title>
-        <PackageId>ManagedCode.Orleans.Identity</PackageId>
+        <Title>ManagedCode.Orleans.Identity.Client</Title>
+        <PackageId>ManagedCode.Orleans.Identity.Client</PackageId>
         <Description>Identity base on Orleans</Description>
         <PackageTags>managedcode, orleans, identity, session</PackageTags>
     </PropertyGroup>
@@ -20,9 +20,14 @@
 
         <PackageReference Include="ManagedCode.Communication" Version="2.0.13" />
         <PackageReference Include="ManagedCode.Communication.Orleans" Version="2.0.13" />
-
+        
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0" />
-        <PackageReference Include="Microsoft.Orleans.Sdk" Version="7.0.0" />
+        <PackageReference Include="Microsoft.Orleans.Client" Version="7.0.0" />
+
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\ManagedCode.Orleans.Identity\ManagedCode.Orleans.Identity.csproj" />
     </ItemGroup>
 
 </Project>

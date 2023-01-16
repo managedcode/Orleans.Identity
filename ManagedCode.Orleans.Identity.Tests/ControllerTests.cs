@@ -1,12 +1,13 @@
+using System.Net;
+using System.Security.Claims;
 using FluentAssertions;
-using ManagedCode.Orleans.Identity.Grains.Interfaces;
+using ManagedCode.Orleans.Identity.Constants;
+using ManagedCode.Orleans.Identity.Interfaces;
 using ManagedCode.Orleans.Identity.Models;
-using ManagedCode.Orleans.Identity.Shared.Constants;
 using ManagedCode.Orleans.Identity.Tests.Cluster;
 using ManagedCode.Orleans.Identity.Tests.Constants;
 using ManagedCode.Orleans.Identity.Tests.Helpers;
-using System.Net;
-using System.Security.Claims;
+using Orleans.Runtime;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -15,10 +16,10 @@ namespace ManagedCode.Orleans.Identity.Tests;
 [Collection(nameof(TestClusterApplication))]
 public class ControllerTests
 {
-    private readonly TestClusterApplication _testApp;
     private readonly ITestOutputHelper _outputHelper;
+    private readonly TestClusterApplication _testApp;
 
-    private Dictionary<string, string> claimsForAdminController = new Dictionary<string, string>()
+    private Dictionary<string, string> claimsForAdminController = new()
     {
         { ClaimTypes.Role, "Moderator" },
         { ClaimTypes.Email, "test2@gmail.com" }
@@ -30,14 +31,20 @@ public class ControllerTests
         _outputHelper = outputHelper;
     }
 
-    private async Task CreateSession(string sessionId, Dictionary<string, string> claims = null, bool replaceClaims = false)
+    private async Task CreateSession(string sessionId, Dictionary<string, HashSet<string>> claims = null, bool replaceClaims = false)
     {
         var createSessionModel = SessionHelper.GetTestCreateSessionModel(sessionId, claims, replaceClaims);
         var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
         await sessionGrain.CreateAsync(createSessionModel);
     }
 
-    #region Route tests
+    private async Task CreateSession(string sessionId, CreateSessionModel createSessionModel)
+    {
+        var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
+        await sessionGrain.CreateAsync(createSessionModel);
+    }
+
+    #region Authorized route tests
 
     [Fact]
     public async Task SendRequestToUnauthorizedRoute_ReturnOk()
@@ -121,22 +128,21 @@ public class ControllerTests
         // Arrange
         var client = _testApp.CreateClient();
         var sessionId = Guid.NewGuid().ToString();
-        var roles = new Dictionary<string, string>()
-        {
-            { ClaimTypes.Role, "moderator" }
-        };
-        await CreateSession(sessionId, roles);
+        CreateSessionModel createSessionModel = new CreateSessionModel();
+        createSessionModel.AddUserGrainId(SessionHelper.GetTestUserGrainId());
+        createSessionModel.AddProperty(ClaimTypes.Role, new List<string> { TestRoles.ADMIN, TestRoles.MODERATOR });
+        await CreateSession(sessionId, createSessionModel);
         client.DefaultRequestHeaders.Add(OrleansIdentityConstants.AUTH_TOKEN, sessionId);
 
         // Act
-        var response = await client.GetAsync(TestControllerRoutes.COMMON_ROUTE);
+        var response = await client.GetAsync(TestControllerRoutes.ADMIN_CONTROLLER_EDIT_ADMINS);
 
         // Assert
         response.IsSuccessStatusCode.Should().BeTrue();
     }
 
     [Fact]
-    public async Task SendRequestToAuthorizedRouteWitheRoles_WhenAuthorizedWithNotAllRoles_ReturnOk()
+    public async Task SendRequestToAuthorizedRouteWitheRoles_WhenAuthorizedWithNotAllRoles_ReturnForbidden()
     {
         // Arrange
         var client = _testApp.CreateClient();
@@ -145,15 +151,16 @@ public class ControllerTests
         client.DefaultRequestHeaders.Add(OrleansIdentityConstants.AUTH_TOKEN, sessionId);
 
         // Act
-        var response = await client.GetAsync(TestControllerRoutes.COMMON_ROUTE);
+        var response = await client.GetAsync(TestControllerRoutes.ADMIN_CONTROLLER_EDIT_ADMINS);
 
         // Assert
-        response.IsSuccessStatusCode.Should().BeTrue();
+        response.IsSuccessStatusCode.Should().BeFalse();
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
-    
+
     #endregion
 
-    #region Controller tests
+    #region Authorized controller tests
 
     [Fact]
     public async Task SendRequestToAuthorizedController_WhenHasRole_ReturnOk()
@@ -163,10 +170,10 @@ public class ControllerTests
         var sessionId = Guid.NewGuid().ToString();
         await CreateSession(sessionId);
         client.DefaultRequestHeaders.Add(OrleansIdentityConstants.AUTH_TOKEN, sessionId);
-        
+
         // Act
         var response = await client.GetAsync(TestControllerRoutes.ADMIN_CONTROLLER_DEFAULT_ROUTE);
-        
+
         // Assert
         response.IsSuccessStatusCode.Should().BeTrue();
     }
@@ -177,7 +184,10 @@ public class ControllerTests
         // Arrange
         var client = _testApp.CreateClient();
         var sessionId = Guid.NewGuid().ToString();
-        await CreateSession(sessionId, claimsForAdminController, true);
+        CreateSessionModel createSessionModel = new CreateSessionModel();
+        createSessionModel.AddUserGrainId(SessionHelper.GetTestUserGrainId());
+        createSessionModel.AddProperty(ClaimTypes.Role, new List<string> { TestRoles.USER });
+        await CreateSession(sessionId, createSessionModel);
         client.DefaultRequestHeaders.Add(OrleansIdentityConstants.AUTH_TOKEN, sessionId);
 
         // Act
@@ -206,7 +216,10 @@ public class ControllerTests
         // Arrange
         var client = _testApp.CreateClient();
         var sessionId = Guid.NewGuid().ToString();
-        await CreateSession(sessionId, claimsForAdminController, true);
+        CreateSessionModel createSessionModel = new CreateSessionModel();
+        createSessionModel.AddUserGrainId(SessionHelper.GetTestUserGrainId());
+        createSessionModel.AddProperty(ClaimTypes.Role, new List<string> { TestRoles.USER });
+        await CreateSession(sessionId, createSessionModel);
         client.DefaultRequestHeaders.Add(OrleansIdentityConstants.AUTH_TOKEN, sessionId);
 
         // Act
@@ -223,13 +236,12 @@ public class ControllerTests
         // Arrange
         var client = _testApp.CreateClient();
         var sessionId = Guid.NewGuid().ToString();
-        var userClaims = new Dictionary<string, string>
-        {
-            { ClaimTypes.Role, "admin" },
-            { ClaimTypes.Role, "moderator" }
-        };
+        CreateSessionModel createSessionModel = new CreateSessionModel();
+        createSessionModel.AddUserGrainId(SessionHelper.GetTestUserGrainId());
+        createSessionModel.AddProperty(ClaimTypes.Role, new List<string> { TestRoles.ADMIN, TestRoles.MODERATOR });
+        await CreateSession(sessionId, createSessionModel);
 
-        await CreateSession(sessionId, userClaims, true);
+        await CreateSession(sessionId, createSessionModel);
         client.DefaultRequestHeaders.Add(OrleansIdentityConstants.AUTH_TOKEN, sessionId);
 
         // Act
@@ -238,7 +250,6 @@ public class ControllerTests
         // Assert
         response.IsSuccessStatusCode.Should().BeTrue();
     }
-
 
     #endregion
 }

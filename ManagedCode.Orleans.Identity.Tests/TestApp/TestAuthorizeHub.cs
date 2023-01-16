@@ -1,15 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 
-namespace ManagedCode.Orleans.Identity.Tests.Cluster;
-
-public class TestAnonymousHub : Hub
-{
-    public Task<int> DoTest()
-    {
-        return Task.FromResult(new Random().Next());
-    }
-}
+namespace ManagedCode.Orleans.Identity.Tests.TestApp;
 
 [Authorize]
 public class TestAuthorizeHub : Hub

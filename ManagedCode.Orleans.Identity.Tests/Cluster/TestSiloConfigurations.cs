@@ -1,5 +1,5 @@
-using ManagedCode.Orleans.Identity.Options;
-using ManagedCode.Orleans.Identity.Shared.Constants;
+using ManagedCode.Orleans.Identity.Constants;
+using ManagedCode.Orleans.Identity.Server.GrainCallFilter;
 using Microsoft.Extensions.DependencyInjection;
 using Orleans.Serialization;
 using Orleans.TestingHost;
@@ -10,17 +10,18 @@ public class TestSiloConfigurations : ISiloConfigurator
 {
     public void Configure(ISiloBuilder siloBuilder)
     {
-        siloBuilder.Services.AddSerializer(serializerBuilder =>
-        {
-            serializerBuilder.AddJsonSerializer();
-        });
+        siloBuilder.Services.AddSerializer(serializerBuilder => { serializerBuilder.AddJsonSerializer(); });
+
+        // TODO: Move to the extension method 
+        siloBuilder.AddIncomingGrainCallFilter<GrainAuthorizationIncomingFilter>();
+        //siloBuilder.AddIncomingGrainCallFilter<GrainAuthorizationFilter>();
 
         // For test purpose
         siloBuilder.AddMemoryGrainStorage(OrleansIdentityConstants.SESSION_STORAGE_NAME);
 
         siloBuilder.ConfigureServices(services =>
         {
-            services.AddSingleton<SessionOption>(TestSiloOptions.SessionOption);
+            services.AddSingleton(TestSiloOptions.SessionOption);
             // services.AddGrpcOrleansScaling();
             //  services.AddApiOrleansScaling();
         });
