@@ -28,6 +28,13 @@ public class UserController : ControllerBase
     [AllowAnonymous]
     public async Task<ActionResult<string>> TryGetUser()
     {
-        return await GetUser();
+        var result = await GetUser();
+        return result;
+    }
+
+    [HttpGet("modify")]
+    public async Task<ActionResult<string>> ModifyUser()
+    {
+        return "";
     }
 }

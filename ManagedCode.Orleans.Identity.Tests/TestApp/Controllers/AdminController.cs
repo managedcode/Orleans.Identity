@@ -28,7 +28,7 @@ public class AdminController : ControllerBase
     }
 
     [HttpGet("editAdmin")]
-    [Authorize("moderator")]
+    [Authorize(Roles = "moderator")]
     public ActionResult<string> EditAdmins()
     {
         return "edits admins";

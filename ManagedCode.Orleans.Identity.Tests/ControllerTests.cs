@@ -135,14 +135,14 @@ public class ControllerTests
         client.DefaultRequestHeaders.Add(OrleansIdentityConstants.AUTH_TOKEN, sessionId);
 
         // Act
-        var response = await client.GetAsync(TestControllerRoutes.COMMON_ROUTE);
+        var response = await client.GetAsync(TestControllerRoutes.ADMIN_CONTROLLER_EDIT_ADMINS);
 
         // Assert
         response.IsSuccessStatusCode.Should().BeTrue();
     }
 
     [Fact]
-    public async Task SendRequestToAuthorizedRouteWitheRoles_WhenAuthorizedWithNotAllRoles_ReturnOk()
+    public async Task SendRequestToAuthorizedRouteWitheRoles_WhenAuthorizedWithNotAllRoles_ReturnForbidden()
     {
         // Arrange
         var client = _testApp.CreateClient();
@@ -151,10 +151,11 @@ public class ControllerTests
         client.DefaultRequestHeaders.Add(OrleansIdentityConstants.AUTH_TOKEN, sessionId);
 
         // Act
-        var response = await client.GetAsync(TestControllerRoutes.COMMON_ROUTE);
+        var response = await client.GetAsync(TestControllerRoutes.ADMIN_CONTROLLER_EDIT_ADMINS);
 
         // Assert
-        response.IsSuccessStatusCode.Should().BeTrue();
+        response.IsSuccessStatusCode.Should().BeFalse();
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
     #endregion
