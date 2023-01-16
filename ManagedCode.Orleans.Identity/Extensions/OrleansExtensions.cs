@@ -9,6 +9,7 @@ public static class OrleansExtensions
 {
     public static void SetOrleansContext(this ClaimsPrincipal user)
     {
+        // TODO: Check if user is autorized at all
         RequestContext.Set(ClaimTypes.Role, user.GetRoles());
     }
 
