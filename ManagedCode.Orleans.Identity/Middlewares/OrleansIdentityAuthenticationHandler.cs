@@ -64,12 +64,7 @@ public class OrleansIdentityAuthenticationHandler : AuthenticationHandler<Authen
                 ClaimsIdentity claimsIdentity = new(OrleansIdentityConstants.AUTHENTICATION_TYPE);
 
                 foreach (var claim in result.Value)
-                {
-                    if (claim.Key == ClaimTypes.Role)
-                        claimsIdentity.ParseRoles(claim.Value);
-                    else
-                        claimsIdentity.AddClaim(new Claim(claim.Key, claim.Value.AsString()));
-                }
+                    claimsIdentity.ParseClaims(claim.Key, claim.Value);
 
                 var ticket = new AuthenticationTicket(new ClaimsPrincipal(claimsIdentity), Scheme.Name);
                 return AuthenticateResult.Success(ticket);
