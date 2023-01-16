@@ -187,6 +187,7 @@ public class ControllerTests
         CreateSessionModel createSessionModel = new CreateSessionModel();
         createSessionModel.AddUserGrainId(SessionHelper.GetTestUserGrainId());
         createSessionModel.AddProperty(ClaimTypes.Role, new List<string> { TestRoles.USER });
+        await CreateSession(sessionId, createSessionModel);
         client.DefaultRequestHeaders.Add(OrleansIdentityConstants.AUTH_TOKEN, sessionId);
 
         // Act
@@ -196,57 +197,59 @@ public class ControllerTests
         response.IsSuccessStatusCode.Should().BeTrue();
     }
 
-    //[Fact]
-    //public async Task SendRequestToAuthorizedControllerToUnauthorizedRoute_NotAuthorized_ReturnOk()
-    //{
-    //    // Arrange
-    //    var client = _testApp.CreateClient();
+    [Fact]
+    public async Task SendRequestToAuthorizedControllerToUnauthorizedRoute_NotAuthorized_ReturnOk()
+    {
+        // Arrange
+        var client = _testApp.CreateClient();
 
-    //    // Act
-    //    var response = await client.GetAsync(TestControllerRoutes.ADMIN_CONTROLLER_ADMINS_LIST);
+        // Act
+        var response = await client.GetAsync(TestControllerRoutes.ADMIN_CONTROLLER_ADMINS_LIST);
 
-    //    // Assert
-    //    response.IsSuccessStatusCode.Should().BeTrue();
-    //}
+        // Assert
+        response.IsSuccessStatusCode.Should().BeTrue();
+    }
 
-    //[Fact]
-    //public async Task SendRequestToAuthorizedControllerToAuthorizedRoute_WhenAutorized_ReturnForbidden()
-    //{
-    //    // Arrange
-    //    var client = _testApp.CreateClient();
-    //    var sessionId = Guid.NewGuid().ToString();
-    //    await CreateSession(sessionId, claimsForAdminController, true);
-    //    client.DefaultRequestHeaders.AddProperty(OrleansIdentityConstants.AUTH_TOKEN, sessionId);
+    [Fact]
+    public async Task SendRequestToAuthorizedControllerToAuthorizedRoute_WhenAutorized_ReturnForbidden()
+    {
+        // Arrange
+        var client = _testApp.CreateClient();
+        var sessionId = Guid.NewGuid().ToString();
+        CreateSessionModel createSessionModel = new CreateSessionModel();
+        createSessionModel.AddUserGrainId(SessionHelper.GetTestUserGrainId());
+        createSessionModel.AddProperty(ClaimTypes.Role, new List<string> { TestRoles.USER });
+        await CreateSession(sessionId, createSessionModel);
+        client.DefaultRequestHeaders.Add(OrleansIdentityConstants.AUTH_TOKEN, sessionId);
 
-    //    // Act
-    //    var response = await client.GetAsync(TestControllerRoutes.ADMIN_CONTROLLER_ADMIN_GET_ADMIN);
+        // Act
+        var response = await client.GetAsync(TestControllerRoutes.ADMIN_CONTROLLER_ADMIN_GET_ADMIN);
 
-    //    // Assert
-    //    response.IsSuccessStatusCode.Should().BeFalse();
-    //    response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
-    //}
+        // Assert
+        response.IsSuccessStatusCode.Should().BeFalse();
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
 
-    //[Fact]
-    //public async Task SendRequestToToAuthorizedControllerToAuthorizedRouteWithRole_WhenAutorizedWithRole_ReturnOk()
-    //{
-    //    // Arrange
-    //    var client = _testApp.CreateClient();
-    //    var sessionId = Guid.NewGuid().ToString();
-    //    var userClaims = new Dictionary<string, string>
-    //    {
-    //        { ClaimTypes.Role, "admin" },
-    //        { ClaimTypes.Role, "moderator" }
-    //    };
+    [Fact]
+    public async Task SendRequestToToAuthorizedControllerToAuthorizedRouteWithRole_WhenAutorizedWithRole_ReturnOk()
+    {
+        // Arrange
+        var client = _testApp.CreateClient();
+        var sessionId = Guid.NewGuid().ToString();
+        CreateSessionModel createSessionModel = new CreateSessionModel();
+        createSessionModel.AddUserGrainId(SessionHelper.GetTestUserGrainId());
+        createSessionModel.AddProperty(ClaimTypes.Role, new List<string> { TestRoles.ADMIN, TestRoles.MODERATOR });
+        await CreateSession(sessionId, createSessionModel);
 
-    //    await CreateSession(sessionId, userClaims, true);
-    //    client.DefaultRequestHeaders.AddProperty(OrleansIdentityConstants.AUTH_TOKEN, sessionId);
+        await CreateSession(sessionId, createSessionModel);
+        client.DefaultRequestHeaders.Add(OrleansIdentityConstants.AUTH_TOKEN, sessionId);
 
-    //    // Act
-    //    var response = await client.GetAsync(TestControllerRoutes.ADMIN_CONTROLLER_ADMIN_GET_ADMIN);
+        // Act
+        var response = await client.GetAsync(TestControllerRoutes.ADMIN_CONTROLLER_ADMIN_GET_ADMIN);
 
-    //    // Assert
-    //    response.IsSuccessStatusCode.Should().BeTrue();
-    //}
+        // Assert
+        response.IsSuccessStatusCode.Should().BeTrue();
+    }
 
     #endregion
 }
