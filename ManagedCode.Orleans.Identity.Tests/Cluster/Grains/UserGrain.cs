@@ -30,4 +30,9 @@ public class UserGrain : Grain, IUserGrain
     {
         return Task.FromResult("user modified");
     }
+
+    public Task<string> AddToList()
+    {
+        return Task.FromResult("add to list");
+    }
 }
