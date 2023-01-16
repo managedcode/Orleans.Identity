@@ -17,7 +17,7 @@ public static class AuthenticationHandlerExtensions
         AddOrleansIdentity(services, option);
     }
 
-    public static void AddOrleansIdentity(this IServiceCollection services, SessionOption sessionOption = null!)
+    public static void AddOrleansIdentity(this IServiceCollection services, SessionOption sessionOption = null)
     {
         sessionOption ??= new SessionOption();
 
