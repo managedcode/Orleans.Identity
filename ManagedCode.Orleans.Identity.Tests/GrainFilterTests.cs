@@ -162,4 +162,84 @@ public class GrainFilterTests
     }
 
     #endregion
+
+    #region Grain without authorization
+
+    [Fact]
+    public async Task SendRequestToUnauthorizedGrain_WhenUserUnauthorized_ReturnOk()
+    {
+        // Arrange
+        var client = _testApp.CreateClient();
+
+        // Act
+        var response = await client.GetAsync(TestControllerRoutes.PUBLIC_CONTROLLER_DEFAULT_ROUTE);
+
+        // Assert
+        response.IsSuccessStatusCode.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task SendRequestToUnauthorizedGrain_WhenUserAndMethodAuthorized_ReturnOk()
+    {
+        // Arrange
+        var client = _testApp.CreateClient();
+        var sessionId = Guid.NewGuid().ToString();
+        await CreateSession(sessionId);
+        client.DefaultRequestHeaders.Add(OrleansIdentityConstants.AUTH_TOKEN, sessionId);
+        
+        // Act
+        var response = await client.GetAsync(TestControllerRoutes.PUBLIC_CONTROLLER_AUTH_METHOD_ROUTE);
+
+        // Assert
+        response.IsSuccessStatusCode.Should().BeTrue();
+    }
+    
+    [Fact]
+    public async Task SendRequestToUnauthorizedGrain_WhenUserUnauthorizedAndGrainMethodAuthorized_ReturnOk()
+    {
+        // Arrange
+        var client = _testApp.CreateClient();
+
+        // Act
+        var response = await client.GetAsync(TestControllerRoutes.PUBLIC_CONTROLLER_AUTH_METHOD_ROUTE);
+
+        // Assert
+        response.IsSuccessStatusCode.Should().BeFalse();
+        response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
+    }
+
+    [Fact]
+    public async Task SendRequestToUnauthorizedGrain_WhenMethodRequiresRoleAndUserHasRole_ReturnOk()
+    {
+        // Arrange
+        var client = _testApp.CreateClient();
+        var sessionId = Guid.NewGuid().ToString();
+        await CreateSession(sessionId);
+        client.DefaultRequestHeaders.Add(OrleansIdentityConstants.AUTH_TOKEN, sessionId);
+        
+        // Act
+        var response = await client.GetAsync(TestControllerRoutes.PUBLIC_CONTROLLER_ADMIN_METHOD_ROUTE);
+
+        // Assert
+        response.IsSuccessStatusCode.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task SendRequestToUnauthorizedGrain_WhenMethodRequiresRoleAndUserHasNoRole_ReturnFail()
+    {
+        // Arrange
+        var client = _testApp.CreateClient();
+        var sessionId = Guid.NewGuid().ToString();
+        await CreateSession(sessionId);
+        client.DefaultRequestHeaders.Add(OrleansIdentityConstants.AUTH_TOKEN, sessionId);
+        
+        // Act
+        var response = await client.GetAsync(TestControllerRoutes.PUBLIC_CONTROLLER_MODERATOR_METHOD_ROUTE);
+
+        // Assert
+        response.IsSuccessStatusCode.Should().BeFalse();   
+        response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
+    }
+
+    #endregion
 }

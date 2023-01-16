@@ -19,4 +19,9 @@ public static class TestControllerRoutes
     public const string USER_CONTROLLER_PUBLIC_INFO_ROUTE = "/userController/publicInfo";
     public const string USER_CONTROLLER_MODIFY = "/userController/modify";
     public const string USER_CONTROLLER_ADD_TO_LIST = "/userController/addToList";
+
+    public const string PUBLIC_CONTROLLER_DEFAULT_ROUTE = "/publicController";
+    public const string PUBLIC_CONTROLLER_AUTH_METHOD_ROUTE = "/publicController/authorizedMethod";
+    public const string PUBLIC_CONTROLLER_ADMIN_METHOD_ROUTE = "/publicController/adminMethod";
+    public const string PUBLIC_CONTROLLER_MODERATOR_METHOD_ROUTE = "/publicController/moderatorMethod";
 }
