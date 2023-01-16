@@ -1,12 +1,12 @@
 using System.Net;
 using System.Security.Claims;
 using FluentAssertions;
-using ManagedCode.Orleans.Identity.Grains.Interfaces;
-using ManagedCode.Orleans.Identity.Models;
-using ManagedCode.Orleans.Identity.Shared.Constants;
-using ManagedCode.Orleans.Identity.Tests.Cluster;
-using ManagedCode.Orleans.Identity.Tests.Constants;
-using ManagedCode.Orleans.Identity.Tests.Helpers;
+using ManagedCode.Orleans.Identity.Server.Grains.Interfaces;
+using ManagedCode.Orleans.Identity.Server.Models;
+using ManagedCode.Orleans.Identity.Server.Shared.Constants;
+using ManagedCode.Orleans.Identity.Server.Tests.Cluster;
+using ManagedCode.Orleans.Identity.Server.Tests.Constants;
+using ManagedCode.Orleans.Identity.Server.Tests.Helpers;
 using Xunit;
 using Xunit.Abstractions;
 

@@ -1,4 +1,4 @@
-using ManagedCode.Orleans.Identity.Middlewares;
+using ManagedCode.Orleans.Identity.Server.Middlewares;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

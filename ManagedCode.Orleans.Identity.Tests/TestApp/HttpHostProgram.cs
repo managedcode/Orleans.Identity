@@ -1,4 +1,4 @@
-using ManagedCode.Orleans.Identity.Extensions;
+using ManagedCode.Orleans.Identity.Server.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 

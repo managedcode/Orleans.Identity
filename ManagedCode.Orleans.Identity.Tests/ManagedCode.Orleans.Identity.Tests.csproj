@@ -50,7 +50,8 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\ManagedCode.Orleans.Identity\ManagedCode.Orleans.Identity.csproj" />
+        <ProjectReference Include="..\ManagedCode.Orleans.Identity.Client\ManagedCode.Orleans.Identity.Client.csproj" />
+        <ProjectReference Include="..\ManagedCode.Orleans.Identity.Server\ManagedCode.Orleans.Identity.Server.csproj" />
     </ItemGroup>
 
 

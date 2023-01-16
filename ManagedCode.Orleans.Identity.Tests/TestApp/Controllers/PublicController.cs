@@ -1,5 +1,5 @@
-using ManagedCode.Orleans.Identity.Middlewares;
-using ManagedCode.Orleans.Identity.Tests.Cluster.Grains.Interfaces;
+using ManagedCode.Orleans.Identity.Server.Middlewares;
+using ManagedCode.Orleans.Identity.Server.Tests.Cluster.Grains.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ManagedCode.Orleans.Identity.Tests.Cluster;
