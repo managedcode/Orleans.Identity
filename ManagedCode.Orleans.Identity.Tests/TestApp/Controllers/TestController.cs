@@ -1,7 +1,6 @@
 using ManagedCode.Orleans.Identity.Middlewares;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Orleans.Runtime;
 
 namespace ManagedCode.Orleans.Identity.Tests.Cluster;
 
@@ -14,12 +13,11 @@ public class TestController : ControllerBase
         User.SetOrleansContext();
         return "Authorize";
     }
-    
-    [AllowAnonymous]   
+
+    [AllowAnonymous]
     [HttpGet("anonymous")]
     public ActionResult<string> Anonymous()
     {
-
         return "Anonymous";
     }
 
@@ -37,7 +35,7 @@ public class TestController : ControllerBase
         return "moderator";
     }
 
-    [Authorize(Roles = "admin, moderator")]
+    //[Authorize(Roles = "admin, moderator")]
     [HttpGet("common")]
     public ActionResult<string> Common()
     {

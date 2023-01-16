@@ -12,7 +12,7 @@ public class TestClusterApplication : WebApplicationFactory<HttpHostProgram>, IC
 {
     public TestClusterApplication()
     {
-        TestClusterBuilder builder = new TestClusterBuilder();
+        var builder = new TestClusterBuilder();
         builder.AddSiloBuilderConfigurator<TestSiloConfigurations>();
         builder.AddClientBuilderConfigurator<TestClientConfigurations>();
         Cluster = builder.Build();
@@ -28,16 +28,13 @@ public class TestClusterApplication : WebApplicationFactory<HttpHostProgram>, IC
             Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Development");
         }
 
-        builder.ConfigureServices(s =>
-        {
-            s.AddSingleton(Cluster.Client);
-        });
+        builder.ConfigureServices(s => { s.AddSingleton(Cluster.Client); });
         return base.CreateHost(builder);
     }
 
     public HubConnection CreateSignalRClient(string hubUrl, Action<HubConnectionBuilder>? configure = null)
     {
-        HubConnectionBuilder builder = new HubConnectionBuilder();
+        var builder = new HubConnectionBuilder();
         configure?.Invoke(builder);
         return builder.WithUrl(new Uri(Server.BaseAddress, hubUrl), o => o.HttpMessageHandlerFactory = _ => Server.CreateHandler())
             .Build();

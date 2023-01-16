@@ -1,9 +1,5 @@
-using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Security.Claims;
-using ManagedCode.Communication;
 using Orleans;
 
 namespace ManagedCode.Orleans.Identity.Serializations;
@@ -20,30 +16,18 @@ public struct ClaimsIdentitySurrogate
         RoleType = roleType;
         NameType = nameType;
     }
-    
+
     [Id(0)]
     public string? AuthenticationType { get; set; }
+
     [Id(1)]
     public List<Claim>? Claims { get; set; }
+
     [Id(2)]
     public string? RoleType { get; set; }
+
     [Id(3)]
     public string? NameType { get; set; }
-    
 }
 
 // This is a converter which converts between the surrogate and the foreign type.
-[RegisterConverter]
-public sealed class ClaimsIdentitySurrogateConverter : IConverter<ClaimsIdentity, ClaimsIdentitySurrogate>
-{
-    public ClaimsIdentity ConvertFromSurrogate(in ClaimsIdentitySurrogate surrogate)
-    {
-        return new(surrogate.Claims, surrogate.AuthenticationType, surrogate.NameType, surrogate.RoleType);
-    }
-
-    public ClaimsIdentitySurrogate ConvertToSurrogate(in ClaimsIdentity value)
-    {
-        return new(value.Claims.ToList(), value.AuthenticationType, value.NameClaimType, value.RoleClaimType);
-    }
-}
-

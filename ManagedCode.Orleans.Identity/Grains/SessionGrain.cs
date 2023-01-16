@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using ManagedCode.Communication;
@@ -15,27 +17,16 @@ namespace ManagedCode.Orleans.Identity.Grains;
 
 public class SessionGrain : Grain, ISessionGrain
 {
+    private readonly SessionOption _sessionOption;
     private readonly IPersistentState<SessionModel> _sessionState;
-    private SessionOption _sessionOption;
-    
+
     public SessionGrain(
-        [PersistentState("sessions", OrleansIdentityConstants.SESSION_STORAGE_NAME)]IPersistentState<SessionModel> sessionState,
+        [PersistentState("sessions", OrleansIdentityConstants.SESSION_STORAGE_NAME)]
+        IPersistentState<SessionModel> sessionState,
         SessionOption sessionOption)
     {
         _sessionState = sessionState;
         _sessionOption = sessionOption;
-    }
-
-    public override async Task OnDeactivateAsync(DeactivationReason reason, CancellationToken cancellationToken)
-    {
-        if (_sessionState.RecordExists)
-        {
-            await _sessionState.WriteStateAsync();
-        }
-        else
-        {
-            await _sessionState.ClearStateAsync();
-        }
     }
 
     public ValueTask<Result<SessionModel>> GetSessionAsync()
@@ -49,20 +40,21 @@ public class SessionGrain : Grain, ISessionGrain
 
         return Result<SessionModel>.Succeed(result).AsValueTask();
     }
-    
+
     public async Task<Result<SessionModel>> CreateAsync(CreateSessionModel model)
     {
         var date = DateTime.UtcNow;
 
-        _sessionState.State = new SessionModel();
-
-        _sessionState.State.Id = this.GetPrimaryKeyString();
-        _sessionState.State.IsActive = true;
-        _sessionState.State.UserGrainId = model.UserGrainId;
-        _sessionState.State.UserData = model.UserData ?? new();
-        _sessionState.State.Status = SessionStatus.Active;
-        _sessionState.State.CreatedDate = date;
-        _sessionState.State.LastAccess = date;
+        _sessionState.State = new SessionModel
+        {
+            Id = this.GetPrimaryKeyString(),
+            IsActive = true,
+            UserGrainId = model.UserGrainId,
+            UserData = model.UserData ?? new Dictionary<string, HashSet<string>>(),
+            Status = SessionStatus.Active,
+            CreatedDate = date,
+            LastAccess = date
+        };
 
         await _sessionState.WriteStateAsync();
 
@@ -71,23 +63,23 @@ public class SessionGrain : Grain, ISessionGrain
         return Result<SessionModel>.Succeed(result);
     }
 
-    public ValueTask<Result<ImmutableDictionary<string, string>>> ValidateAndGetClaimsAsync()
+    public ValueTask<Result<ImmutableDictionary<string, HashSet<string>>>> ValidateAndGetClaimsAsync()
     {
         if (_sessionState.RecordExists is false)
         {
             DeactivateOnIdle();
-            return Result<ImmutableDictionary<string, string>>.Fail().AsValueTask();
+            return Result<ImmutableDictionary<string, HashSet<string>>>.Fail().AsValueTask();
         }
 
         if (_sessionState.State.IsActive is false)
         {
             DeactivateOnIdle();
-            return Result<ImmutableDictionary<string, string>>.Fail().AsValueTask();
+            return Result<ImmutableDictionary<string, HashSet<string>>>.Fail().AsValueTask();
         }
-            
+
         _sessionState.State.LastAccess = DateTime.UtcNow;
 
-        return Result<ImmutableDictionary<string, string>>.Succeed(_sessionState.State.UserData.ToImmutableDictionary()).AsValueTask();
+        return Result<ImmutableDictionary<string, HashSet<string>>>.Succeed(_sessionState.State.UserData.ToImmutableDictionary()).AsValueTask();
     }
 
     public async Task<Result> CloseAsync()
@@ -110,7 +102,6 @@ public class SessionGrain : Grain, ISessionGrain
         await _sessionState.WriteStateAsync();
 
         return Result.Succeed();
-
     }
 
     public ValueTask<Result> PauseSessionAsync()
@@ -141,7 +132,7 @@ public class SessionGrain : Grain, ISessionGrain
         return Result.Succeed().AsValueTask();
     }
 
-    public ValueTask<Result> AddOrUpdateProperty(string key, string value)
+    public ValueTask<Result> AddProperty(string key, string value)
     {
         if (_sessionState.RecordExists is false)
         {
@@ -149,9 +140,80 @@ public class SessionGrain : Grain, ISessionGrain
             return Result.Fail().AsValueTask();
         }
 
-        _sessionState.State.UserData[key] = value;
+        if (_sessionState.State.UserData.ContainsKey(key))
+        {
+            return Result.Fail().AsValueTask();
+        }
 
+        _sessionState.State.UserData[key] = new HashSet<string> { value };
         return Result.Succeed().AsValueTask();
+    }
+
+    public ValueTask<Result> AddProperty(string key, List<string> values)
+    {
+        if (_sessionState.RecordExists is false)
+        {
+            DeactivateOnIdle();
+            return Result.Fail().AsValueTask();
+        }
+
+        if (_sessionState.State.UserData.ContainsKey(key))
+        {
+            return Result.Fail().AsValueTask();
+        }
+
+        _sessionState.State.UserData[key] = values.ToHashSet();
+        return Result.Succeed().AsValueTask();
+    }
+
+    public ValueTask<Result> ReplaceProperty(string key, string value)
+    {
+        if (_sessionState.RecordExists is false)
+        {
+            DeactivateOnIdle();
+            return Result.Fail().AsValueTask();
+        }
+
+        if (_sessionState.State.UserData.ContainsKey(key) is false)
+        {
+            return Result.Fail().AsValueTask();
+        }
+
+        _sessionState.State.UserData[key] = new HashSet<string> { value };
+        return Result.Succeed().AsValueTask();
+    }
+
+    public ValueTask<Result> ReplaceProperty(string key, List<string> values)
+    {
+        if (_sessionState.RecordExists is false)
+        {
+            DeactivateOnIdle();
+            return Result.Fail().AsValueTask();
+        }
+
+        if (_sessionState.State.UserData.ContainsKey(key) is false)
+        {
+            return Result.Fail().AsValueTask();
+        }
+
+        _sessionState.State.UserData[key] = values.ToHashSet();
+        return Result.Succeed().AsValueTask();
+    }
+
+    public ValueTask<Result> AddValueToProperty(string key, string value)
+    {
+        if (_sessionState.RecordExists is false)
+        {
+            DeactivateOnIdle();
+            return Result.Fail().AsValueTask();
+        }
+
+        if (_sessionState.State.UserData.TryGetValue(key, out var hashset))
+        {
+            return hashset.Add(value) ? Result.Succeed().AsValueTask() : Result.Fail().AsValueTask();
+        }
+
+        return Result.Fail().AsValueTask();
     }
 
     public ValueTask<Result> RemoveProperty(string key)
@@ -167,9 +229,47 @@ public class SessionGrain : Grain, ISessionGrain
             _sessionState.State.UserData.Remove(key);
             return Result.Succeed().AsValueTask();
         }
+
+        return Result.Fail().AsValueTask();
+    }
+
+    public ValueTask<Result> RemoveValueFromProperty(string key, string value)
+    {
+        if (_sessionState.RecordExists is false)
+        {
+            DeactivateOnIdle();
+            return Result.Fail().AsValueTask();
+        }
+
+        if (_sessionState.State.UserData.TryGetValue(key, out var hashset))
+        {
+            return hashset.Remove(value) ? Result.Succeed().AsValueTask() : Result.Fail().AsValueTask();
+        }
+
+        return Result.Fail().AsValueTask();
+    }
+
+    public ValueTask<Result> ClearUserData()
+    {
+        if (_sessionState.RecordExists is false)
+        {
+            DeactivateOnIdle();
+            return Result.Fail().AsValueTask();
+        }
+
+        _sessionState.State.UserData.Clear();
+        return Result.Succeed().AsValueTask();
+    }
+
+    public override async Task OnDeactivateAsync(DeactivationReason reason, CancellationToken cancellationToken)
+    {
+        if (_sessionState.RecordExists)
+        {
+            await _sessionState.WriteStateAsync();
+        }
         else
         {
-            return Result.Fail().AsValueTask();
+            await _sessionState.ClearStateAsync();
         }
     }
 

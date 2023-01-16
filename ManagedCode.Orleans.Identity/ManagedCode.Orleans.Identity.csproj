@@ -13,7 +13,7 @@
         <Title>ManagedCode.Orleans.Identity</Title>
         <PackageId>ManagedCode.Orleans.Identity</PackageId>
         <Description>Identity base on Orleans</Description>
-        <PackageTags>managedcode, orleans, identity</PackageTags>
+        <PackageTags>managedcode, orleans, identity, session</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>
@@ -26,26 +26,6 @@
         <PackageReference Include="Microsoft.Orleans.Runtime" Version="7.0.0" />
         <PackageReference Include="Microsoft.Orleans.Sdk" Version="7.0.0" />
 
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Properties" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Compile Remove="old\**" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <EmbeddedResource Remove="old\**" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <None Remove="old\**" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Content Remove="old\**" />
     </ItemGroup>
     
 </Project>

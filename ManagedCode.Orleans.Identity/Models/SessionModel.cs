@@ -28,10 +28,8 @@ public class SessionModel
     public GrainId UserGrainId { get; set; }
 
     [Id(6)]
-    public Dictionary<string, string> UserData { get; set; } = new();
+    public Dictionary<string, HashSet<string>> UserData { get; set; } = new();
 
     [Id(7)]
     public bool IsActive { get; set; }
-
 }
-
