@@ -28,5 +28,9 @@
     <ItemGroup>
       <ProjectReference Include="..\ManagedCode.Orleans.Identity\ManagedCode.Orleans.Identity.csproj" />
     </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Extensions" />
+    </ItemGroup>
     
 </Project>

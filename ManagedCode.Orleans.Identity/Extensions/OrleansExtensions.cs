@@ -5,7 +5,7 @@ using ManagedCode.Orleans.Identity.Extensions;
 using Orleans;
 using Orleans.Runtime;
 
-namespace ManagedCode.Orleans.Identity.Server.Extensions;
+namespace ManagedCode.Orleans.Identity.Extensions;
 
 public static class OrleansExtensions
 {

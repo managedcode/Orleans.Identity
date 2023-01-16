@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using ManagedCode.Orleans.Identity.Extensions;
 using ManagedCode.Orleans.Identity.Interfaces;
-using ManagedCode.Orleans.Identity.Server.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Orleans;
 
