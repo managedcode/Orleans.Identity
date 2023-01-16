@@ -1,3 +1,4 @@
+using System.Net;
 using System.Security.Claims;
 using FluentAssertions;
 using ManagedCode.Orleans.Identity.Grains.Interfaces;
@@ -82,7 +83,7 @@ public class GrainFilterTests
     #region User unauthorized no roles required
 
     [Fact]
-    public async Task SendRequestToUnauthorizedRoute_WhenGrainIsAuthorized_ReturnOk()
+    public async Task SendRequestToUnauthorizedRoute_WhenGrainIsAuthorized_ReturnFail()
     {
         // Arrange
         var client = _testApp.CreateClient();
@@ -92,6 +93,40 @@ public class GrainFilterTests
 
         // Assert
         response.IsSuccessStatusCode.Should().BeFalse();
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task SendRequestToUnauthorizedRoute_WhenGrainsMethodIsNotAuthorized_ReturnOk()
+    {
+        // Arrange
+        var client = _testApp.CreateClient();
+
+        // Act
+        var response = await client.GetAsync(TestControllerRoutes.USER_CONTROLLER_ANONYMOUS_ROUTE);
+
+        // Assert
+        response.IsSuccessStatusCode.Should().BeFalse();
+    }
+
+    #endregion
+
+    #region User authorized and has roles and roles required
+
+    [Fact]
+    public async Task SendRequestToAutorizedGrain_WhenRoleIsRequiredAndUserAuthorized_ReturnOk()
+    {
+        // Arrange
+        var client = _testApp.CreateClient();
+        var sessionId = Guid.NewGuid().ToString();
+        await CreateSession(sessionId);
+        client.DefaultRequestHeaders.Add(OrleansIdentityConstants.AUTH_TOKEN, sessionId);
+
+        // Act
+        var response = await client.GetAsync(TestControllerRoutes.USER_CONTROLLER_PUBLIC_INFO_ROUTE);
+
+        // Assert
+        response.IsSuccessStatusCode.Should().BeTrue();
     }
 
     #endregion

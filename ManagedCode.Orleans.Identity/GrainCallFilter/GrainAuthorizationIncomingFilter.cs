@@ -42,8 +42,6 @@ public class GrainAuthorizationIncomingFilter : IIncomingGrainCallFilter
                         await context.Invoke();
                         return;
                     }
-
-                    throw new UnauthorizedAccessException();
                 }
             }
             throw new UnauthorizedAccessException();

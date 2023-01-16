@@ -32,9 +32,19 @@ public class UserController : ControllerBase
         return result;
     }
 
-    [HttpGet("modify")]
+    [HttpGet("ban")]
     public async Task<ActionResult<string>> ModifyUser()
     {
-        return "";
+        var userId = User.GetGrainId();
+        var userGrain = _clusterClient.GetGrain<IUserGrain>(userId);
+        return await userGrain.BanUser();
+    }
+
+    [HttpGet("publicInfo")]
+    public async Task<ActionResult<string>> GetPublicInfo()
+    {
+        var userId = User.GetGrainId();
+        var userGrain = _clusterClient.GetGrain<IUserGrain>(userId);
+        return await userGrain.GetPublicInfo();
     }
 }
