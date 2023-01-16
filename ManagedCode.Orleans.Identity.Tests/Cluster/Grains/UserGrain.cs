@@ -24,4 +24,10 @@ public class UserGrain : Grain, IUserGrain
     {
         return Task.FromResult("public info");
     }
+
+    [Authorize(Roles = TestRoles.MODERATOR)]
+    public Task<string> ModifyUser()
+    {
+        return Task.FromResult("user modified");
+    }
 }

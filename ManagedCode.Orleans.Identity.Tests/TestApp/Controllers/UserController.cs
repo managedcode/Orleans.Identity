@@ -33,7 +33,7 @@ public class UserController : ControllerBase
     }
 
     [HttpGet("ban")]
-    public async Task<ActionResult<string>> ModifyUser()
+    public async Task<ActionResult<string>> BanUser()
     {
         var userId = User.GetGrainId();
         var userGrain = _clusterClient.GetGrain<IUserGrain>(userId);
@@ -41,10 +41,21 @@ public class UserController : ControllerBase
     }
 
     [HttpGet("publicInfo")]
+    [AllowAnonymous]
     public async Task<ActionResult<string>> GetPublicInfo()
     {
         var userId = User.GetGrainId();
         var userGrain = _clusterClient.GetGrain<IUserGrain>(userId);
-        return await userGrain.GetPublicInfo();
+        var result = await userGrain.GetPublicInfo();
+        return result;
+    }
+
+    [HttpGet("modify")]
+    public async Task<ActionResult<string>> ModifyUser()
+    {
+        var userId = User.GetGrainId();
+        var userGrain = _clusterClient.GetGrain<IUserGrain>(userId);
+        var result = await userGrain.ModifyUser();
+        return result;
     }
 }

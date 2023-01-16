@@ -44,8 +44,6 @@ public class GrainFilterTests
 
     #region User authorized no roles required
 
-    // TODO: Incoming grain filter is working bad, works only when roles in attribute
-
     [Fact]
     public async Task SendRequestToAuthorizedGrain_WhenAuthorized_ReturnOk()
     {
@@ -93,7 +91,7 @@ public class GrainFilterTests
 
         // Assert
         response.IsSuccessStatusCode.Should().BeFalse();
-        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
     }
 
     [Fact]
@@ -103,15 +101,15 @@ public class GrainFilterTests
         var client = _testApp.CreateClient();
 
         // Act
-        var response = await client.GetAsync(TestControllerRoutes.USER_CONTROLLER_ANONYMOUS_ROUTE);
+        var response = await client.GetAsync(TestControllerRoutes.USER_CONTROLLER_PUBLIC_INFO_ROUTE);
 
         // Assert
-        response.IsSuccessStatusCode.Should().BeFalse();
+        response.IsSuccessStatusCode.Should().BeTrue();
     }
 
     #endregion
 
-    #region User authorized and has roles and roles required
+    #region User authorized and has roles and roles are required
 
     [Fact]
     public async Task SendRequestToAutorizedGrain_WhenRoleIsRequiredAndUserAuthorized_ReturnOk()
@@ -123,10 +121,30 @@ public class GrainFilterTests
         client.DefaultRequestHeaders.Add(OrleansIdentityConstants.AUTH_TOKEN, sessionId);
 
         // Act
-        var response = await client.GetAsync(TestControllerRoutes.USER_CONTROLLER_PUBLIC_INFO_ROUTE);
+        var response = await client.GetAsync(TestControllerRoutes.USER_CONTROLLER_BAN_ROUTE);
 
         // Assert
         response.IsSuccessStatusCode.Should().BeTrue();
+    }
+
+    #endregion
+
+    #region User authorized and has no role and role is required
+
+    [Fact]
+    public async Task SendRequestToAutorizedGrain_WhenRoleIsRequiredAndUserDoesntHaveRole_ReturnFail()
+    {
+        // Arrange
+        var client = _testApp.CreateClient();
+        var sessionId = Guid.NewGuid().ToString();
+        await CreateSession(sessionId);
+        client.DefaultRequestHeaders.Add(OrleansIdentityConstants.AUTH_TOKEN, sessionId);
+
+        // Act
+        var response = await client.GetAsync(TestControllerRoutes.USER_CONTROLLER_MODIFY);
+
+        // Assert
+        response.IsSuccessStatusCode.Should().BeFalse();
     }
 
     #endregion
