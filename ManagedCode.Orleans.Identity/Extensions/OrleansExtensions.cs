@@ -11,7 +11,7 @@ public static class OrleansExtensions
     public static void SetOrleansContext(this ClaimsPrincipal user)
     {
         // TODO: Check if user is autorized at all
-        RequestContext.Set(OrleansIdentityConstants.SESSION_ID_CLAIM_NAME, user.GetRoles());
+        RequestContext.Set(OrleansIdentityConstants.SESSION_ID_CLAIM_NAME, user.GetSessionId());
         RequestContext.Set(ClaimTypes.Role, user.GetRoles());
     }
 

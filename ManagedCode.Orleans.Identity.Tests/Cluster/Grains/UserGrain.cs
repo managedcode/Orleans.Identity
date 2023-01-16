@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace ManagedCode.Orleans.Identity.Tests.Cluster.Grains;
 
+[Authorize]
 public class UserGrain : Grain, IUserGrain
 {
 

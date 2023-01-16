@@ -13,8 +13,8 @@ public class TestSiloConfigurations : ISiloConfigurator
         siloBuilder.Services.AddSerializer(serializerBuilder => { serializerBuilder.AddJsonSerializer(); });
 
         // TODO: Move to the extension method 
-        siloBuilder.AddIncomingGrainCallFilter<GrainAuthorizationIncomingFilter>();
-        //siloBuilder.AddIncomingGrainCallFilter<GrainAuthorizationFilter>();
+        //siloBuilder.AddIncomingGrainCallFilter<GrainAuthorizationIncomingFilter>();
+        siloBuilder.AddIncomingGrainCallFilter<GrainAuthorizationFilter>();
 
         // For test purpose
         siloBuilder.AddMemoryGrainStorage(OrleansIdentityConstants.SESSION_STORAGE_NAME);
