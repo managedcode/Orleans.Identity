@@ -160,7 +160,7 @@ public class ControllerTests
 
     #endregion
 
-    //#region Authorized controller tests
+    #region Authorized controller tests
 
     [Fact]
     public async Task SendRequestToAuthorizedController_WhenHasRole_ReturnOk()
@@ -178,21 +178,23 @@ public class ControllerTests
         response.IsSuccessStatusCode.Should().BeTrue();
     }
 
-    //[Fact]
-    //public async Task SendRequestToAuthorizedControllerToUnauthorizedRoute_WithoutRole_ReturnOk()
-    //{
-    //    // Arrange
-    //    var client = _testApp.CreateClient();
-    //    var sessionId = Guid.NewGuid().ToString();
-    //    await CreateSession(sessionId, claimsForAdminController, true);
-    //    client.DefaultRequestHeaders.Add(OrleansIdentityConstants.AUTH_TOKEN, sessionId);
+    [Fact]
+    public async Task SendRequestToAuthorizedControllerToUnauthorizedRoute_WithoutRole_ReturnOk()
+    {
+        // Arrange
+        var client = _testApp.CreateClient();
+        var sessionId = Guid.NewGuid().ToString();
+        CreateSessionModel createSessionModel = new CreateSessionModel();
+        createSessionModel.AddUserGrainId(SessionHelper.GetTestUserGrainId());
+        createSessionModel.AddProperty(ClaimTypes.Role, new List<string> { TestRoles.USER });
+        client.DefaultRequestHeaders.Add(OrleansIdentityConstants.AUTH_TOKEN, sessionId);
 
-    //    // Act
-    //    var response = await client.GetAsync(TestControllerRoutes.ADMIN_CONTROLLER_ADMINS_LIST);
+        // Act
+        var response = await client.GetAsync(TestControllerRoutes.ADMIN_CONTROLLER_ADMINS_LIST);
 
-    //    // Assert
-    //    response.IsSuccessStatusCode.Should().BeTrue();
-    //}
+        // Assert
+        response.IsSuccessStatusCode.Should().BeTrue();
+    }
 
     //[Fact]
     //public async Task SendRequestToAuthorizedControllerToUnauthorizedRoute_NotAuthorized_ReturnOk()
@@ -246,5 +248,5 @@ public class ControllerTests
     //    response.IsSuccessStatusCode.Should().BeTrue();
     //}
 
-    //#endregion
+    #endregion
 }
