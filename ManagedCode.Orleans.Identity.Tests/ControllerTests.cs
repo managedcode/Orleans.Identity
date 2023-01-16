@@ -44,7 +44,7 @@ public class ControllerTests
         await sessionGrain.CreateAsync(createSessionModel);
     }
 
-    #region Route tests
+    #region Authorized route tests
 
     [Fact]
     public async Task SendRequestToUnauthorizedRoute_ReturnOk()
@@ -159,23 +159,23 @@ public class ControllerTests
 
     #endregion
 
-    //#region Controller tests
+    //#region Authorized controller tests
 
-    //[Fact]
-    //public async Task SendRequestToAuthorizedController_WhenHasRole_ReturnOk()
-    //{
-    //    // Arrange
-    //    var client = _testApp.CreateClient();
-    //    var sessionId = Guid.NewGuid().ToString();
-    //    await CreateSession(sessionId);
-    //    client.DefaultRequestHeaders.AddProperty(OrleansIdentityConstants.AUTH_TOKEN, sessionId);
+    [Fact]
+    public async Task SendRequestToAuthorizedController_WhenHasRole_ReturnOk()
+    {
+        // Arrange
+        var client = _testApp.CreateClient();
+        var sessionId = Guid.NewGuid().ToString();
+        await CreateSession(sessionId);
+        client.DefaultRequestHeaders.Add(OrleansIdentityConstants.AUTH_TOKEN, sessionId);
 
-    //    // Act
-    //    var response = await client.GetAsync(TestControllerRoutes.ADMIN_CONTROLLER_DEFAULT_ROUTE);
+        // Act
+        var response = await client.GetAsync(TestControllerRoutes.ADMIN_CONTROLLER_DEFAULT_ROUTE);
 
-    //    // Assert
-    //    response.IsSuccessStatusCode.Should().BeTrue();
-    //}
+        // Assert
+        response.IsSuccessStatusCode.Should().BeTrue();
+    }
 
     //[Fact]
     //public async Task SendRequestToAuthorizedControllerToUnauthorizedRoute_WithoutRole_ReturnOk()
@@ -184,7 +184,7 @@ public class ControllerTests
     //    var client = _testApp.CreateClient();
     //    var sessionId = Guid.NewGuid().ToString();
     //    await CreateSession(sessionId, claimsForAdminController, true);
-    //    client.DefaultRequestHeaders.AddProperty(OrleansIdentityConstants.AUTH_TOKEN, sessionId);
+    //    client.DefaultRequestHeaders.Add(OrleansIdentityConstants.AUTH_TOKEN, sessionId);
 
     //    // Act
     //    var response = await client.GetAsync(TestControllerRoutes.ADMIN_CONTROLLER_ADMINS_LIST);
