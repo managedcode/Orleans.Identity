@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Data;
 using System.Security.Claims;
 
 namespace ManagedCode.Orleans.Identity.Extensions;
@@ -14,5 +15,11 @@ public static class UserDataExtensions
     {
         foreach (var role in roles)
             claimsIdentity.AddClaim(new Claim(ClaimTypes.Role, role));
+    }
+
+    public static void ParseClaims(this ClaimsIdentity claimsIdentity, string key, HashSet<string> claims)
+    {
+        foreach (var claim in claims)
+            claimsIdentity.AddClaim(new Claim(key, claim));
     }
 }
