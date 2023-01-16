@@ -76,6 +76,22 @@ public class GrainFilterTests
         response.IsSuccessStatusCode.Should().BeTrue();
     }
 
+    [Fact]
+    public async Task SendRequestToAuthorizedGrain_WhenMethodWitoutAttributeAndUserIsAuthorized_ReturnOk()
+    {
+        // Arrange
+        var client = _testApp.CreateClient();
+        var sessionId = Guid.NewGuid().ToString();
+        await CreateSession(sessionId);
+        client.DefaultRequestHeaders.Add(OrleansIdentityConstants.AUTH_TOKEN, sessionId);
+
+        // Act
+        var response = await client.GetAsync(TestControllerRoutes.USER_CONTROLLER_ADD_TO_LIST);
+
+        // Assert
+        response.IsSuccessStatusCode.Should().BeTrue();
+    }
+
     #endregion
 
     #region User unauthorized no roles required
