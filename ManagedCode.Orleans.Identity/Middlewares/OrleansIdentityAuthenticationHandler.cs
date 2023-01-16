@@ -66,6 +66,8 @@ public class OrleansIdentityAuthenticationHandler : AuthenticationHandler<Authen
                 foreach (var claim in result.Value)
                     claimsIdentity.ParseClaims(claim.Key, claim.Value);
 
+                claimsIdentity.AddClaim(new Claim(OrleansIdentityConstants.SESSION_ID_CLAIM_NAME, sessionId));
+
                 var ticket = new AuthenticationTicket(new ClaimsPrincipal(claimsIdentity), Scheme.Name);
                 return AuthenticateResult.Success(ticket);
             }

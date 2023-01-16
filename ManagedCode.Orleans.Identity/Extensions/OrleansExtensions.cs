@@ -1,5 +1,6 @@
 using System;
 using System.Security.Claims;
+using ManagedCode.Orleans.Identity.Shared.Constants;
 using Orleans;
 using Orleans.Runtime;
 
@@ -10,6 +11,7 @@ public static class OrleansExtensions
     public static void SetOrleansContext(this ClaimsPrincipal user)
     {
         // TODO: Check if user is autorized at all
+        RequestContext.Set(OrleansIdentityConstants.SESSION_ID_CLAIM_NAME, user.GetRoles());
         RequestContext.Set(ClaimTypes.Role, user.GetRoles());
     }
 

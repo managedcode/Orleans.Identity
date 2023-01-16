@@ -43,7 +43,7 @@ public class GrainFilterTests
 
     #region User authorized no roles required
 
-    // TODO: Incoming grain filter is working bad, might be working if roles are setted
+    // TODO: Incoming grain filter is working bad, works only when roles in attribute
 
     [Fact]
     public async Task SendRequestToAuthorizedGrain_WhenAuthorized_ReturnOk()

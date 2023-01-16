@@ -29,6 +29,7 @@ public class GrainAuthorizationIncomingFilter : IIncomingGrainCallFilter
                 if (intersect.Any(role => roles.Contains(role)))
                 {
                     await context.Invoke();
+                    return;
                 }
 
                 throw new UnauthorizedAccessException();

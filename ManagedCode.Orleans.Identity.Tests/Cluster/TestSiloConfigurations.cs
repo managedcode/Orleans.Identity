@@ -14,6 +14,7 @@ public class TestSiloConfigurations : ISiloConfigurator
 
         // TODO: Move to the extension method 
         siloBuilder.AddIncomingGrainCallFilter<GrainAuthorizationIncomingFilter>();
+        //siloBuilder.AddIncomingGrainCallFilter<GrainAuthorizationFilter>();
 
         // For test purpose
         siloBuilder.AddMemoryGrainStorage(OrleansIdentityConstants.SESSION_STORAGE_NAME);

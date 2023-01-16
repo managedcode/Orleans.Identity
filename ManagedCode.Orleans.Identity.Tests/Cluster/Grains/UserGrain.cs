@@ -6,6 +6,7 @@ namespace ManagedCode.Orleans.Identity.Tests.Cluster.Grains;
 public class UserGrain : Grain, IUserGrain
 {
 
+    //[Authorize(Roles = "admin")]
     [Authorize]
     public Task<string> GetUser()
     {
