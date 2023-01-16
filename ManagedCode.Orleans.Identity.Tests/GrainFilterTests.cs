@@ -107,6 +107,20 @@ public class GrainFilterTests
         response.IsSuccessStatusCode.Should().BeTrue();
     }
 
+    [Fact]
+    public async Task SendRequestToUnauthorizedRoute_WhenGrainMethodWithoutAttribute_ReturnFail()
+    {
+        // Arrange
+        var client = _testApp.CreateClient();
+
+        // Act
+        var response = await client.GetAsync(TestControllerRoutes.USER_CONTROLLER_ADD_TO_LIST);
+
+        // Assert
+        response.IsSuccessStatusCode.Should().BeFalse();
+        response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
+    }
+
     #endregion
 
     #region User authorized and has roles and roles are required

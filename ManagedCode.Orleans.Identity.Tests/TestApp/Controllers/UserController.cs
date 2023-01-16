@@ -58,4 +58,13 @@ public class UserController : ControllerBase
         var result = await userGrain.ModifyUser();
         return result;
     }
+
+    [HttpGet("addToList")]
+    [AllowAnonymous]
+    public async Task<ActionResult<string>> AddToList()
+    {
+        var userId = User.GetGrainId();
+        var userGrain = _clusterClient.GetGrain<IUserGrain>(userId);
+        return await userGrain.AddToList();
+    }
 }

@@ -18,4 +18,5 @@ public static class TestControllerRoutes
     public const string USER_CONTROLLER_BAN_ROUTE = "/userController/ban";
     public const string USER_CONTROLLER_PUBLIC_INFO_ROUTE = "/userController/publicInfo";
     public const string USER_CONTROLLER_MODIFY = "/userController/modify";
+    public const string USER_CONTROLLER_ADD_TO_LIST = "/userController/addToList";
 }
