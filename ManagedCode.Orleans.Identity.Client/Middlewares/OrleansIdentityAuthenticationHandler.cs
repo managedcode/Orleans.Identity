@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 using ManagedCode.Orleans.Identity.Constants;
+using ManagedCode.Orleans.Identity.Extensions;
 using ManagedCode.Orleans.Identity.Interfaces;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;

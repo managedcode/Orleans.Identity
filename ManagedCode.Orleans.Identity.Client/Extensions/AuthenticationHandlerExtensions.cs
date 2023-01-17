@@ -10,6 +10,11 @@ namespace ManagedCode.Orleans.Identity.Client.Extensions;
 
 public static class AuthenticationHandlerExtensions
 {
+    /// <summary>
+    /// Use Orleans.Identity authentication as default authentication scheme
+    /// </summary>
+    /// <param name="services"></param>
+    /// <param name="sessionOption">Options for working with session</param>
     public static void AddOrleansIdentity(this IServiceCollection services, Action<SessionOption> sessionOption)
     {
         var option = new SessionOption();
@@ -17,7 +22,12 @@ public static class AuthenticationHandlerExtensions
         AddOrleansIdentity(services, option);
     }
 
-    public static void AddOrleansIdentity(this IServiceCollection services, SessionOption sessionOption = null)
+    /// <summary>
+    /// Use Orleans.Identity authentication as default authentication scheme
+    /// </summary>
+    /// <param name="services"></param>
+    /// <param name="sessionOption">Options for working with session</param>
+    public static void AddOrleansIdentity(this IServiceCollection services, SessionOption? sessionOption = null)
     {
         sessionOption ??= new SessionOption();
 

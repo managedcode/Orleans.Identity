@@ -258,4 +258,92 @@ public class GrainFilterTests
     }
 
     #endregion
+
+    #region Authorized grain with role and user has role
+
+    [Fact]
+    public async Task SendRequestToAuthorizedGrainWithRole_WhenUserHasRole_ReturnOk()
+    {
+        // Arrange
+        var client = _testApp.CreateClient();
+        var sessionId = Guid.NewGuid().ToString();
+        CreateSessionModel createSessionModel = new CreateSessionModel();
+        createSessionModel.AddUserGrainId(SessionHelper.GetTestUserGrainId());
+        createSessionModel.AddProperty(ClaimTypes.Role, new List<string> { TestRoles.ADMIN, TestRoles.MODERATOR });
+        await CreateSession(sessionId, createSessionModel);
+        client.DefaultRequestHeaders.Add(OrleansIdentityConstants.AUTH_TOKEN, sessionId);
+
+        // Act
+        var response = await client.GetAsync(TestControllerRoutes.MODERATOR_CONTROLLER_DEFAULT_ROUTE);
+
+        // Assert
+        response.IsSuccessStatusCode.Should().BeTrue();
+    }
+
+    #endregion
+
+    #region Authorized grain with role and user has no role
+
+    [Fact]
+    public async Task SendRequestToAuthorizedGrainWithRole_WhenUserHasNoRole_ReturnOFail()
+    {
+        // Arrange
+        var client = _testApp.CreateClient();
+        var sessionId = Guid.NewGuid().ToString();
+        await CreateSession(sessionId);
+        client.DefaultRequestHeaders.Add(OrleansIdentityConstants.AUTH_TOKEN, sessionId);
+
+        // Act
+        var response = await client.GetAsync(TestControllerRoutes.MODERATOR_CONTROLLER_DEFAULT_ROUTE);
+
+        // Assert
+        response.IsSuccessStatusCode.Should().BeFalse();
+        response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
+    }
+
+    [Fact]
+    public async Task SendRequestToAuthorizedGrainWithRole_WhenUserHasNoRoleAndMethodToo_ReturnFail()
+    {
+        // Arrange
+        var client = _testApp.CreateClient();
+        var sessionId = Guid.NewGuid().ToString();
+        await CreateSession(sessionId);
+        client.DefaultRequestHeaders.Add(OrleansIdentityConstants.AUTH_TOKEN, sessionId);
+
+        // Act
+        var response = await client.GetAsync(TestControllerRoutes.MODERATOR_CONTROLLER_GET_MODERATORS_ROUTE);
+
+        // Assert
+        response.IsSuccessStatusCode.Should().BeFalse();
+        response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
+    }
+
+    [Fact]
+    public async Task SendRequestToAuthorizedGrainWithRole_WhenUserUnauthorizedAndMethodToo_ReturnOk()
+    {
+        // Arrange
+        var client = _testApp.CreateClient();
+
+        // Act
+        var response = await client.GetAsync(TestControllerRoutes.MODERATOR_CONTROLLER_GET_PUBLIC_INFO_ROUTE);
+
+        // Assert
+        response.IsSuccessStatusCode.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task SendRequestToAuthorizedGrainWithRole_WhenUserUnauthorized_ReturnFail()
+    {
+        // Arrange
+        var client = _testApp.CreateClient();
+
+        // Act
+        var response = await client.GetAsync(TestControllerRoutes.MODERATOR_CONTROLLER_DEFAULT_ROUTE);
+
+        // Assert
+        response.IsSuccessStatusCode.Should().BeFalse();
+        response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
+    }
+
+    #endregion
 }

@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using ManagedCode.Orleans.Identity.Extensions;
 using Microsoft.AspNetCore.Http;
 
 namespace ManagedCode.Orleans.Identity.Client.Middlewares;

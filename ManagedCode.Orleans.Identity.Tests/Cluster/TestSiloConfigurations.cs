@@ -1,4 +1,5 @@
 using ManagedCode.Orleans.Identity.Constants;
+using ManagedCode.Orleans.Identity.Server.Extensions;
 using ManagedCode.Orleans.Identity.Server.GrainCallFilter;
 using Microsoft.Extensions.DependencyInjection;
 using Orleans.Serialization;
@@ -12,9 +13,9 @@ public class TestSiloConfigurations : ISiloConfigurator
     {
         siloBuilder.Services.AddSerializer(serializerBuilder => { serializerBuilder.AddJsonSerializer(); });
 
-        // TODO: Move to the extension method 
-        siloBuilder.AddIncomingGrainCallFilter<GrainAuthorizationIncomingFilter>();
-        //siloBuilder.AddIncomingGrainCallFilter<GrainAuthorizationFilter>();
+        // add OrleansIdentity
+        siloBuilder.AddOrleansIdentity();
+
 
         // For test purpose
         siloBuilder.AddMemoryGrainStorage(OrleansIdentityConstants.SESSION_STORAGE_NAME);
