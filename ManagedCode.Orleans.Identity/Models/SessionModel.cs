@@ -32,4 +32,13 @@ public class SessionModel
 
     [Id(7)]
     public bool IsActive { get; set; }
+    
+    public SessionModel()
+    {
+    }
+    
+    public SessionModel(string id)
+    {
+        Id = id;
+    }
 }
