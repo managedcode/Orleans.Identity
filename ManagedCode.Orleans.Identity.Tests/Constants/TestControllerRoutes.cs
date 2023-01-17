@@ -26,4 +26,5 @@ public static class TestControllerRoutes
     public const string PUBLIC_CONTROLLER_MODERATOR_METHOD_ROUTE = "/publicController/moderatorMethod";
 
     public const string MODERATOR_CONTROLLER_DEFAULT_ROUTE = "/moderatorController";
+    public const string MODERATOR_CONTROLLER_GET_MODERATORS_ROUTE = "/moderatorController/getModerators";
 }

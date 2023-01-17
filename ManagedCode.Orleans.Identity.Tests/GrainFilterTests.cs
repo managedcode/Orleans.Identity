@@ -301,5 +301,22 @@ public class GrainFilterTests
         response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
     }
 
+    [Fact]
+    public async Task SendRequestToAuthorizedGrainWithRole_WhenUserHasNoRoleAndMethodToo_ReturnOFail()
+    {
+        // Arrange
+        var client = _testApp.CreateClient();
+        var sessionId = Guid.NewGuid().ToString();
+        await CreateSession(sessionId);
+        client.DefaultRequestHeaders.Add(OrleansIdentityConstants.AUTH_TOKEN, sessionId);
+
+        // Act
+        var response = await client.GetAsync(TestControllerRoutes.MODERATOR_CONTROLLER_GET_MODERATORS_ROUTE);
+
+        // Assert
+        response.IsSuccessStatusCode.Should().BeFalse();
+        response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
+    }
+
     #endregion
 }

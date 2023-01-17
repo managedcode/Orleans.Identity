@@ -21,5 +21,13 @@ namespace ManagedCode.Orleans.Identity.Tests.TestApp.Controllers
             var moderatorGrain = _clusterClient.GetGrain<IModeratorGrain>(userId);
             return await moderatorGrain.GetInfo();
         }
+
+        [HttpGet("getModerators")]
+        public async Task<ActionResult<string>> GetModerators()
+        {
+            var userId = User.GetGrainId();
+            var moderatorGrain = _clusterClient.GetGrain<IModeratorGrain>(userId);
+            return await moderatorGrain.GetModerators();
+        }
     }
 }

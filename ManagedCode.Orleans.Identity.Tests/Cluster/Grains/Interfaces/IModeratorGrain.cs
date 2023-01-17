@@ -3,5 +3,6 @@
     public interface IModeratorGrain : IGrainWithStringKey
     {
         Task<string> GetInfo();
+        Task<string> GetModerators();
     }
 }

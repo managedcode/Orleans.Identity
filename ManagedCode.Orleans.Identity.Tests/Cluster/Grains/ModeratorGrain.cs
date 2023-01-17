@@ -11,5 +11,11 @@ namespace ManagedCode.Orleans.Identity.Tests.Cluster.Grains
         {
             return Task.FromResult("info");
         }
+
+        [Authorize]
+        public Task<string> GetModerators()
+        {
+            return Task.FromResult("moderators");
+        }
     }
 }
