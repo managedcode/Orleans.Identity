@@ -17,5 +17,11 @@ namespace ManagedCode.Orleans.Identity.Tests.Cluster.Grains
         {
             return Task.FromResult("moderators");
         }
+
+        [AllowAnonymous]
+        public Task<string> GetPublicInformation()
+        {
+            return Task.FromResult("public info");
+        }
     }
 }

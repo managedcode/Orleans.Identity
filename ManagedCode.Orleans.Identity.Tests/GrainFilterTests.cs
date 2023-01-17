@@ -302,7 +302,7 @@ public class GrainFilterTests
     }
 
     [Fact]
-    public async Task SendRequestToAuthorizedGrainWithRole_WhenUserHasNoRoleAndMethodToo_ReturnOFail()
+    public async Task SendRequestToAuthorizedGrainWithRole_WhenUserHasNoRoleAndMethodToo_ReturnFail()
     {
         // Arrange
         var client = _testApp.CreateClient();
@@ -312,6 +312,33 @@ public class GrainFilterTests
 
         // Act
         var response = await client.GetAsync(TestControllerRoutes.MODERATOR_CONTROLLER_GET_MODERATORS_ROUTE);
+
+        // Assert
+        response.IsSuccessStatusCode.Should().BeFalse();
+        response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
+    }
+
+    [Fact]
+    public async Task SendRequestToAuthorizedGrainWithRole_WhenUserUnauthorizedAndMethodToo_ReturnOk()
+    {
+        // Arrange
+        var client = _testApp.CreateClient();
+
+        // Act
+        var response = await client.GetAsync(TestControllerRoutes.MODERATOR_CONTROLLER_GET_PUBLIC_INFO_ROUTE);
+
+        // Assert
+        response.IsSuccessStatusCode.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task SendRequestToAuthorizedGrainWithRole_WhenUserUnauthorized_ReturnFail()
+    {
+        // Arrange
+        var client = _testApp.CreateClient();
+
+        // Act
+        var response = await client.GetAsync(TestControllerRoutes.MODERATOR_CONTROLLER_DEFAULT_ROUTE);
 
         // Assert
         response.IsSuccessStatusCode.Should().BeFalse();

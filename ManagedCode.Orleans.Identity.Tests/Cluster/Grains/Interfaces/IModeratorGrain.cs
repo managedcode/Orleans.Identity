@@ -4,5 +4,6 @@
     {
         Task<string> GetInfo();
         Task<string> GetModerators();
+        Task<string> GetPublicInformation();
     }
 }
