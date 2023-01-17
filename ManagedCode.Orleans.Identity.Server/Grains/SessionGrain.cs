@@ -45,9 +45,8 @@ public class SessionGrain : Grain, ISessionGrain
     {
         var date = DateTime.UtcNow;
 
-        _sessionState.State = new SessionModel
+        _sessionState.State = new SessionModel(this.GetPrimaryKeyString())
         {
-            Id = this.GetPrimaryKeyString(),
             IsActive = true,
             UserGrainId = model.UserGrainId,
             UserData = model.UserData ?? new Dictionary<string, HashSet<string>>(),
@@ -275,9 +274,8 @@ public class SessionGrain : Grain, ISessionGrain
 
     private SessionModel GetSessionModel()
     {
-        return new SessionModel
+        return new SessionModel(_sessionState.State.Id)
         {
-            Id = _sessionState.State.Id,
             IsActive = _sessionState.State.IsActive,
             ClosedDate = _sessionState.State.ClosedDate,
             CreatedDate = _sessionState.State.CreatedDate,
