@@ -34,7 +34,7 @@ public class EmailVerificationTokenGrainGrain : Grain, IEmailVerificationTokenGr
         return Result.Succeed();
     }
 
-    public ValueTask<Result> VerifyAsync(string token)
+    public ValueTask<Result> VerifyAsync()
     {
         throw new System.NotImplementedException();
     }
