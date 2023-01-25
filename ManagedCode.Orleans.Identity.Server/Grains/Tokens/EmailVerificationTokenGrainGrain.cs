@@ -19,9 +19,19 @@ public class EmailVerificationTokenGrainGrain : Grain, IEmailVerificationTokenGr
         _tokenState = tokenState;
     }
     
-    public ValueTask<Result> CreateAsync(CreateTokenModel createModel)
+    public async ValueTask<Result> CreateAsync(CreateTokenModel createModel)
     {
-        throw new System.NotImplementedException();
+        _tokenState.State = new TokenModel
+        {
+            IsActive = true,
+            Lifetime = createModel.Lifetime,
+            UserGrainId = createModel.UserGrainId,
+            Value = createModel.Value,
+        };
+
+        await _tokenState.WriteStateAsync();
+
+        return Result.Succeed();
     }
 
     public ValueTask<Result> VerifyAsync(string token)
