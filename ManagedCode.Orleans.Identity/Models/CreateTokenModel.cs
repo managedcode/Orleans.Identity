@@ -15,8 +15,5 @@ public class CreateTokenModel
     public GrainId UserGrainId { get; set; }
 
     [Id(2)]
-    public DateTimeOffset ExpirationDate { get; set; }
-
-    [Id(3)]
-    public Dictionary<string, string> Properties { get; set; } = new Dictionary<string, string>();
+    public TimeSpan Lifetime { get; set; }
 }
