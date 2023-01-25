@@ -20,7 +20,7 @@ public class TokenGrain : Grain, ITokenGrain
         _tokenState = tokenState;
     }
 
-    public async ValueTask<Result> AddToken(TokenModel tokenModel)
+    public async ValueTask<Result> CreateAsync(TokenModel tokenModel)
     {
         _tokenState.State = tokenModel;
 
@@ -29,7 +29,7 @@ public class TokenGrain : Grain, ITokenGrain
         return Result.Succeed();
     }
 
-    public ValueTask<Result<TokenModel>> GetToken()
+    public ValueTask<Result<TokenModel>> GetTokenAsync()
     {
         if (_tokenState.RecordExists is false)
         {
@@ -40,7 +40,7 @@ public class TokenGrain : Grain, ITokenGrain
         return Result<TokenModel>.Succeed(_tokenState.State).AsValueTask();
     }
 
-    public ValueTask<Result<bool>> CompareTokens(string token)
+    public ValueTask<Result<bool>> CompareTokensAsync(string token)
     {
         if (_tokenState.RecordExists is false)
         {
@@ -51,7 +51,7 @@ public class TokenGrain : Grain, ITokenGrain
         return Result<bool>.Succeed(_tokenState.State.Value == token).AsValueTask();
     }
 
-    public async ValueTask<Result> ClearToken()
+    public async ValueTask<Result> ClearTokenAsync()
     {
         if (_tokenState.RecordExists is false)
         {
@@ -63,7 +63,7 @@ public class TokenGrain : Grain, ITokenGrain
         return Result.Succeed();
     }
 
-    public ValueTask<Result<bool>> IsExpired()
+    public ValueTask<Result<bool>> IsExpiredAsync()
     {
         if (_tokenState.RecordExists is false)
         {

@@ -7,13 +7,13 @@ namespace ManagedCode.Orleans.Identity.Interfaces;
 
 public interface ITokenGrain : IGrainWithStringKey
 {
-    ValueTask<Result> AddToken(TokenModel tokenModel);
+    ValueTask<Result> CreateAsync(TokenModel tokenModel);
 
-    ValueTask<Result<TokenModel>> GetToken();
+    ValueTask<Result<TokenModel>> GetTokenAsync();
 
-    ValueTask<Result<bool>> CompareTokens(string token);
+    ValueTask<Result<bool>> CompareTokensAsync(string token);
 
-    ValueTask<Result> ClearToken();
+    ValueTask<Result> ClearTokenAsync();
 
-    ValueTask<Result<bool>> IsExpired();
+    ValueTask<Result<bool>> IsExpiredAsync();
 }
