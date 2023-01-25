@@ -62,16 +62,4 @@ public class TokenGrain : Grain, ITokenGrain
         await _tokenState.ClearStateAsync();
         return Result.Succeed();
     }
-
-    public ValueTask<Result<bool>> IsExpiredAsync()
-    {
-        if (_tokenState.RecordExists is false)
-        {
-            DeactivateOnIdle();
-            return Result<bool>.Fail().AsValueTask();
-        }
-        
-        var datetimeNow = DateTimeOffset.UtcNow;
-        return Result<bool>.Succeed(datetimeNow >= _tokenState.State.ExpirationDate).AsValueTask();
-    }
 }

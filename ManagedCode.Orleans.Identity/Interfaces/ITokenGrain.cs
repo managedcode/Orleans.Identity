@@ -14,6 +14,4 @@ public interface ITokenGrain : IGrainWithStringKey
     ValueTask<Result<bool>> CompareTokensAsync(string token);
 
     ValueTask<Result> ClearTokenAsync();
-
-    ValueTask<Result<bool>> IsExpiredAsync();
 }
