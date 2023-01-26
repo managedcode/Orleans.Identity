@@ -10,11 +10,11 @@ using Orleans.Runtime;
 
 namespace ManagedCode.Orleans.Identity.Server.Grains.Tokens;
 
-public class EmailVerificationTokenGrainGrain : Grain, IEmailVerificationTokenGrain
+public class EmailVerificationTokenGrain : Grain, IEmailVerificationTokenGrain
 {
     private readonly IPersistentState<TokenModel> _tokenState;
 
-    public EmailVerificationTokenGrainGrain(
+    public EmailVerificationTokenGrain(
         [PersistentState("emailVerificationToken", OrleansIdentityConstants.TOKEN_STORAGE_NAME)]
         IPersistentState<TokenModel> tokenState)
     {
