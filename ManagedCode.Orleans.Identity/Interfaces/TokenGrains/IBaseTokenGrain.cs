@@ -7,5 +7,5 @@ namespace ManagedCode.Orleans.Identity.Interfaces.TokenGrains;
 
 public interface IBaseTokenGrain : IGrainWithStringKey
 {
-    ValueTask<Result> CreateAsync(CreateTokenModel tokenModel);
+    ValueTask<Result> CreateAsync(CreateTokenModel createModel);
 }
