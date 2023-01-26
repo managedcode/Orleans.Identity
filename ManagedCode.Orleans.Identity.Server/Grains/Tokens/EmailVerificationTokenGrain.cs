@@ -25,9 +25,13 @@ public class EmailVerificationTokenGrain : Grain, IEmailVerificationTokenGrain, 
     private async Task OnTimerTicked(object args)
     {
         if (_tokenState.RecordExists is false)
+        {
+            DeactivateOnIdle();
             return;
+        }
         
-        // TODO: also notify 
+        // TODO: also notify UserGrain if token is expired
+        DeactivateOnIdle();
         await _tokenState.ClearStateAsync();
     }
     
@@ -36,6 +40,7 @@ public class EmailVerificationTokenGrain : Grain, IEmailVerificationTokenGrain, 
         // TODO: add to the method description that if token lifetime less than 1 minute, timer with period 1 minute will be registered 
         if (createModel.IsModelValid() is false)
         {
+            DeactivateOnIdle();
             return Result.Fail();
         }
 
@@ -62,13 +67,22 @@ public class EmailVerificationTokenGrain : Grain, IEmailVerificationTokenGrain, 
 
     public ValueTask<Result> VerifyAsync()
     {
-        throw new System.NotImplementedException();
+        if (_tokenState.RecordExists is false)
+        {
+            DeactivateOnIdle();
+            return Result.Fail().AsValueTask();    
+        }
+
+        return Result.Succeed().AsValueTask();
     }
 
     public async Task ReceiveReminder(string reminderName, TickStatus status)
     {
         if (_tokenState.RecordExists is false)
+        {
+            DeactivateOnIdle();
             return;
+        }
 
         if (reminderName == TokenGrainConstants.EMAIL_VERIFICATION_TOKEN_REMINDER_NAME)
         {
