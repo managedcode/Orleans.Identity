@@ -16,7 +16,4 @@ public class TokenModel
     
     [Id(2)]
     public TimeSpan Lifetime { get; set; }
-
-    [Id(3)] 
-    public bool IsActive { get; set; }
 }

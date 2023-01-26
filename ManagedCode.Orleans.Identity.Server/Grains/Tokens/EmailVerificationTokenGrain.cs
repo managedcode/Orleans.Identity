@@ -26,10 +26,9 @@ public class EmailVerificationTokenGrain : Grain, IEmailVerificationTokenGrain, 
     {
         if (_tokenState.RecordExists is false)
             return;
-
-        _tokenState.State.IsActive = false;
-
-        await _tokenState.WriteStateAsync();
+        
+        // TODO: also notify 
+        await _tokenState.ClearStateAsync();
     }
     
     public async ValueTask<Result> CreateAsync(CreateTokenModel createModel)
@@ -42,7 +41,6 @@ public class EmailVerificationTokenGrain : Grain, IEmailVerificationTokenGrain, 
 
         _tokenState.State = new TokenModel
         {
-            IsActive = true,
             Lifetime = createModel.Lifetime,
             UserGrainId = createModel.UserGrainId,
             Value = createModel.Value,
@@ -74,8 +72,7 @@ public class EmailVerificationTokenGrain : Grain, IEmailVerificationTokenGrain, 
 
         if (reminderName == TokenGrainConstants.EMAIL_VERIFICATION_TOKEN_REMINDER_NAME)
         {
-            _tokenState.State.IsActive = false;
-            await _tokenState.WriteStateAsync();
+            await _tokenState.ClearStateAsync();
         }
     }
 }
