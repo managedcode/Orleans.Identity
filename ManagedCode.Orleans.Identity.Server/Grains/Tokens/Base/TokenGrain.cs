@@ -7,15 +7,22 @@ using Orleans;
 using Orleans.Runtime;
 using System;
 using System.Threading.Tasks;
+using ManagedCode.Orleans.Identity.Constants;
 
 namespace ManagedCode.Orleans.Identity.Server.Grains.Tokens.Base
 {
-    public abstract class TokenGrain : Grain, IBaseTokenGrain
+    public abstract class TokenGrain : Grain, IBaseTokenGrain, IRemindable
     {
-        private readonly IPersistentState<TokenModel> _tokenState;
-
-
-        protected async Task OnTimerTicked(object args)
+        private readonly string _reminderName;
+        protected readonly IPersistentState<TokenModel> _tokenState;
+        
+        protected TokenGrain(IPersistentState<TokenModel> tokenState, string reminderName)
+        {
+            _tokenState = tokenState;
+            _reminderName = reminderName;
+        }
+        
+        private async Task OnTimerTicked(object args)
         {
             if (_tokenState.RecordExists is false)
             {
@@ -51,7 +58,7 @@ namespace ManagedCode.Orleans.Identity.Server.Grains.Tokens.Base
             }
             else
             {
-                await this.RegisterOrUpdateReminder(TokenGrainConstants.MAGIC_LINK_TOKEN_REMINDER_NAME, _tokenState.State.Lifetime, _tokenState.State.Lifetime);
+                await this.RegisterOrUpdateReminder(_reminderName, _tokenState.State.Lifetime, _tokenState.State.Lifetime);
             }
 
             return Result.Succeed();
@@ -60,7 +67,27 @@ namespace ManagedCode.Orleans.Identity.Server.Grains.Tokens.Base
 
         public ValueTask<Result> VerifyAsync()
         {
-            throw new System.NotImplementedException();
+            if (_tokenState.RecordExists is false)
+            {
+                DeactivateOnIdle();
+                return Result.Fail().AsValueTask();    
+            }
+
+            return Result.Succeed().AsValueTask();
+        }
+        
+        public async Task ReceiveReminder(string reminderName, TickStatus status)
+        {
+            if (_tokenState.RecordExists is false)
+            {
+                DeactivateOnIdle();
+                return;
+            }
+
+            if (reminderName == _reminderName)
+            {
+                await _tokenState.ClearStateAsync();
+            }
         }
     }
 }
