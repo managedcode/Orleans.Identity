@@ -2,6 +2,7 @@
 using ManagedCode.Orleans.Identity.Interfaces.TokenGrains;
 using ManagedCode.Orleans.Identity.Models;
 using ManagedCode.Orleans.Identity.Tests.Cluster;
+using ManagedCode.Orleans.Identity.Tests.Helpers;
 using Orleans.Runtime;
 using Xunit;
 using Xunit.Abstractions;
@@ -21,63 +22,13 @@ namespace ManagedCode.Orleans.Identity.Tests.TokenGrainTests
             _testApp = testApp;
         }
 
-        #region Token creation methods
-
-        protected CreateTokenModel GenerateCreateTestTokenModel()
-        {
-            var randomValue = Guid.NewGuid().ToString();
-            var randomUserGrainId = Guid.NewGuid().ToString();
-            return new CreateTokenModel
-            {
-                Value = randomValue,
-                UserGrainId = GrainId.Create("userGrain", randomUserGrainId),
-                Lifetime = TimeSpan.FromMinutes(2)
-            };
-        }
-
-        protected CreateTokenModel GenerateCreateTestTokenModel(string tokenValue)
-        {
-            var randomUserGrainId = Guid.NewGuid().ToString();
-            return new CreateTokenModel
-            {
-                Value = tokenValue,
-                UserGrainId = GrainId.Create("userGrain", randomUserGrainId),
-                Lifetime = TimeSpan.FromMinutes(4)
-            };
-        }
-
-        protected CreateTokenModel GenerateCreateTestTokenModel(TimeSpan lifetime)
-        {
-            var randomValue = Guid.NewGuid().ToString();
-            var randomUserGrainId = Guid.NewGuid().ToString();
-            return new CreateTokenModel
-            {
-                Value = randomValue,
-                UserGrainId = GrainId.Create("userGrain", randomUserGrainId),
-                Lifetime = lifetime
-            };
-        }
-
-        protected CreateTokenModel GenerateCreateTestTokenModel(string tokenValue, TimeSpan lifetime)
-        {
-            var randomUserGrainId = Guid.NewGuid().ToString();
-            return new CreateTokenModel
-            {
-                Value = tokenValue,
-                UserGrainId = GrainId.Create("userGrain", randomUserGrainId),
-                Lifetime = lifetime
-            };
-        }
-
-        #endregion
-
         #region CreateToken
 
         [Fact]
         public virtual async Task CreateToken_WhenValueIsValid_ReturnSuccess()
         {
             // Arrange
-            var createTokenModel = GenerateCreateTestTokenModel();
+            var createTokenModel = TokenHelper.GenerateCreateTestTokenModel();
             var tokenGrain = _testApp.Cluster.Client.GetGrain<TGrain>(createTokenModel.Value);
             
             // Act
@@ -95,7 +46,7 @@ namespace ManagedCode.Orleans.Identity.Tests.TokenGrainTests
         public virtual async Task CreateToken_WhenTokensLifetimeLessThanMinute_ReturnSuccess()
         {
             // Arrange
-            var createTokenModel = GenerateCreateTestTokenModel(TimeSpan.FromSeconds(30));
+            var createTokenModel = TokenHelper.GenerateCreateTestTokenModel(TimeSpan.FromSeconds(30));
             var tokenGrain = _testApp.Cluster.Client.GetGrain<TGrain>(createTokenModel.Value);
             
             // Act
@@ -113,7 +64,7 @@ namespace ManagedCode.Orleans.Identity.Tests.TokenGrainTests
         public virtual async Task CreateToken_WhenTokensValueIsEmpty_ReturnFail()
         {
             // Arrange
-            var createTokenModel = GenerateCreateTestTokenModel(string.Empty);
+            var createTokenModel = TokenHelper.GenerateCreateTestTokenModel(string.Empty);
             var tokenGrain = _testApp.Cluster.Client.GetGrain<TGrain>(createTokenModel.Value);
 
             // Act
@@ -127,7 +78,7 @@ namespace ManagedCode.Orleans.Identity.Tests.TokenGrainTests
         public virtual async Task CreateToken_WhenTokensValueIsNull_ReturnFail()
         {
             // Arrange
-            var createTokenModel = GenerateCreateTestTokenModel(null);
+            var createTokenModel = TokenHelper.GenerateCreateTestTokenModel(null);
             var tokenGrain = _testApp.Cluster.Client.GetGrain<TGrain>(createTokenModel.Value);
             
             // Act
@@ -141,7 +92,7 @@ namespace ManagedCode.Orleans.Identity.Tests.TokenGrainTests
         public virtual async Task CreateToken_WhenTokensValueIsWhiteSpace_ReturnFail()
         {
             // Arrange
-            var createTokenModel = GenerateCreateTestTokenModel(" ");
+            var createTokenModel = TokenHelper.GenerateCreateTestTokenModel(" ");
             var tokenGrain = _testApp.Cluster.Client.GetGrain<TGrain>(createTokenModel.Value);
             
             // Act
@@ -155,7 +106,7 @@ namespace ManagedCode.Orleans.Identity.Tests.TokenGrainTests
         public virtual async Task CreateToken_WhenTokensLifetimeIsZero_ReturnFail()
         {
             // Arrange
-            var createTokenModel = GenerateCreateTestTokenModel(TimeSpan.Zero);
+            var createTokenModel = TokenHelper.GenerateCreateTestTokenModel(TimeSpan.Zero);
             var tokenGrain = _testApp.Cluster.Client.GetGrain<TGrain>(createTokenModel.Value);
             
             // Act
@@ -173,7 +124,7 @@ namespace ManagedCode.Orleans.Identity.Tests.TokenGrainTests
         public async Task GetToken_WhenTokenExists_ReturnSuccess()
         {
             // Arrange
-            var createTokenModel = GenerateCreateTestTokenModel();
+            var createTokenModel = TokenHelper.GenerateCreateTestTokenModel();
             var tokenGrain = _testApp.Cluster.Client.GetGrain<TGrain>(createTokenModel.Value);
             await tokenGrain.CreateAsync(createTokenModel);
             
@@ -207,7 +158,7 @@ namespace ManagedCode.Orleans.Identity.Tests.TokenGrainTests
         public async Task VerifyToken_WhenTokenExists_ReturnSuccess()
         {
             // Arrange
-            var createTokenModel = GenerateCreateTestTokenModel();
+            var createTokenModel = TokenHelper.GenerateCreateTestTokenModel();
             var tokenGrain = _testApp.Cluster.Client.GetGrain<TGrain>(createTokenModel.Value);
             await tokenGrain.CreateAsync(createTokenModel);
 
@@ -240,7 +191,7 @@ namespace ManagedCode.Orleans.Identity.Tests.TokenGrainTests
         public async Task ExecuteReminder_WhenTokenExists_DeleteToken()
         {
             // Arrange
-            var createTokenModel = GenerateCreateTestTokenModel();
+            var createTokenModel = TokenHelper.GenerateCreateTestTokenModel();
             var tokenGrain = _testApp.Cluster.Client.GetGrain<TGrain>(createTokenModel.Value);
             await tokenGrain.CreateAsync(createTokenModel);
             
