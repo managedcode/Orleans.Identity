@@ -76,13 +76,49 @@ namespace ManagedCode.Orleans.Identity.Tests.TokenGrainTests
         [Fact]
         public virtual async Task CreateToken_WhenValueIsValid_ReturnSuccess()
         {
-            var createToeknModel = GenerateCreateTestTokenModel();
+            var createTokenModel = GenerateCreateTestTokenModel();
 
-            var tokenGrain = _testApp.Cluster.Client.GetGrain<TGrain>(createToeknModel.Value);
-            var result = await tokenGrain.CreateAsync(createToeknModel);
+            var tokenGrain = _testApp.Cluster.Client.GetGrain<TGrain>(createTokenModel.Value);
+            var result = await tokenGrain.CreateAsync(createTokenModel);
+            var token = await tokenGrain.GetTokenAsync();
 
-            result.Should().NotBeNull();
             result.IsSuccess.Should().BeTrue();
+            token.IsSuccess.Should().BeTrue();
+            token.Value.Should().NotBeNull();
+            token.Value.Value.Should().Be(createTokenModel.Value);
+        }
+
+        [Fact]
+        public virtual async Task CreateToken_WhenTokensValueIsEmpty_ReturnFail()
+        {
+            var createTokenModel = GenerateCreateTestTokenModel(string.Empty);
+
+            var tokenGrain = _testApp.Cluster.Client.GetGrain<TGrain>(createTokenModel.Value);
+            var result = await tokenGrain.CreateAsync(createTokenModel);
+
+            result.IsFailed.Should().BeTrue();
+        }
+        
+        [Fact]
+        public virtual async Task CreateToken_WhenTokensValueIsNull_ReturnFail()
+        {
+            var createTokenModel = GenerateCreateTestTokenModel(null);
+
+            var tokenGrain = _testApp.Cluster.Client.GetGrain<TGrain>(createTokenModel.Value);
+            var result = await tokenGrain.CreateAsync(createTokenModel);
+
+            result.IsFailed.Should().BeTrue();
+        }
+        
+        [Fact]
+        public virtual async Task CreateToken_WhenTokensValueIsWhiteSpace_ReturnFail()
+        {
+            var createTokenModel = GenerateCreateTestTokenModel(" ");
+
+            var tokenGrain = _testApp.Cluster.Client.GetGrain<TGrain>(createTokenModel.Value);
+            var result = await tokenGrain.CreateAsync(createTokenModel);
+
+            result.IsFailed.Should().BeTrue();
         }
 
         #endregion
