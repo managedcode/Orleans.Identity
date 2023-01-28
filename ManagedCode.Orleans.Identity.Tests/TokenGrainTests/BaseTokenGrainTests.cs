@@ -15,7 +15,7 @@ namespace ManagedCode.Orleans.Identity.Tests.TokenGrainTests
         protected readonly ITestOutputHelper _outputHelper;
         protected readonly TestClusterApplication _testApp;
 
-        public BaseTokenGrainTests(TestClusterApplication testApp, ITestOutputHelper outputHelper)
+        protected BaseTokenGrainTests(TestClusterApplication testApp, ITestOutputHelper outputHelper)
         {
             _outputHelper = outputHelper;
             _testApp = testApp;
@@ -31,7 +31,7 @@ namespace ManagedCode.Orleans.Identity.Tests.TokenGrainTests
             {
                 Value = randomValue,
                 UserGrainId = GrainId.Create("userGrain", randomUserGrainId),
-                Lifetime = TimeSpan.FromMinutes(4)
+                Lifetime = TimeSpan.FromMinutes(2)
             };
         }
 
@@ -200,6 +200,58 @@ namespace ManagedCode.Orleans.Identity.Tests.TokenGrainTests
         }
 
         #endregion
+
+        #region VerifyToken
+
+        [Fact]
+        public async Task VerifyToken_WhenTokenExists_ReturnSuccess()
+        {
+            // Arrange
+            var createTokenModel = GenerateCreateTestTokenModel();
+            var tokenGrain = _testApp.Cluster.Client.GetGrain<TGrain>(createTokenModel.Value);
+            await tokenGrain.CreateAsync(createTokenModel);
+
+            // Act
+            var result = await tokenGrain.VerifyAsync();
+            
+            // Arrange
+            result.IsSuccess.Should().BeTrue();
+        }
+
+        [Fact]
+        public async Task VerifyToken_WhenTokenDoesNotExists_ReturnFail()
+        {
+            // Arrange 
+            var randomValue = Guid.NewGuid().ToString();
+            var tokenGrain = _testApp.Cluster.Client.GetGrain<TGrain>(randomValue);
+
+            // Act
+            var result = await tokenGrain.VerifyAsync();
+
+            // Assert
+            result.IsFailed.Should().BeTrue();
+        }
+
+        #endregion
         
+        #region ReminderTests
+
+        [Fact]
+        public async Task ExecuteReminder_WhenTokenExists_DeleteToken()
+        {
+            // Arrange
+            var createTokenModel = GenerateCreateTestTokenModel();
+            var tokenGrain = _testApp.Cluster.Client.GetGrain<TGrain>(createTokenModel.Value);
+            await tokenGrain.CreateAsync(createTokenModel);
+            
+            // Act
+            await Task.Delay(TimeSpan.FromMinutes(3));
+
+            // Assert
+            var result = await tokenGrain.VerifyAsync();
+            result.IsFailed.Should().BeTrue();
+        }
+        
+        #endregion
     }
 }
