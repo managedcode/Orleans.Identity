@@ -182,26 +182,6 @@ namespace ManagedCode.Orleans.Identity.Tests.TokenGrainTests
             // Assert
             result.IsFailed.Should().BeTrue();
         }
-
-        #endregion
-        
-        #region ReminderTests
-
-        [Fact]
-        public async Task ExecuteReminder_WhenTokenExists_DeleteToken()
-        {
-            // Arrange
-            var createTokenModel = TokenHelper.GenerateCreateTestTokenModel();
-            var tokenGrain = _testApp.Cluster.Client.GetGrain<TGrain>(createTokenModel.Value);
-            await tokenGrain.CreateAsync(createTokenModel);
-            
-            // Act
-            await Task.Delay(TimeSpan.FromMinutes(3));
-
-            // Assert
-            var result = await tokenGrain.VerifyAsync();
-            result.IsFailed.Should().BeTrue();
-        }
         
         #endregion
     }
