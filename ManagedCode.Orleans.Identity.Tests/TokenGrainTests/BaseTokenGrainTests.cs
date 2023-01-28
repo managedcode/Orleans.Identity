@@ -8,7 +8,7 @@ using Xunit.Abstractions;
 
 namespace ManagedCode.Orleans.Identity.Tests.TokenGrainTests
 {
-    [Collection(nameof(BaseTokenGrainTests<TGrain>))]
+    [Collection(nameof(TestClusterApplication))]
     public abstract class BaseTokenGrainTests<TGrain>
         where TGrain : IBaseTokenGrain
     {
