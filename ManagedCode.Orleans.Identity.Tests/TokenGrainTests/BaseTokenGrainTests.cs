@@ -87,6 +87,21 @@ namespace ManagedCode.Orleans.Identity.Tests.TokenGrainTests
             token.Value.Should().NotBeNull();
             token.Value.Value.Should().Be(createTokenModel.Value);
         }
+        
+        [Fact]
+        public virtual async Task CreateToken_WhenTokensLifetimeLessThanMinute_ReturnSuccess()
+        {
+            var createTokenModel = GenerateCreateTestTokenModel(TimeSpan.FromSeconds(30));
+
+            var tokenGrain = _testApp.Cluster.Client.GetGrain<TGrain>(createTokenModel.Value);
+            var result = await tokenGrain.CreateAsync(createTokenModel);
+            var token = await tokenGrain.GetTokenAsync();
+
+            result.IsSuccess.Should().BeTrue();
+            token.IsSuccess.Should().BeTrue();
+            token.Value.Should().NotBeNull();
+            token.Value.Value.Should().Be(createTokenModel.Value);
+        }
 
         [Fact]
         public virtual async Task CreateToken_WhenTokensValueIsEmpty_ReturnFail()
@@ -114,6 +129,17 @@ namespace ManagedCode.Orleans.Identity.Tests.TokenGrainTests
         public virtual async Task CreateToken_WhenTokensValueIsWhiteSpace_ReturnFail()
         {
             var createTokenModel = GenerateCreateTestTokenModel(" ");
+
+            var tokenGrain = _testApp.Cluster.Client.GetGrain<TGrain>(createTokenModel.Value);
+            var result = await tokenGrain.CreateAsync(createTokenModel);
+
+            result.IsFailed.Should().BeTrue();
+        }
+
+        [Fact]
+        public virtual async Task CreateToken_WhenTokensLifetimeIsZero_ReturnFail()
+        {
+            var createTokenModel = GenerateCreateTestTokenModel(TimeSpan.Zero);
 
             var tokenGrain = _testApp.Cluster.Client.GetGrain<TGrain>(createTokenModel.Value);
             var result = await tokenGrain.CreateAsync(createTokenModel);
