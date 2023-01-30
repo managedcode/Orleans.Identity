@@ -10,4 +10,6 @@ public interface IBaseTokenGrain : IGrainWithStringKey
     ValueTask<Result> CreateAsync(CreateTokenModel createModel);
 
     ValueTask<Result> VerifyAsync();
+
+    ValueTask<Result<TokenModel>> GetTokenAsync();
 }

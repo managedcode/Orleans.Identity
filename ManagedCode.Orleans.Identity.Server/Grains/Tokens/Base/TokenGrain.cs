@@ -75,7 +75,18 @@ namespace ManagedCode.Orleans.Identity.Server.Grains.Tokens.Base
 
             return Result.Succeed().AsValueTask();
         }
-        
+
+        public ValueTask<Result<TokenModel>> GetTokenAsync()
+        {
+            if (_tokenState.RecordExists is false)
+            {
+                DeactivateOnIdle();
+                return Result<TokenModel>.Fail().AsValueTask();
+            }
+
+            return Result<TokenModel>.Succeed(_tokenState.State).AsValueTask();
+        }
+
         public async Task ReceiveReminder(string reminderName, TickStatus status)
         {
             if (_tokenState.RecordExists is false)
