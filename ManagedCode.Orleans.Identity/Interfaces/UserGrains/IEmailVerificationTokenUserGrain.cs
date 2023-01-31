@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using Orleans;
 
-namespace ManagedCode.Orleans.Identity.Interfaces.UserGrain
+namespace ManagedCode.Orleans.Identity.Interfaces.UserGrains
 {
     public interface IEmailVerificationTokenUserGrain : IGrainWithStringKey
     {

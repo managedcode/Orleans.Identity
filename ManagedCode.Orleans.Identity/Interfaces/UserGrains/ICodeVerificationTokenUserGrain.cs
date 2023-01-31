@@ -1,7 +1,7 @@
 using System.Threading.Tasks;
 using ManagedCode.Communication;
 
-namespace ManagedCode.Orleans.Identity.Interfaces.UserGrain;
+namespace ManagedCode.Orleans.Identity.Interfaces.UserGrains;
 
 public interface ICodeVerificationTokenUserGrain
 {

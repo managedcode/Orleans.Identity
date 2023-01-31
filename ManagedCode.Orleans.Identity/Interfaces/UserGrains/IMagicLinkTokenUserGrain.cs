@@ -2,7 +2,7 @@ using System.Threading.Tasks;
 using ManagedCode.Communication;
 using Orleans;
 
-namespace ManagedCode.Orleans.Identity.Interfaces.UserGrain;
+namespace ManagedCode.Orleans.Identity.Interfaces.UserGrains;
 
 public interface IMagicLinkTokenUserGrain : IGrainWithStringKey
 {
