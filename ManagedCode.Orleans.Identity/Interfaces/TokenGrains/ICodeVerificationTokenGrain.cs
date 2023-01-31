@@ -3,8 +3,7 @@ using System.Threading.Tasks;
 
 namespace ManagedCode.Orleans.Identity.Interfaces.TokenGrains
 {
-    public interface ITokenCodeVerificaitonGrain : IBaseTokenGrain
+    public interface ICodeVerificationTokenGrain : IBaseTokenGrain
     {
-        ValueTask<Result> VerifyAsync();
     }
 }

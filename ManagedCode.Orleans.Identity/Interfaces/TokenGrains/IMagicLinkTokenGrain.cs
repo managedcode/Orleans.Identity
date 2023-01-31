@@ -5,5 +5,4 @@ namespace ManagedCode.Orleans.Identity.Interfaces.TokenGrains;
 
 public interface IMagicLinkTokenGrain : IBaseTokenGrain
 {
-    ValueTask<Result> VerifyAsync();
 }

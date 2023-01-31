@@ -7,5 +7,4 @@ namespace ManagedCode.Orleans.Identity.Interfaces.TokenGrains;
 
 public interface IEmailVerificationTokenGrain : IBaseTokenGrain
 {
-    ValueTask<Result> VerifyAsync();
 }

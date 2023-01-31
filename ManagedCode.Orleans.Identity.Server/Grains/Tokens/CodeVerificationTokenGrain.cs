@@ -9,7 +9,7 @@ using ManagedCode.Orleans.Identity.Server.Grains.Tokens.Base;
 
 namespace ManagedCode.Orleans.Identity.Server.Grains.Tokens
 {
-    public class CodeVerificationTokenGrain : TokenGrain, ITokenCodeVerificaitonGrain
+    public class CodeVerificationTokenGrain : TokenGrain, ICodeVerificationTokenGrain
     {
         public CodeVerificationTokenGrain(
         [PersistentState("verificationCodeToken", OrleansIdentityConstants.TOKEN_STORAGE_NAME)]
