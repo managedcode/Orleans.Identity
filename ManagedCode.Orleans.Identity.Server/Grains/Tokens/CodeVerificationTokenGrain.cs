@@ -6,6 +6,7 @@ using Orleans.Runtime;
 using System.Threading.Tasks;
 using ManagedCode.Orleans.Identity.Server.Constants;
 using ManagedCode.Orleans.Identity.Server.Grains.Tokens.Base;
+using ManagedCode.Orleans.Identity.Interfaces.UserGrains;
 
 namespace ManagedCode.Orleans.Identity.Server.Grains.Tokens
 {
@@ -15,6 +16,39 @@ namespace ManagedCode.Orleans.Identity.Server.Grains.Tokens
         [PersistentState("verificationCodeToken", OrleansIdentityConstants.TOKEN_STORAGE_NAME)]
         IPersistentState<TokenModel> tokenState) : base(tokenState, TokenGrainConstants.EMAIL_VERIFICATION_TOKEN_REMINDER_NAME)
         {
+        }
+
+        protected override async ValueTask CallUserGrainOnTokenExpired()
+        {
+            if(_tokenState.State.UserGrainId.IsDefault || _tokenState.State.UserGrainId.TryGetGuidKey(out var guid, out var grainId) is false)
+            {
+                return;
+            }
+
+            var userGrain = GrainFactory.GetGrain<ICodeVerificationTokenUserGrain>(grainId);
+            await userGrain.CodeVerificationTokenExpiredAsync(_tokenState.State.Value);
+        }
+
+        protected override async ValueTask CallUserGrainOnTokenInvalid()
+        {
+            if (_tokenState.State.UserGrainId.IsDefault || _tokenState.State.UserGrainId.TryGetGuidKey(out var guid, out var grainId) is false)
+            {
+                return;
+            }
+
+            var userGrain = GrainFactory.GetGrain<ICodeVerificationTokenUserGrain>(grainId);
+            await userGrain.CodeVerificationTokenInvalidAsync(_tokenState.State.Value);
+        }
+
+        protected override async ValueTask CallUserGrainOnTokenValid()
+        {
+            if (_tokenState.State.UserGrainId.IsDefault || _tokenState.State.UserGrainId.TryGetGuidKey(out var guid, out var grainId) is false)
+            {
+                return;
+            }
+
+            var userGrain = GrainFactory.GetGrain<ICodeVerificationTokenUserGrain>(grainId);
+            await userGrain.CodeVerificationTokenValidAsync(_tokenState.State.Value);
         }
     }
 }
