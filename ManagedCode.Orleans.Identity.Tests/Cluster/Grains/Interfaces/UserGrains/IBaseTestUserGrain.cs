@@ -2,7 +2,7 @@ using ManagedCode.Communication;
 
 namespace ManagedCode.Orleans.Identity.Tests.Cluster.Grains.Interfaces.UserGrains;
 
-public interface IBaseTestUserGrain
+public interface IBaseTestUserGrain : IGrainWithStringKey
 {
     ValueTask<Result<bool>> IsTokenExpired();
 

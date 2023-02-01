@@ -69,15 +69,16 @@ namespace ManagedCode.Orleans.Identity.Server.Grains.Tokens.Base
         }
 
 
-        public ValueTask<Result> VerifyAsync()
+        public async ValueTask<Result> VerifyAsync()
         {
             if (_tokenState.RecordExists is false)
             {
                 DeactivateOnIdle();
-                return Result.Fail().AsValueTask();    
+                return Result.Fail();    
             }
 
-            return Result.Succeed().AsValueTask();
+            await CallUserGrainOnTokenValid();
+            return Result.Succeed();
         }
 
         public ValueTask<Result<TokenModel>> GetTokenAsync()

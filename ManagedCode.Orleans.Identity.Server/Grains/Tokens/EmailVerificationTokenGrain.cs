@@ -33,7 +33,7 @@ public class EmailVerificationTokenGrain : TokenGrain, IEmailVerificationTokenGr
 
     protected override async ValueTask CallUserGrainOnTokenInvalid()
     {
-        if (_tokenState.State.UserGrainId.IsDefault || _tokenState.State.UserGrainId.TryGetGuidKey(out var guid, out var grainId) is false)
+        if (_tokenState.State.UserGrainId.IsDefault || !_tokenState.State.UserGrainId.TryGetGuidKey(out var guid, out var grainId))
         {
             return;
         }
@@ -44,12 +44,13 @@ public class EmailVerificationTokenGrain : TokenGrain, IEmailVerificationTokenGr
 
     protected override async ValueTask CallUserGrainOnTokenValid()
     {
-        if (_tokenState.State.UserGrainId.IsDefault || _tokenState.State.UserGrainId.TryGetGuidKey(out var guid, out var grainId) is false)
+        // TODO: change parsing of user grain id
+        if (_tokenState.State.UserGrainId.IsDefault)
         {
             return;
         }
-
-        var userGrain = GrainFactory.GetGrain<IEmailVerificationTokenUserGrain>(grainId);
+        var parseResult = _tokenState.State.UserGrainId.Key.ToString();
+        var userGrain = GrainFactory.GetGrain<IEmailVerificationTokenUserGrain>(parseResult);
         await userGrain.EmailVerificationTokenValidAsync(_tokenState.State.Value);
     }
 }
