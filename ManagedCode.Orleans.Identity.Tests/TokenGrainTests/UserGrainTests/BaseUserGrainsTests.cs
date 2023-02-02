@@ -11,7 +11,7 @@ using Xunit.Abstractions;
 namespace ManagedCode.Orleans.Identity.Tests.TokenGrainTests.UserGrainTests
 {
     [Collection(nameof(TestClusterApplication))]
-    public class BaseUserGrainsTests<TTokenGrain, TUserGrain>
+    public abstract class BaseUserGrainsTests<TTokenGrain, TUserGrain>
         where TTokenGrain : IBaseTokenGrain
         where TUserGrain : IBaseTestUserGrain
     {
