@@ -33,39 +33,12 @@ namespace ManagedCode.Orleans.Identity.Tests.TokenGrainTests.UserGrainTests
             return tokenGrain;
         }
 
-        protected async Task<TTokenGrain> CreateTokenAsync()
-        {
-            var createTokenModel = TokenHelper.GenerateCreateTestTokenModel();
-            var tokenGrain = await CreateAndGetTokenGrainAsync(createTokenModel);
-            return tokenGrain;
-        }
-
         protected async Task<TTokenGrain> CreateTokenAsync(CreateTokenModel createTokenModel)
         {
             var tokenGrain = await CreateAndGetTokenGrainAsync(createTokenModel);
             return tokenGrain;
         }
 
-        protected async Task<TTokenGrain> CreateTokenAsync(string tokenValue)
-        {
-            var createTokenModel = TokenHelper.GenerateCreateTestTokenModel(tokenValue);
-            var tokenGrain = await CreateAndGetTokenGrainAsync(createTokenModel);
-            return tokenGrain;
-        }
-
-        protected async Task<TTokenGrain> CreateTokenAsync(string tokenValue, TimeSpan timeSpan)
-        {
-            var createTokenModel = TokenHelper.GenerateCreateTestTokenModel(tokenValue, timeSpan);
-            var tokenGrain = await CreateAndGetTokenGrainAsync(createTokenModel);
-            return tokenGrain;
-        }
-
-        protected async Task<TTokenGrain> CreateTokenAsync(TimeSpan timeSpan)
-        {
-            var createTokenModel = TokenHelper.GenerateCreateTestTokenModel(timeSpan);
-            var tokenGrain = await CreateAndGetTokenGrainAsync(createTokenModel);
-            return tokenGrain;
-        }
 
         #endregion
 
@@ -87,7 +60,27 @@ namespace ManagedCode.Orleans.Identity.Tests.TokenGrainTests.UserGrainTests
             // Assert
             result.IsSuccess.Should().BeTrue();
             result.Value.Should().BeTrue();
-        } 
+        }
+
+        [Fact]
+        public virtual async Task VerifyToken_WhenTokenExpired_ReturnTrue()
+        {
+            // Arrange
+            var createTokenModel = TokenHelper.GenerateCreateTestTokenModel(TimeSpan.FromSeconds(40));
+            var tokenGrain = await CreateTokenAsync(createTokenModel);
+            var userGrainId = createTokenModel.UserGrainId.Key.ToString();
+            await tokenGrain.VerifyAsync();
+            var userGrain = _testApp.Cluster.Client.GetGrain<TUserGrain>(userGrainId);
+
+            await Task.Delay(TimeSpan.FromMinutes(1).Add(TimeSpan.FromSeconds(20)));
+
+            // Act
+            var result = await userGrain.IsTokenExpired();
+
+            // Assert
+            result.IsSuccess.Should().BeTrue();
+            result.Value.Should().BeTrue();
+        }
 
         #endregion
     }

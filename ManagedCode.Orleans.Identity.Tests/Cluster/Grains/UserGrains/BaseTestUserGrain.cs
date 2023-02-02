@@ -3,7 +3,7 @@ using ManagedCode.Orleans.Identity.Tests.Cluster.Grains.Interfaces.UserGrains;
 
 namespace ManagedCode.Orleans.Identity.Tests.Cluster.Grains.UserGrains;
 
-public class BaseTestUserGrain : Grain, IBaseTestUserGrain
+public abstract class BaseTestUserGrain : Grain, IBaseTestUserGrain
 {
     protected bool _tokenInvalid;
     protected bool _tokenExpired;

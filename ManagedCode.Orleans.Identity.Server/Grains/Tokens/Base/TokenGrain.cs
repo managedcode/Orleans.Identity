@@ -15,7 +15,9 @@ namespace ManagedCode.Orleans.Identity.Server.Grains.Tokens.Base
     {
         private readonly string _reminderName;
         protected readonly IPersistentState<TokenModel> _tokenState;
-        
+
+        private IDisposable _timerReference;
+
         protected TokenGrain(IPersistentState<TokenModel> tokenState, string reminderName)
         {
             _tokenState = tokenState;
@@ -34,8 +36,8 @@ namespace ManagedCode.Orleans.Identity.Server.Grains.Tokens.Base
                 return;
             }
 
-            // TODO: also notify UserGrain if token is expired
             DeactivateOnIdle();
+            _timerReference.Dispose();
             await _tokenState.ClearStateAsync();
         }
 
@@ -58,7 +60,7 @@ namespace ManagedCode.Orleans.Identity.Server.Grains.Tokens.Base
 
             if (createModel.Lifetime < TimeSpan.FromMinutes(1))
             {
-                RegisterTimer(OnTimerTicked, null, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
+                _timerReference = RegisterTimer(OnTimerTicked, null, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
             }
             else
             {
@@ -97,12 +99,15 @@ namespace ManagedCode.Orleans.Identity.Server.Grains.Tokens.Base
             if (_tokenState.RecordExists is false)
             {
                 DeactivateOnIdle();
+                await this.UnregisterReminder(await this.GetReminder(reminderName));
                 return;
             }
 
             if (reminderName == _reminderName)
             {
+                await CallUserGrainOnTokenExpired();
                 await _tokenState.ClearStateAsync();
+                await this.UnregisterReminder(await this.GetReminder(reminderName));
             }
         }
     }
