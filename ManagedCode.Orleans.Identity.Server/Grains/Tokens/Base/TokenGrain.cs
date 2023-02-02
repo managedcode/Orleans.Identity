@@ -36,9 +36,10 @@ namespace ManagedCode.Orleans.Identity.Server.Grains.Tokens.Base
                 return;
             }
 
-            DeactivateOnIdle();
             _timerReference.Dispose();
+            await CallUserGrainOnTokenExpired();
             await _tokenState.ClearStateAsync();
+            DeactivateOnIdle();
         }
 
         public async ValueTask<Result> CreateAsync(CreateTokenModel createModel)
@@ -106,8 +107,9 @@ namespace ManagedCode.Orleans.Identity.Server.Grains.Tokens.Base
             if (reminderName == _reminderName)
             {
                 await CallUserGrainOnTokenExpired();
-                await _tokenState.ClearStateAsync();
                 await this.UnregisterReminder(await this.GetReminder(reminderName));
+                await _tokenState.ClearStateAsync();
+                DeactivateOnIdle();
             }
         }
     }

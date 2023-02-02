@@ -69,7 +69,6 @@ namespace ManagedCode.Orleans.Identity.Tests.TokenGrainTests.UserGrainTests
             var createTokenModel = TokenHelper.GenerateCreateTestTokenModel(TimeSpan.FromSeconds(40));
             var tokenGrain = await CreateTokenAsync(createTokenModel);
             var userGrainId = createTokenModel.UserGrainId.Key.ToString();
-            await tokenGrain.VerifyAsync();
             var userGrain = _testApp.Cluster.Client.GetGrain<TUserGrain>(userGrainId);
 
             await Task.Delay(TimeSpan.FromMinutes(1).Add(TimeSpan.FromSeconds(20)));
