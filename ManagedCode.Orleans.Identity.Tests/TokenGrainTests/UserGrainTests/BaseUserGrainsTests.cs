@@ -81,6 +81,24 @@ namespace ManagedCode.Orleans.Identity.Tests.TokenGrainTests.UserGrainTests
             result.Value.Should().BeTrue();
         }
 
+        [Fact]
+        public virtual async Task VerifyToken_WhenTokenDoesNotExists_ReturnFail()
+        {
+            // Arrange
+            var tokenValue = Guid.NewGuid().ToString();
+            var userId = Guid.NewGuid().ToString();
+            var tokenGrain = _testApp.Cluster.GrainFactory.GetGrain<TTokenGrain>(tokenValue);
+            var userGrain = _testApp.Cluster.GrainFactory.GetGrain<TUserGrain>(userId);
+            
+            // Act
+            await tokenGrain.VerifyAsync();
+            var result = await userGrain.IsTokenValid();
+
+            // Assert
+            result.IsSuccess.Should().BeTrue();
+            result.Value.Should().BeFalse();
+        }
+        
         #endregion
     }
 
