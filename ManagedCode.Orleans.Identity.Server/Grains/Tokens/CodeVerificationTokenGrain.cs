@@ -1,12 +1,11 @@
-﻿using ManagedCode.Communication;
-using ManagedCode.Orleans.Identity.Constants;
+﻿using ManagedCode.Orleans.Identity.Constants;
 using ManagedCode.Orleans.Identity.Interfaces.TokenGrains;
+using ManagedCode.Orleans.Identity.Interfaces.UserGrains;
 using ManagedCode.Orleans.Identity.Models;
-using Orleans.Runtime;
-using System.Threading.Tasks;
 using ManagedCode.Orleans.Identity.Server.Constants;
 using ManagedCode.Orleans.Identity.Server.Grains.Tokens.Base;
-using ManagedCode.Orleans.Identity.Interfaces.UserGrains;
+using Orleans.Runtime;
+using System.Threading.Tasks;
 
 namespace ManagedCode.Orleans.Identity.Server.Grains.Tokens
 {
