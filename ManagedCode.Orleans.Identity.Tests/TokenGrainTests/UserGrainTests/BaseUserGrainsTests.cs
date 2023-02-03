@@ -98,7 +98,22 @@ namespace ManagedCode.Orleans.Identity.Tests.TokenGrainTests.UserGrainTests
             result.IsSuccess.Should().BeTrue();
             result.Value.Should().BeFalse();
         }
-        
+
+        [Fact]
+        public virtual async Task VerifyToken_WhenUserGrainIsDefault_ReturnSuccess()
+        {
+            // Arrange
+            var createTokenModel = TokenHelper.GenerateCreateTestTokenModel();
+            createTokenModel.UserGrainId = new GrainId();
+            var tokenGrain = await CreateTokenAsync(createTokenModel);
+            
+            // Act
+            var result = await tokenGrain.VerifyAsync();
+            
+            // Assert
+            result.IsSuccess.Should().BeTrue();
+        }
+
         #endregion
 
         #region NotifyUserGrain_WhenTokenIsExpired
@@ -137,6 +152,38 @@ namespace ManagedCode.Orleans.Identity.Tests.TokenGrainTests.UserGrainTests
             result.Value.Should().BeTrue();
         }
 
+        [Fact]
+        public async Task NotifyUserGrain_WhenTokenExpiredAndUserGrainIdIsDefault_ReturnSuccess()
+        {
+            // Arrange
+            var createTokenModel = TokenHelper.GenerateCreateTestTokenModel();
+            createTokenModel.UserGrainId = new GrainId();
+            var tokenGrain = await CreateTokenAsync(createTokenModel);
+
+            // Act
+            await Task.Delay(TimeSpan.FromMinutes(1).Add(TimeSpan.FromSeconds(10)));
+            var result = await tokenGrain.VerifyAsync();
+
+            // Assert
+            result.IsSuccess.Should().BeTrue();
+        }
+
+        [Fact]
+        public virtual async Task NotifyUserGrainWithTimer_WhenTokenExpiredAndUserGrainIdIsDefault_ReturnSuccess()
+        {
+            // Arrange
+            var createTokenModel = TokenHelper.GenerateCreateTestTokenModel(TimeSpan.FromSeconds(30));
+            createTokenModel.UserGrainId = new GrainId();
+            var tokenGrain = await CreateTokenAsync(createTokenModel);
+            
+            // Act
+            await Task.Delay(TimeSpan.FromMinutes(1).Add(TimeSpan.FromSeconds(10)));
+            var result = await tokenGrain.VerifyAsync();
+
+            // Assert
+            result.IsSuccess.Should().BeTrue();
+        }
+        
         #endregion
     }
 
