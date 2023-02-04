@@ -19,34 +19,34 @@ public class MagicLinkTokenGrain : TokenGrain, IMagicLinkTokenGrain
 
     protected override async ValueTask CallUserGrainOnTokenExpired()
     {
-        if (_tokenState.State.UserGrainId.IsDefault || _tokenState.State.UserGrainId.TryGetGuidKey(out var guid, out var grainId) is false)
+        if (_tokenState.State.UserGrainId.IsDefault)
         {
             return;
         }
-
-        var userGrain = GrainFactory.GetGrain<IMagicLinkTokenUserGrain>(grainId);
+        var parseResult = _tokenState.State.UserGrainId.Key.ToString();
+        var userGrain = GrainFactory.GetGrain<IMagicLinkTokenUserGrain>(parseResult);
         await userGrain.MagicLinkTokenExpiredAsync(_tokenState.State.Value);
     }
 
     protected override async ValueTask CallUserGrainOnTokenInvalid()
     {
-        if (_tokenState.State.UserGrainId.IsDefault || _tokenState.State.UserGrainId.TryGetGuidKey(out var guid, out var grainId) is false)
+        if (_tokenState.State.UserGrainId.IsDefault)
         {
             return;
         }
-
-        var userGrain = GrainFactory.GetGrain<IMagicLinkTokenUserGrain>(grainId);
+        var parseResult = _tokenState.State.UserGrainId.Key.ToString();
+        var userGrain = GrainFactory.GetGrain<IMagicLinkTokenUserGrain>(parseResult);
         await userGrain.MagicLinkTokenInvalidAsync(_tokenState.State.Value);
     }
 
     protected override async ValueTask CallUserGrainOnTokenValid()
     {
-        if (_tokenState.State.UserGrainId.IsDefault || _tokenState.State.UserGrainId.TryGetGuidKey(out var guid, out var grainId) is false)
+        if (_tokenState.State.UserGrainId.IsDefault)
         {
             return;
         }
-
-        var userGrain = GrainFactory.GetGrain<IMagicLinkTokenUserGrain>(grainId);
+        var parseResult = _tokenState.State.UserGrainId.Key.ToString();
+        var userGrain = GrainFactory.GetGrain<IMagicLinkTokenUserGrain>(parseResult);
         await userGrain.MagicLinkTokenValidAsync(_tokenState.State.Value);
     }
 }
