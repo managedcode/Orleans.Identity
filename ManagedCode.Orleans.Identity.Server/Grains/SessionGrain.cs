@@ -21,7 +21,7 @@ public class SessionGrain : Grain, ISessionGrain
     private readonly IPersistentState<SessionModel> _sessionState;
 
     public SessionGrain(
-        [PersistentState("sessions", OrleansIdentityConstants.SESSION_STORAGE_NAME)]
+        [PersistentState("sessions", OrleansIdentityConstants.SESSION_STORAGE)]
         IPersistentState<SessionModel> sessionState,
         SessionOption sessionOption)
     {

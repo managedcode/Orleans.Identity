@@ -18,15 +18,12 @@ public class TestSiloConfigurations : ISiloConfigurator
 
 
         // For test purpose
-        siloBuilder.AddMemoryGrainStorage(OrleansIdentityConstants.SESSION_STORAGE_NAME);
-        siloBuilder.AddMemoryGrainStorage(OrleansIdentityConstants.TOKEN_STORAGE_NAME);
+        siloBuilder.AddMemoryGrainStorage(OrleansIdentityConstants.SESSION_STORAGE);
         siloBuilder.UseInMemoryReminderService();
 
         siloBuilder.ConfigureServices(services =>
         {
             services.AddSingleton(TestSiloOptions.SessionOption);
-            // services.AddGrpcOrleansScaling();
-            //  services.AddApiOrleansScaling();
         });
     }
 }

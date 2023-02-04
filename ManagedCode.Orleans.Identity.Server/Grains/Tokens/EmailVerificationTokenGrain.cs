@@ -14,41 +14,41 @@ namespace ManagedCode.Orleans.Identity.Server.Grains.Tokens;
 public class EmailVerificationTokenGrain : TokenGrain, IEmailVerificationTokenGrain
 {
     public EmailVerificationTokenGrain(
-        [PersistentState("emailVerificationToken", OrleansIdentityConstants.TOKEN_STORAGE_NAME)]
+        [PersistentState("emailVerificationToken", OrleansIdentityConstants.SESSION_STORAGE)]
         IPersistentState<TokenModel> tokenState) : base(tokenState, TokenGrainConstants.EMAIL_VERIFICATION_TOKEN_REMINDER_NAME)
     {
     }
 
     protected override async ValueTask CallUserGrainOnTokenExpired()
     {
-        if (_tokenState.State.UserGrainId.IsDefault)
+        if (TokenState.State.UserGrainId.IsDefault)
         {
             return;
         }
-        var parseResult = _tokenState.State.UserGrainId.Key.ToString();
+        var parseResult = TokenState.State.UserGrainId.Key.ToString();
         var userGrain = GrainFactory.GetGrain<IEmailVerificationTokenUserGrain>(parseResult);
-        await userGrain.EmailVerificationTokenExpiredAsync(_tokenState.State.Value);
+        await userGrain.EmailVerificationTokenExpiredAsync(TokenState.State.Value);
     }
 
     protected override async ValueTask CallUserGrainOnTokenInvalid()
     {
-        if (_tokenState.State.UserGrainId.IsDefault)
+        if (TokenState.State.UserGrainId.IsDefault)
         {
             return;
         }
-        var parseResult = _tokenState.State.UserGrainId.Key.ToString();
+        var parseResult = TokenState.State.UserGrainId.Key.ToString();
         var userGrain = GrainFactory.GetGrain<IEmailVerificationTokenUserGrain>(parseResult);
-        await userGrain.EmailVerificationTokenInvalidAsync(_tokenState.State.Value);
+        await userGrain.EmailVerificationTokenInvalidAsync(TokenState.State.Value);
     }
 
     protected override async ValueTask CallUserGrainOnTokenValid()
     {
-        if (_tokenState.State.UserGrainId.IsDefault)
+        if (TokenState.State.UserGrainId.IsDefault)
         {
             return;
         }
-        var parseResult = _tokenState.State.UserGrainId.Key.ToString();
+        var parseResult = TokenState.State.UserGrainId.Key.ToString();
         var userGrain = GrainFactory.GetGrain<IEmailVerificationTokenUserGrain>(parseResult);
-        await userGrain.EmailVerificationTokenValidAsync(_tokenState.State.Value);
+        await userGrain.EmailVerificationTokenValidAsync(TokenState.State.Value);
     }
 }
