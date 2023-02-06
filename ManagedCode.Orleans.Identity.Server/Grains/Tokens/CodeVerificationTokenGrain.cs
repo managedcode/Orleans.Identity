@@ -14,7 +14,7 @@ namespace ManagedCode.Orleans.Identity.Server.Grains.Tokens
     {
         public CodeVerificationTokenGrain(
         [PersistentState("verificationCodeToken", OrleansIdentityConstants.TOKEN_STORAGE_NAME)]
-        IPersistentState<TokenModel> tokenState) : base(tokenState, TokenGrainConstants.EMAIL_VERIFICATION_TOKEN_REMINDER_NAME)
+        IPersistentState<TokenModel> tokenState) : base(tokenState, TokenGrainConstants.CODE_VERIFICATION_TOKEN_REMINDER_NAME)
         {
         }
 
