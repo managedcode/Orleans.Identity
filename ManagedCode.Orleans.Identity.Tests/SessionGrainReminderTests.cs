@@ -56,7 +56,7 @@ public class SessionGrainReminderTests
         sessionResult.IsSuccess.Should().BeFalse();
         sessionResult.IsFailed.Should().BeTrue();
 
-        TestSiloOptions.SessionOption.ClearStateOnClose = false;
+        TestSiloOptions.SessionOption.ClearStateOnClose = true;
         TestSiloOptions.SessionOption.SessionLifetime = TimeSpan.FromDays(20);
     }
 
