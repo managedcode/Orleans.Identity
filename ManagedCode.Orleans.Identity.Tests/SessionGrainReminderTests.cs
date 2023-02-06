@@ -59,4 +59,22 @@ public class SessionGrainReminderTests
         TestSiloOptions.SessionOption.ClearStateOnClose = false;
         TestSiloOptions.SessionOption.SessionLifetime = TimeSpan.FromDays(20);
     }
+
+    [Fact]
+    public async Task CloseSession_WhenDeleteSessionOnCloseIsTrue_DoNotRegisterReminder()
+    {
+        // Arrange
+        var sessionId = Guid.NewGuid().ToString();
+        var createSessionModel = GetTestCreateSessionModel(sessionId);
+        var sessionGrain = _testApp.Cluster.Client.GetGrain<ISessionGrain>(sessionId);
+        await sessionGrain.CreateAsync(createSessionModel);
+        await sessionGrain.CloseAsync();
+
+        // Act
+        var sessionResult = await sessionGrain.GetSessionAsync();
+
+        // Assert
+        sessionResult.IsSuccess.Should().BeFalse();
+        sessionResult.IsFailed.Should().BeTrue();
+    }
 }
