@@ -68,9 +68,6 @@ public class SessionGrain : Grain, ISessionGrain, IRemindable
         if (reminderName == SessionGrainConstants.SESSION_LIFETIME_REMINDER_NAME)
         {
             await CloseAsync();
-            var reminder = await this.GetReminder(SessionGrainConstants.SESSION_LIFETIME_REMINDER_NAME);
-            if (reminder is not null)
-                await this.UnregisterReminder(reminder);
         }
     }
 
@@ -111,6 +108,7 @@ public class SessionGrain : Grain, ISessionGrain, IRemindable
         _sessionState.State.IsActive = false;
 
         await _sessionState.WriteStateAsync();
+        await UnregisterReminder();
 
         return Result.Succeed();
     }
@@ -314,5 +312,12 @@ public class SessionGrain : Grain, ISessionGrain, IRemindable
         await this.RegisterOrUpdateReminder(SessionGrainConstants.SESSION_LIFETIME_REMINDER_NAME,
             _sessionOption.SessionLifetime, _sessionOption.SessionLifetime);
 
+    }
+
+    private async ValueTask UnregisterReminder()
+    {
+        var reminder = await this.GetReminder(SessionGrainConstants.SESSION_LIFETIME_REMINDER_NAME);
+        if (reminder is not null)
+            await this.UnregisterReminder(reminder);
     }
 }
