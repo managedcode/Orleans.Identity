@@ -29,17 +29,6 @@ namespace ManagedCode.Orleans.Identity.Server.Grains.Tokens
             await userGrain.CodeVerificationTokenExpiredAsync(_tokenState.State.Value);
         }
 
-        protected override async ValueTask CallUserGrainOnTokenInvalid()
-        {
-            if (_tokenState.State.UserGrainId.IsDefault || _tokenState.State.UserGrainId.TryGetGuidKey(out var guid, out var grainId) is false)
-            {
-                return;
-            }
-
-            var userGrain = GrainFactory.GetGrain<ICodeVerificationTokenUserGrain>(grainId);
-            await userGrain.CodeVerificationTokenInvalidAsync(_tokenState.State.Value);
-        }
-
         protected override async ValueTask CallUserGrainOnTokenValid()
         {
             if (_tokenState.State.UserGrainId.IsDefault || _tokenState.State.UserGrainId.TryGetGuidKey(out var guid, out var grainId) is false)

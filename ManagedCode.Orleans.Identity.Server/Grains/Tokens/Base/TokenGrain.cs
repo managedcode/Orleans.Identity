@@ -24,8 +24,7 @@ namespace ManagedCode.Orleans.Identity.Server.Grains.Tokens.Base
 
         protected abstract ValueTask CallUserGrainOnTokenExpired();
         protected abstract ValueTask CallUserGrainOnTokenValid();
-        protected abstract ValueTask CallUserGrainOnTokenInvalid();
-
+        
         private async Task OnTimerTicked(object args)
         {
             if (_tokenState.RecordExists is false)
