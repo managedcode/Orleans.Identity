@@ -12,41 +12,41 @@ namespace ManagedCode.Orleans.Identity.Server.Grains.Tokens;
 public class MagicLinkTokenGrain : TokenGrain, IMagicLinkTokenGrain
 {
     public MagicLinkTokenGrain(
-        [PersistentState("magicLinkToken", OrleansIdentityConstants.TOKEN_STORAGE_NAME)]
+        [PersistentState("magicLinkToken", OrleansIdentityConstants.SESSION_STORAGE)]
         IPersistentState<TokenModel> tokenState) : base(tokenState, TokenGrainConstants.MAGIC_LINK_TOKEN_REMINDER_NAME)
     {
     }
 
     protected override async ValueTask CallUserGrainOnTokenExpired()
     {
-        if (_tokenState.State.UserGrainId.IsDefault)
+        if (TokenState.State.UserGrainId.IsDefault)
         {
             return;
         }
-        var parseResult = _tokenState.State.UserGrainId.Key.ToString();
+        var parseResult = TokenState.State.UserGrainId.Key.ToString();
         var userGrain = GrainFactory.GetGrain<IMagicLinkTokenUserGrain>(parseResult);
-        await userGrain.MagicLinkTokenExpiredAsync(_tokenState.State.Value);
+        await userGrain.MagicLinkTokenExpiredAsync(TokenState.State.Value);
     }
 
     protected override async ValueTask CallUserGrainOnTokenInvalid()
     {
-        if (_tokenState.State.UserGrainId.IsDefault)
+        if (TokenState.State.UserGrainId.IsDefault)
         {
             return;
         }
-        var parseResult = _tokenState.State.UserGrainId.Key.ToString();
+        var parseResult = TokenState.State.UserGrainId.Key.ToString();
         var userGrain = GrainFactory.GetGrain<IMagicLinkTokenUserGrain>(parseResult);
-        await userGrain.MagicLinkTokenInvalidAsync(_tokenState.State.Value);
+        await userGrain.MagicLinkTokenInvalidAsync(TokenState.State.Value);
     }
 
     protected override async ValueTask CallUserGrainOnTokenValid()
     {
-        if (_tokenState.State.UserGrainId.IsDefault)
+        if (TokenState.State.UserGrainId.IsDefault)
         {
             return;
         }
-        var parseResult = _tokenState.State.UserGrainId.Key.ToString();
+        var parseResult = TokenState.State.UserGrainId.Key.ToString();
         var userGrain = GrainFactory.GetGrain<IMagicLinkTokenUserGrain>(parseResult);
-        await userGrain.MagicLinkTokenValidAsync(_tokenState.State.Value);
+        await userGrain.MagicLinkTokenValidAsync(TokenState.State.Value);
     }
 }
