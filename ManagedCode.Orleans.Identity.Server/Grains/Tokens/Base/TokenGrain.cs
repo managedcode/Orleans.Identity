@@ -14,11 +14,13 @@ namespace ManagedCode.Orleans.Identity.Server.Grains.Tokens.Base
     public abstract class TokenGrain : Grain, IBaseTokenGrain, IRemindable
     {
         private readonly string _reminderName;
-        protected readonly IPersistentState<TokenModel> _tokenState;
-        
+        protected readonly IPersistentState<TokenModel> TokenState;
+
+        private IDisposable? _timerReference;
+
         protected TokenGrain(IPersistentState<TokenModel> tokenState, string reminderName)
         {
-            _tokenState = tokenState;
+            TokenState = tokenState;
             _reminderName = reminderName;
         }
 
@@ -26,16 +28,17 @@ namespace ManagedCode.Orleans.Identity.Server.Grains.Tokens.Base
         protected abstract ValueTask CallUserGrainOnTokenValid();
         
         private async Task OnTimerTicked(object args)
-        {
-            if (_tokenState.RecordExists is false)
+        {            
+            _timerReference?.Dispose();
+            if (TokenState.RecordExists is false)
             {
                 DeactivateOnIdle();
                 return;
             }
-
-            // TODO: also notify UserGrain if token is expired
+            
+            await CallUserGrainOnTokenExpired();
+            await TokenState.ClearStateAsync();
             DeactivateOnIdle();
-            await _tokenState.ClearStateAsync();
         }
 
         public async ValueTask<Result> CreateAsync(CreateTokenModel createModel)
@@ -46,61 +49,66 @@ namespace ManagedCode.Orleans.Identity.Server.Grains.Tokens.Base
                 return Result.Fail();
             }
 
-            _tokenState.State = new TokenModel
+            TokenState.State = new TokenModel
             {
                 Lifetime = createModel.Lifetime,
                 UserGrainId = createModel.UserGrainId,
                 Value = createModel.Value,
             };
 
-            await _tokenState.WriteStateAsync();
+            await TokenState.WriteStateAsync();
 
             if (createModel.Lifetime < TimeSpan.FromMinutes(1))
             {
-                RegisterTimer(OnTimerTicked, null, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
+                _timerReference = RegisterTimer(OnTimerTicked, null, createModel.Lifetime, createModel.Lifetime);
             }
             else
             {
-                await this.RegisterOrUpdateReminder(_reminderName, _tokenState.State.Lifetime, _tokenState.State.Lifetime);
+                await this.RegisterOrUpdateReminder(_reminderName, TokenState.State.Lifetime, TokenState.State.Lifetime);
             }
 
             return Result.Succeed();
         }
 
 
-        public ValueTask<Result> VerifyAsync()
+        public async ValueTask<Result> VerifyAsync()
         {
-            if (_tokenState.RecordExists is false)
+            if (TokenState.RecordExists is false)
             {
                 DeactivateOnIdle();
-                return Result.Fail().AsValueTask();    
+                return Result.Fail();    
             }
 
-            return Result.Succeed().AsValueTask();
+            await CallUserGrainOnTokenValid();
+            return Result.Succeed();
         }
 
         public ValueTask<Result<TokenModel>> GetTokenAsync()
         {
-            if (_tokenState.RecordExists is false)
+            if (TokenState.RecordExists is false)
             {
                 DeactivateOnIdle();
                 return Result<TokenModel>.Fail().AsValueTask();
             }
 
-            return Result<TokenModel>.Succeed(_tokenState.State).AsValueTask();
+            return Result<TokenModel>.Succeed(TokenState.State).AsValueTask();
         }
 
         public async Task ReceiveReminder(string reminderName, TickStatus status)
         {
-            if (_tokenState.RecordExists is false)
+            if (TokenState.RecordExists is false)
             {
                 DeactivateOnIdle();
+                await this.UnregisterReminder(await this.GetReminder(reminderName));
                 return;
             }
 
             if (reminderName == _reminderName)
             {
-                await _tokenState.ClearStateAsync();
+                await CallUserGrainOnTokenExpired();
+                await this.UnregisterReminder(await this.GetReminder(reminderName));
+                await TokenState.ClearStateAsync();
+                DeactivateOnIdle();
             }
         }
     }

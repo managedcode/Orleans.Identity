@@ -14,31 +14,30 @@ namespace ManagedCode.Orleans.Identity.Server.Grains.Tokens;
 public class EmailVerificationTokenGrain : TokenGrain, IEmailVerificationTokenGrain
 {
     public EmailVerificationTokenGrain(
-        [PersistentState("emailVerificationToken", OrleansIdentityConstants.TOKEN_STORAGE_NAME)]
+        [PersistentState("emailVerificationToken", OrleansIdentityConstants.SESSION_STORAGE)]
         IPersistentState<TokenModel> tokenState) : base(tokenState, TokenGrainConstants.EMAIL_VERIFICATION_TOKEN_REMINDER_NAME)
     {
     }
 
     protected override async ValueTask CallUserGrainOnTokenExpired()
     {
-
-        if (_tokenState.State.UserGrainId.IsDefault || _tokenState.State.UserGrainId.TryGetGuidKey(out var guid, out var grainId) is false)
+        if (TokenState.State.UserGrainId.IsDefault)
         {
             return;
         }
-
-        var userGrain = GrainFactory.GetGrain<IEmailVerificationTokenUserGrain>(grainId);
-        await userGrain.EmailVerificationTokenExpiredAsync(_tokenState.State.Value);
+        var parseResult = TokenState.State.UserGrainId.Key.ToString();
+        var userGrain = GrainFactory.GetGrain<IEmailVerificationTokenUserGrain>(parseResult);
+        await userGrain.EmailVerificationTokenExpiredAsync(TokenState.State.Value);
     }
 
     protected override async ValueTask CallUserGrainOnTokenValid()
     {
-        if (_tokenState.State.UserGrainId.IsDefault || _tokenState.State.UserGrainId.TryGetGuidKey(out var guid, out var grainId) is false)
+        if (TokenState.State.UserGrainId.IsDefault)
         {
             return;
         }
-
-        var userGrain = GrainFactory.GetGrain<IEmailVerificationTokenUserGrain>(grainId);
-        await userGrain.EmailVerificationTokenValidAsync(_tokenState.State.Value);
+        var parseResult = TokenState.State.UserGrainId.Key.ToString();
+        var userGrain = GrainFactory.GetGrain<IEmailVerificationTokenUserGrain>(parseResult);
+        await userGrain.EmailVerificationTokenValidAsync(TokenState.State.Value);
     }
 }
