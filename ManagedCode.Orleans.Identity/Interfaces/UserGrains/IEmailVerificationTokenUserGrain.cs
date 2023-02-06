@@ -9,7 +9,5 @@ namespace ManagedCode.Orleans.Identity.Interfaces.UserGrains
         ValueTask<Result> EmailVerificationTokenExpiredAsync(string token);
 
         ValueTask<Result> EmailVerificationTokenValidAsync(string token);
-        
-        ValueTask<Result> EmailVerificationTokenInvalidAsync(string token);
     }
 }

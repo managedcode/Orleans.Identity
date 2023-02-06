@@ -30,17 +30,6 @@ public class EmailVerificationTokenGrain : TokenGrain, IEmailVerificationTokenGr
         await userGrain.EmailVerificationTokenExpiredAsync(TokenState.State.Value);
     }
 
-    protected override async ValueTask CallUserGrainOnTokenInvalid()
-    {
-        if (TokenState.State.UserGrainId.IsDefault)
-        {
-            return;
-        }
-        var parseResult = TokenState.State.UserGrainId.Key.ToString();
-        var userGrain = GrainFactory.GetGrain<IEmailVerificationTokenUserGrain>(parseResult);
-        await userGrain.EmailVerificationTokenInvalidAsync(TokenState.State.Value);
-    }
-
     protected override async ValueTask CallUserGrainOnTokenValid()
     {
         if (TokenState.State.UserGrainId.IsDefault)

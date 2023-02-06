@@ -1,4 +1,5 @@
-﻿using ManagedCode.Orleans.Identity.Constants;
+﻿using ManagedCode.Communication;
+using ManagedCode.Orleans.Identity.Constants;
 using ManagedCode.Orleans.Identity.Interfaces.TokenGrains;
 using ManagedCode.Orleans.Identity.Interfaces.UserGrains;
 using ManagedCode.Orleans.Identity.Models;
@@ -26,17 +27,6 @@ namespace ManagedCode.Orleans.Identity.Server.Grains.Tokens
             var parseResult = TokenState.State.UserGrainId.Key.ToString();
             var userGrain = GrainFactory.GetGrain<ICodeVerificationTokenUserGrain>(parseResult);
             await userGrain.CodeVerificationTokenExpiredAsync(TokenState.State.Value);
-        }
-
-        protected override async ValueTask CallUserGrainOnTokenInvalid()
-        {
-            if (TokenState.State.UserGrainId.IsDefault)
-            {
-                return;
-            }
-            var parseResult = TokenState.State.UserGrainId.Key.ToString();
-            var userGrain = GrainFactory.GetGrain<ICodeVerificationTokenUserGrain>(parseResult);
-            await userGrain.CodeVerificationTokenInvalidAsync(TokenState.State.Value);
         }
 
         protected override async ValueTask CallUserGrainOnTokenValid()

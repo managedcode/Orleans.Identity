@@ -9,6 +9,4 @@ public interface IMagicLinkTokenUserGrain : IGrainWithStringKey
     ValueTask<Result> MagicLinkTokenExpiredAsync(string token);
     
     ValueTask<Result> MagicLinkTokenValidAsync(string token);
-    
-    ValueTask<Result> MagicLinkTokenInvalidAsync(string token);
 }

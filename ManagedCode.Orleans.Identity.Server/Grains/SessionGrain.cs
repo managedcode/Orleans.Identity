@@ -10,12 +10,13 @@ using ManagedCode.Orleans.Identity.Enums;
 using ManagedCode.Orleans.Identity.Interfaces;
 using ManagedCode.Orleans.Identity.Models;
 using ManagedCode.Orleans.Identity.Options;
+using ManagedCode.Orleans.Identity.Server.Constants;
 using Orleans;
 using Orleans.Runtime;
 
 namespace ManagedCode.Orleans.Identity.Server.Grains;
 
-public class SessionGrain : Grain, ISessionGrain
+public class SessionGrain : Grain, ISessionGrain, IRemindable
 {
     private readonly SessionOption _sessionOption;
     private readonly IPersistentState<SessionModel> _sessionState;
@@ -58,8 +59,17 @@ public class SessionGrain : Grain, ISessionGrain
         await _sessionState.WriteStateAsync();
 
         var result = GetSessionModel();
-
+        
         return Result<SessionModel>.Succeed(result);
+    }
+
+    public async Task ReceiveReminder(string reminderName, TickStatus status)
+    {
+        
+        if (reminderName == SessionGrainConstants.SESSION_LIFETIME_REMINDER_NAME)
+        {
+            await UnregisterReminderAndDeleteState();
+        }
     }
 
     public ValueTask<Result<ImmutableDictionary<string, HashSet<string>>>> ValidateAndGetClaimsAsync()
@@ -99,6 +109,7 @@ public class SessionGrain : Grain, ISessionGrain
         _sessionState.State.IsActive = false;
 
         await _sessionState.WriteStateAsync();
+        await SetSessionLifetimeReminder();
 
         return Result.Succeed();
     }
@@ -283,5 +294,32 @@ public class SessionGrain : Grain, ISessionGrain
             Status = _sessionState.State.Status,
             UserData = _sessionState.State.UserData
         };
+    }
+
+    private async ValueTask SetSessionLifetimeReminder()
+    {
+        if (_sessionOption.SessionLifetime == TimeSpan.Zero ||
+            _sessionOption.SessionLifetime < TimeSpan.FromMinutes(1))
+        {
+            return;   
+        }
+
+        var reminder = await this.GetReminder(SessionGrainConstants.SESSION_LIFETIME_REMINDER_NAME);
+        if(reminder is not null)
+            return;
+        
+        await this.RegisterOrUpdateReminder(SessionGrainConstants.SESSION_LIFETIME_REMINDER_NAME,
+            _sessionOption.SessionLifetime, _sessionOption.SessionLifetime);
+
+    }
+
+    private async ValueTask UnregisterReminderAndDeleteState()
+    {
+        if (_sessionState.RecordExists)
+            await _sessionState.ClearStateAsync();
+        
+        var reminder = await this.GetReminder(SessionGrainConstants.SESSION_LIFETIME_REMINDER_NAME);
+        if (reminder is not null)
+            await this.UnregisterReminder(reminder);
     }
 }

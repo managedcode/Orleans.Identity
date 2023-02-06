@@ -9,6 +9,4 @@ public interface ICodeVerificationTokenUserGrain : IGrainWithStringKey
     ValueTask<Result> CodeVerificationTokenExpiredAsync(string token);
         
     ValueTask<Result> CodeVerificationTokenValidAsync(string token);
-        
-    ValueTask<Result> CodeVerificationTokenInvalidAsync(string token);    
 }

@@ -28,17 +28,6 @@ public class MagicLinkTokenGrain : TokenGrain, IMagicLinkTokenGrain
         await userGrain.MagicLinkTokenExpiredAsync(TokenState.State.Value);
     }
 
-    protected override async ValueTask CallUserGrainOnTokenInvalid()
-    {
-        if (TokenState.State.UserGrainId.IsDefault)
-        {
-            return;
-        }
-        var parseResult = TokenState.State.UserGrainId.Key.ToString();
-        var userGrain = GrainFactory.GetGrain<IMagicLinkTokenUserGrain>(parseResult);
-        await userGrain.MagicLinkTokenInvalidAsync(TokenState.State.Value);
-    }
-
     protected override async ValueTask CallUserGrainOnTokenValid()
     {
         if (TokenState.State.UserGrainId.IsDefault)
