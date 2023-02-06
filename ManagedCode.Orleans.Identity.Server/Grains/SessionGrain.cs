@@ -59,7 +59,9 @@ public class SessionGrain : Grain, ISessionGrain, IRemindable
         await _sessionState.WriteStateAsync();
 
         var result = GetSessionModel();
-
+        
+        await SetSessionLifetimeReminder();
+        
         return Result<SessionModel>.Succeed(result);
     }
 
@@ -275,7 +277,6 @@ public class SessionGrain : Grain, ISessionGrain, IRemindable
         if (_sessionState.RecordExists)
         {
             await _sessionState.WriteStateAsync();
-            await SetSessionLifetimeReminder();
         }
         else
         {
