@@ -60,16 +60,15 @@ public class SessionGrain : Grain, ISessionGrain, IRemindable
 
         var result = GetSessionModel();
         
-        await SetSessionLifetimeReminder();
-        
         return Result<SessionModel>.Succeed(result);
     }
 
     public async Task ReceiveReminder(string reminderName, TickStatus status)
     {
+        
         if (reminderName == SessionGrainConstants.SESSION_LIFETIME_REMINDER_NAME)
         {
-            await CloseAsync();
+            await UnregisterReminderAndDeleteState();
         }
     }
 
@@ -110,7 +109,7 @@ public class SessionGrain : Grain, ISessionGrain, IRemindable
         _sessionState.State.IsActive = false;
 
         await _sessionState.WriteStateAsync();
-        await UnregisterReminder();
+        await SetSessionLifetimeReminder();
 
         return Result.Succeed();
     }
@@ -309,14 +308,16 @@ public class SessionGrain : Grain, ISessionGrain, IRemindable
         if(reminder is not null)
             return;
         
-        // TODO: Unregister reminder when session is closed or deleted 
         await this.RegisterOrUpdateReminder(SessionGrainConstants.SESSION_LIFETIME_REMINDER_NAME,
             _sessionOption.SessionLifetime, _sessionOption.SessionLifetime);
 
     }
 
-    private async ValueTask UnregisterReminder()
+    private async ValueTask UnregisterReminderAndDeleteState()
     {
+        if (_sessionState.RecordExists)
+            await _sessionState.ClearStateAsync();
+        
         var reminder = await this.GetReminder(SessionGrainConstants.SESSION_LIFETIME_REMINDER_NAME);
         if (reminder is not null)
             await this.UnregisterReminder(reminder);
