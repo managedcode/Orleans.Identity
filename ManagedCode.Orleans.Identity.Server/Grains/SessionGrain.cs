@@ -310,6 +310,7 @@ public class SessionGrain : Grain, ISessionGrain, IRemindable
         if(reminder is not null)
             return;
         
+        // TODO: Unregister reminder when session is closed or deleted 
         await this.RegisterOrUpdateReminder(SessionGrainConstants.SESSION_LIFETIME_REMINDER_NAME,
             _sessionOption.SessionLifetime, _sessionOption.SessionLifetime);
 
