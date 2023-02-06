@@ -169,7 +169,7 @@ namespace ManagedCode.Orleans.Identity.Tests.TokenGrainTests.UserGrainTests
         }
 
         [Fact]
-        public virtual async Task NotifyUserGrainWithTimer_WhenTokenExpiredAndUserGrainIdIsDefault_ReturnSuccess()
+        public virtual async Task NotifyUserGrainWithTimer_WhenTokenExpiredAndUserGrainIdIsDefault_ReturnFail()
         {
             // Arrange
             var createTokenModel = TokenHelper.GenerateCreateTestTokenModel(TimeSpan.FromSeconds(30));
@@ -181,7 +181,8 @@ namespace ManagedCode.Orleans.Identity.Tests.TokenGrainTests.UserGrainTests
             var result = await tokenGrain.VerifyAsync();
 
             // Assert
-            result.IsSuccess.Should().BeTrue();
+            result.IsSuccess.Should().BeFalse();
+            result.IsFailed.Should().BeTrue();
         }
         
         #endregion
