@@ -89,4 +89,21 @@ public class SessionGrainReminderTests
         // Assert
         result.IsFailed.Should().BeTrue();
     }
+
+    [Fact]
+    public async Task DeactivateGrain_RegisterReminder_CloseSession_UnregisterReminder()
+    {
+        // Arrange
+        var sessionId = Guid.NewGuid().ToString();
+        var sessionCreateModel = GetTestCreateSessionModel(sessionId);
+        var sessionGrain = _testApp.Cluster.GrainFactory.GetGrain<ISessionGrain>(sessionId);
+        await sessionGrain.CreateAsync(sessionCreateModel);
+        
+        // Act
+        await Task.Delay(TimeSpan.FromMinutes(2));
+        var result = await sessionGrain.CloseAsync();
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+    }
 }

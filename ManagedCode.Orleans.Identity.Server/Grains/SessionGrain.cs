@@ -100,7 +100,8 @@ public class SessionGrain : Grain, ISessionGrain, IRemindable
 
         if (_sessionOption.ClearStateOnClose)
         {
-            await _sessionState.ClearStateAsync();
+            await _sessionState.ClearStateAsync();        
+            await UnregisterReminder();
             return Result.Succeed();
         }
 
@@ -110,6 +111,7 @@ public class SessionGrain : Grain, ISessionGrain, IRemindable
 
         await _sessionState.WriteStateAsync();
 
+        await UnregisterReminder();
         return Result.Succeed();
     }
 
@@ -272,7 +274,7 @@ public class SessionGrain : Grain, ISessionGrain, IRemindable
 
     public override async Task OnDeactivateAsync(DeactivationReason reason, CancellationToken cancellationToken)
     {
-        if (_sessionState.RecordExists)
+        if (_sessionState.RecordExists && _sessionState.State.Status != SessionStatus.Closed)
         {
             await _sessionState.WriteStateAsync();
             await SetSessionLifetimeReminder();
