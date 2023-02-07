@@ -1,13 +1,13 @@
 using ManagedCode.Orleans.Identity.Constants;
 using ManagedCode.Orleans.Identity.Server.Extensions;
-using ManagedCode.Orleans.Identity.Server.GrainCallFilter;
 using Microsoft.Extensions.DependencyInjection;
+using Orleans.Configuration;
 using Orleans.Serialization;
 using Orleans.TestingHost;
 
-namespace ManagedCode.Orleans.Identity.Tests.Cluster;
+namespace ManagedCode.Orleans.Identity.Tests.Cluster.ShortLifetimeSilo;
 
-public class TestSiloConfigurations : ISiloConfigurator
+public class ShortLifetimeSiloConfiguration : ISiloConfigurator
 {
     public void Configure(ISiloBuilder siloBuilder)
     {
@@ -18,10 +18,14 @@ public class TestSiloConfigurations : ISiloConfigurator
         // For test purpose
         siloBuilder.AddMemoryGrainStorage(OrleansIdentityConstants.SESSION_STORAGE);
         siloBuilder.UseInMemoryReminderService();
+        siloBuilder.Configure<GrainCollectionOptions>(options =>
+        {
+            options.CollectionAge = TimeSpan.FromMinutes(1).Add(TimeSpan.FromSeconds(30));
+        });
 
         siloBuilder.ConfigureServices(services =>
         {
-            services.AddSingleton(TestSiloOptions.SessionOption);
+            services.AddSingleton(ShortLifetimeSiloOptions.SessionOption);
         });
     }
 }
