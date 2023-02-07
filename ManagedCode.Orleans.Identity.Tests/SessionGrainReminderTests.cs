@@ -100,10 +100,47 @@ public class SessionGrainReminderTests
         await sessionGrain.CreateAsync(sessionCreateModel);
         
         // Act
-        await Task.Delay(TimeSpan.FromMinutes(2));
+        await Task.Delay(TimeSpan.FromMinutes(3));
         var result = await sessionGrain.CloseAsync();
 
         // Assert
         result.IsSuccess.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task DeactivateGrain_ReactivateGrainWhenSessionLifetimeIsExpired_CloseSession_UnregisterReminder()
+    {
+        // Arrange
+        var sessionId = Guid.NewGuid().ToString();
+        var sessionCreateModel = GetTestCreateSessionModel(sessionId);
+        var sessionGrain = _testApp.Cluster.GrainFactory.GetGrain<ISessionGrain>(sessionId);
+        await sessionGrain.CreateAsync(sessionCreateModel);
+        
+        // Act
+        await Task.Delay(TimeSpan.FromMinutes(3));
+        var result = await sessionGrain.GetSessionAsync();
+        
+        // Assert
+        result.IsFailed.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task DeactivateGrain_ReactivateGrainWhenSessionLifetimeIsExpiredAndClearStateOnClose_CloseSession_UnregisterReminder_ReturnClosedSession()
+    {
+        // Arrange
+        ShortLifetimeSiloOptions.SessionOption.ClearStateOnClose = false;
+        var sessionId = Guid.NewGuid().ToString();
+        var sessionCreateModel = GetTestCreateSessionModel(sessionId);
+        var sessionGrain = _testApp.Cluster.GrainFactory.GetGrain<ISessionGrain>(sessionId);
+        await sessionGrain.CreateAsync(sessionCreateModel);
+        
+        // Act
+        await Task.Delay(TimeSpan.FromMinutes(3));
+        var result = await sessionGrain.GetSessionAsync();
+        
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Status.Should().Be(SessionStatus.Closed);
+        ShortLifetimeSiloOptions.SessionOption.ClearStateOnClose = true;
     }
 }

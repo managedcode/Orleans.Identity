@@ -42,6 +42,18 @@ public class SessionGrain : Grain, ISessionGrain, IRemindable
         return Result<SessionModel>.Succeed(result).AsValueTask();
     }
 
+    public override async Task OnActivateAsync(CancellationToken cancellationToken)
+    {
+        if (_sessionState.RecordExists)
+        {
+            var timePassed = DateTime.UtcNow - _sessionState.State.LastAccess;
+            if (timePassed >= _sessionOption.SessionLifetime)
+            {
+                await CloseAsync();
+            }
+        }
+    }
+
     public async Task<Result<SessionModel>> CreateAsync(CreateSessionModel model)
     {
         var date = DateTime.UtcNow;
@@ -312,7 +324,6 @@ public class SessionGrain : Grain, ISessionGrain, IRemindable
         
         await this.RegisterOrUpdateReminder(SessionGrainConstants.SESSION_LIFETIME_REMINDER_NAME,
             _sessionOption.SessionLifetime, _sessionOption.SessionLifetime);
-
     }
 
     private async ValueTask UnregisterReminder()
