@@ -11,8 +11,6 @@ public class ShortLifetimeSiloConfiguration : ISiloConfigurator
 {
     public void Configure(ISiloBuilder siloBuilder)
     {
-        siloBuilder.Services.AddSerializer(serializerBuilder => { serializerBuilder.AddJsonSerializer(); });
-
         // add OrleansIdentity
         siloBuilder.AddOrleansIdentity();
 
