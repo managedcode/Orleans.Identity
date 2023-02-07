@@ -75,4 +75,18 @@ public class SessionGrainReminderTests
         result.Value.ClosedDate.Should().NotBeNull();
         ShortLifetimeSiloOptions.SessionOption.ClearStateOnClose = true;
     }
+
+    [Fact]
+    public async Task DeactivateGrain_WhenSessionDoesntExists_DoNotRegisterReminder()
+    {
+        // Arrange
+        var sessionId = Guid.NewGuid().ToString();
+        var sessionGrain = _testApp.Cluster.GrainFactory.GetGrain<ISessionGrain>(sessionId);
+
+        // Act
+        var result = await sessionGrain.PauseSessionAsync();
+
+        // Assert
+        result.IsFailed.Should().BeTrue();
+    }
 }
