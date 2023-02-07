@@ -94,17 +94,20 @@ public class SessionGrainReminderTests
     public async Task DeactivateGrain_RegisterReminder_CloseSession_UnregisterReminder()
     {
         // Arrange
+        ShortLifetimeSiloOptions.SessionOption.SessionLifetime = TimeSpan.FromMinutes(4); 
         var sessionId = Guid.NewGuid().ToString();
         var sessionCreateModel = GetTestCreateSessionModel(sessionId);
         var sessionGrain = _testApp.Cluster.GrainFactory.GetGrain<ISessionGrain>(sessionId);
         await sessionGrain.CreateAsync(sessionCreateModel);
         
         // Act
-        await Task.Delay(TimeSpan.FromMinutes(3));
+        await sessionGrain.GetSessionAsync();
+        await Task.Delay(TimeSpan.FromMinutes(2));
         var result = await sessionGrain.CloseAsync();
 
         // Assert
         result.IsSuccess.Should().BeTrue();
+        ShortLifetimeSiloOptions.SessionOption.SessionLifetime = TimeSpan.FromMinutes(1).Add(TimeSpan.FromSeconds(40));
     }
 
     [Fact]
