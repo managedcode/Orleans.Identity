@@ -1,4 +1,4 @@
-﻿using ManagedCode.Orleans.Identity.Extensions;
+﻿using ManagedCode.Orleans.Identity.Core.Extensions;
 using ManagedCode.Orleans.Identity.Tests.Cluster.Grains.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 

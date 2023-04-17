@@ -1,7 +1,7 @@
-﻿using ManagedCode.Orleans.Identity.Constants;
-using ManagedCode.Orleans.Identity.Interfaces.TokenGrains;
-using ManagedCode.Orleans.Identity.Interfaces.UserGrains;
-using ManagedCode.Orleans.Identity.Models;
+﻿using ManagedCode.Orleans.Identity.Core.Constants;
+using ManagedCode.Orleans.Identity.Core.Interfaces.TokenGrains;
+using ManagedCode.Orleans.Identity.Core.Interfaces.UserGrains;
+using ManagedCode.Orleans.Identity.Core.Models;
 using ManagedCode.Orleans.Identity.Server.Constants;
 using ManagedCode.Orleans.Identity.Server.Grains.Tokens.Base;
 using Orleans.Runtime;

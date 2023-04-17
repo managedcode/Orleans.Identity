@@ -27,7 +27,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\ManagedCode.Orleans.Identity\ManagedCode.Orleans.Identity.csproj" />
+      <ProjectReference Include="..\ManagedCode.Orleans.Identity.Core\ManagedCode.Orleans.Identity.Core.csproj" />
     </ItemGroup>
 
 </Project>

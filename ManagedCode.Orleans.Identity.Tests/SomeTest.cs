@@ -1,6 +1,6 @@
 using System.Net;
 using FluentAssertions;
-using ManagedCode.Orleans.Identity.Interfaces;
+using ManagedCode.Orleans.Identity.Core.Interfaces;
 using ManagedCode.Orleans.Identity.Tests.Cluster;
 using ManagedCode.Orleans.Identity.Tests.TestApp;
 using Microsoft.AspNetCore.SignalR.Client;

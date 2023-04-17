@@ -1,4 +1,4 @@
-﻿using ManagedCode.Orleans.Identity.Interfaces.UserGrains;
+﻿using ManagedCode.Orleans.Identity.Core.Interfaces.UserGrains;
 
 namespace ManagedCode.Orleans.Identity.Tests.Cluster.Grains.Interfaces.UserGrains
 {

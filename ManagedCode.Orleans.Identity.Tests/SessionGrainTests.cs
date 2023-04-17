@@ -1,8 +1,8 @@
 ﻿using System.Security.Claims;
 using FluentAssertions;
-using ManagedCode.Orleans.Identity.Enums;
-using ManagedCode.Orleans.Identity.Interfaces;
-using ManagedCode.Orleans.Identity.Models;
+using ManagedCode.Orleans.Identity.Core.Enums;
+using ManagedCode.Orleans.Identity.Core.Interfaces;
+using ManagedCode.Orleans.Identity.Core.Models;
 using ManagedCode.Orleans.Identity.Tests.Cluster;
 using ManagedCode.Orleans.Identity.Tests.Helpers;
 using Orleans.Runtime;

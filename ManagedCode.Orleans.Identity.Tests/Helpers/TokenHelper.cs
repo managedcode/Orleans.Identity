@@ -1,4 +1,4 @@
-using ManagedCode.Orleans.Identity.Models;
+using ManagedCode.Orleans.Identity.Core.Models;
 using Orleans.Runtime;
 
 namespace ManagedCode.Orleans.Identity.Tests.Helpers;

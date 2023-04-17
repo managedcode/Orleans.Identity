@@ -1,5 +1,5 @@
 using FluentAssertions;
-using ManagedCode.Orleans.Identity.Interfaces.TokenGrains;
+using ManagedCode.Orleans.Identity.Core.Interfaces.TokenGrains;
 using ManagedCode.Orleans.Identity.Tests.Cluster;
 using ManagedCode.Orleans.Identity.Tests.Helpers;
 using Xunit;

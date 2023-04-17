@@ -1,4 +1,4 @@
-using ManagedCode.Orleans.Identity.Extensions;
+using ManagedCode.Orleans.Identity.Core.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

@@ -1,4 +1,4 @@
-using ManagedCode.Orleans.Identity.Options;
+using ManagedCode.Orleans.Identity.Core.Options;
 
 namespace ManagedCode.Orleans.Identity.Tests.Cluster;
 

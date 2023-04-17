@@ -1,4 +1,4 @@
-using ManagedCode.Orleans.Identity.Constants;
+using ManagedCode.Orleans.Identity.Core.Constants;
 using ManagedCode.Orleans.Identity.Server.Extensions;
 using ManagedCode.Orleans.Identity.Server.GrainCallFilter;
 using Microsoft.Extensions.DependencyInjection;

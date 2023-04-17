@@ -1,4 +1,4 @@
-﻿using ManagedCode.Orleans.Identity.Interfaces.TokenGrains;
+﻿using ManagedCode.Orleans.Identity.Core.Interfaces.TokenGrains;
 using ManagedCode.Orleans.Identity.Tests.Cluster;
 using ManagedCode.Orleans.Identity.Tests.Cluster.Grains.Interfaces.UserGrains;
 using Xunit;

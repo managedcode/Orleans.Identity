@@ -1,7 +1,7 @@
 using System;
 using ManagedCode.Orleans.Identity.Client.Middlewares;
-using ManagedCode.Orleans.Identity.Constants;
-using ManagedCode.Orleans.Identity.Options;
+using ManagedCode.Orleans.Identity.Core.Constants;
+using ManagedCode.Orleans.Identity.Core.Options;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.DependencyInjection;
