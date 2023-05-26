@@ -11,7 +11,7 @@ public static class ClaimsPrincipalExtensions
         return user.FindFirst(ClaimTypes.MobilePhone)?.Value ?? string.Empty;
     }
 
-    public static string GetAccountId(this ClaimsPrincipal user)
+    public static string GetNameIdentifier(this ClaimsPrincipal user)
     {
         return user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
     }
@@ -43,6 +43,7 @@ public static class ClaimsPrincipalExtensions
 
     public static bool IsUnauthorizedClient(this ClaimsPrincipal user)
     {
+        //TODO: this is strange 
         return user.GetGrainId() == OrleansIdentityConstants.AUTH_TOKEN;
     }
 }

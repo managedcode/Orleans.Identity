@@ -62,12 +62,17 @@ public class SessionGrain : Grain, ISessionGrain, IRemindable
         {
             IsActive = true,
             UserGrainId = model.UserGrainId,
-            UserData = model.UserData ?? new Dictionary<string, HashSet<string>>(),
+            UserData = model.UserData ?? new (),
             Status = SessionStatus.Active,
             CreatedDate = date,
             LastAccess = date
         };
-
+        
+        _sessionState.State.UserData.Add(OrleansIdentityConstants.SESSION_ID_CLAIM_NAME, new HashSet<string>()
+        {
+            this.GetPrimaryKeyString()
+        });
+        
         await _sessionState.WriteStateAsync();
 
         var result = GetSessionModel();

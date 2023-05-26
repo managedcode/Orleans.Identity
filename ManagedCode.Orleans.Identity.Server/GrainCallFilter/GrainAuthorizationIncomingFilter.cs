@@ -33,7 +33,7 @@ public class GrainAuthorizationIncomingFilter : IIncomingGrainCallFilter
                     await context.Invoke();
                     return;
                 }
-                var roles = this.GetOrleansContext().ToHashSet();
+                var roles = this.GetRoles().ToHashSet();
                 foreach (var attribute in attributes)
                 {
                     var intersect = attribute.Roles?.Split(',') ?? Array.Empty<string>();

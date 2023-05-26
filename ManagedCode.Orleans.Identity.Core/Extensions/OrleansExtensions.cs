@@ -17,6 +17,10 @@ public static class OrleansExtensions
     {
         RequestContext.Set(OrleansIdentityConstants.SESSION_ID_CLAIM_NAME, user.GetSessionId());
         RequestContext.Set(ClaimTypes.Role, user.GetRoles());
+        if (!string.IsNullOrEmpty(user.Identity?.Name))
+        {
+            RequestContext.Set(ClaimTypes.NameIdentifier, user.Identity.Name);
+        }
     }
 
     /// <summary>
@@ -24,7 +28,7 @@ public static class OrleansExtensions
     /// </summary>
     /// <param name="filter"></param>
     /// <returns>Roles as <typeparam>string[]</typeparam> </returns>
-    public static string[] GetOrleansContext(this IIncomingGrainCallFilter filter)
+    public static string[] GetRoles(this IIncomingGrainCallFilter filter)
     {
         return RequestContext.Get(ClaimTypes.Role) as string[] ?? Array.Empty<string>();
     }

@@ -63,18 +63,16 @@ public class OrleansIdentityAuthenticationHandler : AuthenticationHandler<Authen
             {
                 ClaimsIdentity claimsIdentity = new(OrleansIdentityConstants.AUTHENTICATION_TYPE);
 
-                foreach (var claim in result.Value)
+                foreach (var claim in result.Value!)
                     claimsIdentity.ParseClaims(claim.Key, claim.Value);
-
-                claimsIdentity.AddClaim(new Claim(OrleansIdentityConstants.SESSION_ID_CLAIM_NAME, sessionId));
-
+                
                 var ticket = new AuthenticationTicket(new ClaimsPrincipal(claimsIdentity), Scheme.Name);
                 return AuthenticateResult.Success(ticket);
             }
         }
         catch (Exception e)
         {
-            Logger.LogError(e, "HandleAuthenticateAsync.SessionId Validation");
+            Logger.LogError(e, "HandleAuthenticateAsync Validation");
         }
 
         return AuthenticateResult.Fail($"Unauthorized request. SessionId: {sessionId};");
