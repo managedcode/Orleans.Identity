@@ -1,31 +1,31 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net7.0</TargetFramework>
         <LangVersion>11</LangVersion>
         <EnableNETAnalyzers>true</EnableNETAnalyzers>
         <IsPackable>false</IsPackable>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <GenerateProgramFile>false</GenerateProgramFile>
+        <TargetFramework>net8.0</TargetFramework>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="FluentAssertions" Version="6.11.0" />
-        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.6.3" />
-        <PackageReference Include="Microsoft.Orleans.Analyzers" Version="7.2.1">
+        <PackageReference Include="FluentAssertions" Version="6.12.0" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+        <PackageReference Include="Microsoft.Orleans.Analyzers" Version="7.2.4">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.Orleans.Serialization" Version="7.2.1" />
-        <PackageReference Include="Microsoft.Orleans.TestingHost" Version="7.2.1" />
+        <PackageReference Include="Microsoft.Orleans.Serialization" Version="7.2.4" />
+        <PackageReference Include="Microsoft.Orleans.TestingHost" Version="7.2.4" />
         <PackageReference Include="System.Linq.Async" Version="6.0.1" />
-        <PackageReference Include="xunit" Version="2.5.0" />
-        <PackageReference Include="xunit.runner.visualstudio" Version="2.5.0">
+        <PackageReference Include="xunit" Version="2.6.2" />
+        <PackageReference Include="xunit.runner.visualstudio" Version="2.5.4">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
             <PrivateAssets>all</PrivateAssets>
         </PackageReference>
-        <PackageReference Include="xunit.runner.console" Version="2.5.0">
+        <PackageReference Include="xunit.runner.console" Version="2.6.2">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
@@ -37,15 +37,15 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="7.0.9" />
-        <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="7.0.9" />
-        <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="7.0.9" />
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0" />
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="7.0.0" />
-        <PackageReference Include="Microsoft.Orleans.Sdk" Version="7.2.1" />
-        <PackageReference Include="Microsoft.Orleans.Serialization.TestKit" Version="7.2.1" />
-        <PackageReference Include="ManagedCode.Communication" Version="2.0.26" />
-        <PackageReference Include="ManagedCode.Communication.Orleans" Version="2.0.26" />
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.0" />
+        <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.0" />
+        <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="8.0.0" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.0" />
+        <PackageReference Include="Microsoft.Orleans.Sdk" Version="7.2.4" />
+        <PackageReference Include="Microsoft.Orleans.Serialization.TestKit" Version="7.2.4" />
+        <PackageReference Include="ManagedCode.Communication" Version="8.0.0" />
+        <PackageReference Include="ManagedCode.Communication.Orleans" Version="8.0.0" />
     </ItemGroup>
 
     <ItemGroup>
