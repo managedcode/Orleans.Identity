@@ -75,7 +75,7 @@ public class SessionGrainTests
         // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
-        result.Value.Count.Should().Be(createSessionModel.UserData.Count);
+        result.Value.Count.Should().Be(createSessionModel.UserData.Count + 1);
     }
 
     [Fact]

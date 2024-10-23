@@ -4,6 +4,7 @@
         <OutputType>Library</OutputType>
         <Nullable>enable</Nullable>
         <IsPackable>true</IsPackable>
+        <TargetFrameworks>net7.0;net8.0</TargetFrameworks>
     </PropertyGroup>
 
     <!--NuGet-->

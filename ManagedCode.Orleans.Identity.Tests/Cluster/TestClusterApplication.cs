@@ -1,4 +1,5 @@
 ﻿using ManagedCode.Orleans.Identity.Tests.TestApp;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,13 +23,13 @@ public class TestClusterApplication : WebApplicationFactory<HttpHostProgram>, IC
 
     public TestCluster Cluster { get; }
 
+    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    {
+        builder.UseEnvironment("Development");
+    }
+
     protected override IHost CreateHost(IHostBuilder builder)
     {
-        if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")))
-        {
-            Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Development");
-        }
-
         builder.ConfigureServices(s => { s.AddSingleton(Cluster.Client); });
         return base.CreateHost(builder);
     }
