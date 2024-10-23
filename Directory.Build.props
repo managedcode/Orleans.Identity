@@ -1,4 +1,11 @@
 <Project>
+    
+    <!--C# version-->
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <LangVersion>12</LangVersion>
+    </PropertyGroup>
+    
     <!--NuGet-->
     <PropertyGroup>
         <Authors>ManagedCode</Authors>
@@ -17,8 +24,8 @@
         <RepositoryUrl>https://github.com/managedcode/Orleans.Identity</RepositoryUrl>
         <PackageProjectUrl>https://github.com/managedcode/Orleans.Identity</PackageProjectUrl>
         <Product>Managed Code - Orleans Identity</Product>
-        <Version>7.0.2</Version>
-        <PackageVersion>7.0.2</PackageVersion>
+        <Version>8.0.1</Version>
+        <PackageVersion>8.0.1</PackageVersion>
 
     </PropertyGroup>
     <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
@@ -29,7 +36,7 @@
         <None Include="$(SolutionDir)\README.md" Pack="true" Visible="false" PackagePath="\"/>
     </ItemGroup>
     <ItemGroup>
-        <PackageReference Include="DotNet.ReproducibleBuilds" Version="1.1.1">
+        <PackageReference Include="DotNet.ReproducibleBuilds" Version="1.2.25">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>

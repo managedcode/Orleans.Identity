@@ -14,30 +14,52 @@ jobs:
   
   build-and-test:
     runs-on: ubuntu-latest
+    
     steps:
+
       - uses: actions/checkout@v3
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: 7.0.x
+          dotnet-version: 8.0.x
         
         # run build and test           
       - name: Restore dependencies
         run: dotnet restore
+
       - name: Build
         run: dotnet build --no-restore
-      - name: Test
-        run: dotnet test --no-build --verbosity normal /p:CollectCoverage=true /p:CoverletOutputFormat=lcov /p:CoverletOutput=ManagedCode.Repository.Tests/lcov.info
 
-      #- name: coverlet
-      #  uses: b3b00/coverlet-action@1.1.9
-      #  with:
-      #    testProject: 'ManagedCode.Database.Tests/ManagedCode.Database.Tests.csproj'
-      #    output: 'lcov.info'
-      #    outputFormat: 'lcov'
-      #    excludes: '[program]*,[test]test.*'
-      #- name: coveralls
-      #  uses: coverallsapp/github-action@master
-      #  with:
-      #    github-token: ${{secrets.GITHUB_TOKEN }}
-      #    path-to-lcov: ManagedCode.Storage.Tests/lcov.info
+      - name: Test and Collect Code Coverage
+        run: dotnet test -p:CollectCoverage=true -p:CoverletOutput=coverage/
+
+      - name: Copy coverage files
+        run: |
+          mkdir '${{ github.workspace }}/coverage'
+          find . -name "*.opencover.xml" -exec sh -c 'cp "$0" "coverage/coverage-$(basename $0)"' {} \;
+
+      - name: List coverage files
+        run: ls '${{ github.workspace }}/coverage/'
+
+      - name: SonarCloud Scan
+        uses: sonarsource/sonarcloud-github-action@master
+        with:
+          args: >
+            -Dsonar.organization=managedcode
+            -Dsonar.projectKey=managedcode_Orleans.Identity
+            -Dsonar.token=${{ secrets.SONAR_TOKEN }}
+            -Dsonar.cs.opencover.reportsPaths=${{ github.workspace }}/coverage/
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+#      - name: coveralls
+#        uses: coverallsapp/github-action@master
+#        with:
+#          github-token: ${{secrets.GITHUB_TOKEN }}
+#          path-to-lcov: coverage/coverage.info

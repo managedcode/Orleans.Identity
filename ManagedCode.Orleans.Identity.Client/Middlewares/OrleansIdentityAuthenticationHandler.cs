@@ -12,20 +12,13 @@ using Orleans;
 
 namespace ManagedCode.Orleans.Identity.Client.Middlewares;
 
-public class OrleansIdentityAuthenticationHandler : AuthenticationHandler<AuthenticationSchemeOptions>
+public class OrleansIdentityAuthenticationHandler(
+    IOptionsMonitor<AuthenticationSchemeOptions> options,
+    ILoggerFactory logger,
+    UrlEncoder encoder,
+    ISystemClock clock,
+    IClusterClient client) : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder, clock)
 {
-    private readonly IClusterClient _client;
-
-    public OrleansIdentityAuthenticationHandler(IOptionsMonitor<AuthenticationSchemeOptions> options,
-        ILoggerFactory logger,
-        UrlEncoder encoder,
-        ISystemClock clock,
-        IClusterClient client
-    ) : base(options, logger, encoder, clock)
-    {
-        _client = client;
-    }
-
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
     {
         string sessionId;
@@ -56,7 +49,7 @@ public class OrleansIdentityAuthenticationHandler : AuthenticationHandler<Authen
 
         try
         {
-            var sessionGrain = _client.GetGrain<ISessionGrain>(sessionId);
+            var sessionGrain = client.GetGrain<ISessionGrain>(sessionId);
             var result = await sessionGrain.ValidateAndGetClaimsAsync();
 
             if (result.IsSuccess)

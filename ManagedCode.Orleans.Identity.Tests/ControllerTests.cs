@@ -47,6 +47,19 @@ public class ControllerTests
     #region Authorized route tests
 
     [Fact]
+    public async Task LoginTest()
+    {
+        var client = _testApp.CreateClient();
+        
+        var response = await client.GetAsync(TestControllerRoutes.AUTH_CONTROLLER_LOGIN+"?user=test");
+        response.IsSuccessStatusCode.Should().BeTrue();
+        
+        response = await client.GetAsync(TestControllerRoutes.AUTH_CONTROLLER_LOGOUT);
+        response.IsSuccessStatusCode.Should().BeTrue();
+    }
+    
+    
+    [Fact]
     public async Task SendRequestToUnauthorizedRoute_ReturnOk()
     {
         // Arrange

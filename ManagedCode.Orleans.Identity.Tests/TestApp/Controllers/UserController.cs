@@ -5,8 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ManagedCode.Orleans.Identity.Tests.TestApp.Controllers;
 
-[Route("userController")]
 [Authorize]
+[Route("userController")]
 public class UserController : ControllerBase
 {
     private readonly IClusterClient _clusterClient;

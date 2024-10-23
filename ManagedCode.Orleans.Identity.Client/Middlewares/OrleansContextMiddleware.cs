@@ -4,18 +4,11 @@ using Microsoft.AspNetCore.Http;
 
 namespace ManagedCode.Orleans.Identity.Client.Middlewares;
 
-public class OrleansContextMiddleware
+public class OrleansContextMiddleware(RequestDelegate next)
 {
-    private readonly RequestDelegate _next;
-
-    public OrleansContextMiddleware(RequestDelegate next)
-    {
-        _next = next;
-    }
-
     public async Task InvokeAsync(HttpContext context)
     {
         context.User.SetOrleansContext();
-        await _next(context);
+        await next(context);
     }
 }

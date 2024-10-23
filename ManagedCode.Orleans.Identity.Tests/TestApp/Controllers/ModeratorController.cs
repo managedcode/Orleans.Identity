@@ -1,9 +1,11 @@
 ﻿using ManagedCode.Orleans.Identity.Core.Extensions;
 using ManagedCode.Orleans.Identity.Tests.Cluster.Grains.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ManagedCode.Orleans.Identity.Tests.TestApp.Controllers
 {
+    [Authorize(Roles = "admin, moderator")]
     [Route("moderatorController")]
     public class ModeratorController : ControllerBase
     {

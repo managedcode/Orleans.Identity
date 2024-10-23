@@ -8,6 +8,9 @@ public static class TestControllerRoutes
     public const string MODERATOR_ROUTE = "/moderator";
     public const string COMMON_ROUTE = "/common";
 
+    public const string AUTH_CONTROLLER_LOGIN = "/auth/login";
+    public const string AUTH_CONTROLLER_LOGOUT = "/auth/logout";
+    
     public const string ADMIN_CONTROLLER_DEFAULT_ROUTE = "/adminController";
     public const string ADMIN_CONTROLLER_ADMINS_LIST = "/adminController/adminsList";
     public const string ADMIN_CONTROLLER_ADMIN_GET_ADMIN = "/adminController/getAdmin";

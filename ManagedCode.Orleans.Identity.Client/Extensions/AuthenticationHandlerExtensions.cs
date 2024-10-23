@@ -27,17 +27,22 @@ public static class AuthenticationHandlerExtensions
     /// </summary>
     /// <param name="services"></param>
     /// <param name="sessionOption">Options for working with session</param>
-    public static void AddOrleansIdentity(this IServiceCollection services, SessionOption? sessionOption = null)
+    public static void AddOrleansIdentity(this IServiceCollection services, SessionOption? sessionOption = null, Action<AuthorizationPolicyBuilder>? authenticationBuilder = null)
+
     {
         sessionOption ??= new SessionOption();
+        
+        services.AddScoped<SessionAuthorizationHandler>();     
+        services.AddScoped<SessionAuthenticationHandler>();      
 
         services.AddAuthentication(options => options.DefaultScheme = OrleansIdentityConstants.AUTHENTICATION_TYPE)
-            .AddScheme<AuthenticationSchemeOptions, OrleansIdentityAuthenticationHandler>(OrleansIdentityConstants.AUTHENTICATION_TYPE, op => { });
+            .AddScheme<AuthenticationSchemeOptions, SessionAuthenticationHandler>(OrleansIdentityConstants.AUTHENTICATION_TYPE, op => { });
 
         services.AddAuthorization(options =>
         {
             var defaultAuthorizationPolicyBuilder = new AuthorizationPolicyBuilder(OrleansIdentityConstants.AUTHENTICATION_TYPE);
             defaultAuthorizationPolicyBuilder = defaultAuthorizationPolicyBuilder.RequireAuthenticatedUser();
+            authenticationBuilder?.Invoke(defaultAuthorizationPolicyBuilder);
             options.DefaultPolicy = defaultAuthorizationPolicyBuilder.Build();
         });
     }
