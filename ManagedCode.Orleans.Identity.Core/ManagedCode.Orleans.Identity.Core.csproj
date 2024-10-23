@@ -4,6 +4,7 @@
         <OutputType>Library</OutputType>
         <Nullable>enable</Nullable>
         <IsPackable>true</IsPackable>
+        
     </PropertyGroup>
 
     <!--NuGet-->
