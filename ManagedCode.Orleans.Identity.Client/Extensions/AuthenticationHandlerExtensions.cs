@@ -32,8 +32,8 @@ public static class AuthenticationHandlerExtensions
     {
         sessionOption ??= new SessionOption();
         
-        services.AddScoped<SessionAuthorizationHandler>();     
-        services.AddScoped<SessionAuthenticationHandler>();      
+        //services.AddScoped<SessionAuthorizationHandler>();     
+        //services.AddScoped<SessionAuthenticationHandler>();      
 
         services.AddAuthentication(options => options.DefaultScheme = OrleansIdentityConstants.AUTHENTICATION_TYPE)
             .AddScheme<AuthenticationSchemeOptions, SessionAuthenticationHandler>(OrleansIdentityConstants.AUTHENTICATION_TYPE, op => { });
