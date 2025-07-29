@@ -27,23 +27,30 @@ public static class AuthenticationHandlerExtensions
     /// </summary>
     /// <param name="services"></param>
     /// <param name="sessionOption">Options for working with session</param>
+    /// <param name="authenticationBuilder"></param>
     public static void AddOrleansIdentity(this IServiceCollection services, SessionOption? sessionOption = null, Action<AuthorizationPolicyBuilder>? authenticationBuilder = null)
 
     {
         sessionOption ??= new SessionOption();
         
-        //services.AddScoped<SessionAuthorizationHandler>();     
-        //services.AddScoped<SessionAuthenticationHandler>();      
+        // Add custom authentication and authorization
+        services.AddScoped<OrleansSessionAuthorizationHandler>();
+        services.AddScoped<OrleansSessionAuthenticationHandler>();
 
-        services.AddAuthentication(options => options.DefaultScheme = OrleansIdentityConstants.AUTHENTICATION_TYPE)
-            .AddScheme<AuthenticationSchemeOptions, SessionAuthenticationHandler>(OrleansIdentityConstants.AUTHENTICATION_TYPE, op => { });
-
+        services.AddAuthentication(options =>
+        {
+            options.DefaultScheme = OrleansIdentityConstants.AUTHENTICATION_TYPE;
+        })
+        .AddScheme<AuthenticationSchemeOptions, OrleansSessionAuthenticationHandler>(OrleansIdentityConstants.AUTHENTICATION_TYPE, op => 
+        {
+            
+        });
         services.AddAuthorization(options =>
         {
             var defaultAuthorizationPolicyBuilder = new AuthorizationPolicyBuilder(OrleansIdentityConstants.AUTHENTICATION_TYPE);
             defaultAuthorizationPolicyBuilder = defaultAuthorizationPolicyBuilder.RequireAuthenticatedUser();
-            authenticationBuilder?.Invoke(defaultAuthorizationPolicyBuilder);
             options.DefaultPolicy = defaultAuthorizationPolicyBuilder.Build();
         });
+        
     }
 }

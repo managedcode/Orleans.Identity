@@ -12,7 +12,8 @@ public static class OrleansContextMiddlewareExtensions
     /// <returns></returns>
     public static IApplicationBuilder UseOrleansIdentity(this IApplicationBuilder builder)
     {
-        return builder.UseMiddleware<OrleansContextMiddleware>();
+        return builder.UseMiddleware<OrleansContextMiddleware>()
+            .UseMiddleware<OrleansContextMiddleware>();
     }
 
     /// <summary>

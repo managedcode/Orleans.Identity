@@ -2,8 +2,8 @@
     
     <!--C# version-->
     <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
-        <LangVersion>12</LangVersion>
+        <TargetFramework>net9.0</TargetFramework>
+        <LangVersion>13</LangVersion>
     </PropertyGroup>
     
     <!--NuGet-->

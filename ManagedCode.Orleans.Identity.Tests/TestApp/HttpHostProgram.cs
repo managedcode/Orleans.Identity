@@ -33,30 +33,14 @@ public class HttpHostProgram
         // AddProperty it for using Orleans Identity
         builder.Services.AddOrleansIdentity();
         
-
         
-        builder.Services.AddAuthorization(options =>
-        {
-            options.AddPolicy(OrleansIdentityConstants.AUTHENTICATION_TYPE, policy =>
-            {
-                policy.AuthenticationSchemes.Add(OrleansIdentityConstants.AUTH_TOKEN);
-                policy.Requirements.Add(new SessionRequirement());
-            });
-        });
-        builder.Services.AddAuthentication(options =>
-        {
-            options.DefaultScheme = OrleansIdentityConstants.AUTHENTICATION_TYPE;
-        });
-
 
         var app = builder.Build();
 
         // AddProperty it for using Orleans Identity
         // Authentication and Authorization already use
-        //app.UseAuthenticationAndOrleansIdentity();
-
-        app.UseAuthentication();
-        app.UseAuthorization();
+        app.UseAuthenticationAndOrleansIdentity();
+        
         
         app.MapControllers();
         app.MapHub<TestAnonymousHub>(nameof(TestAnonymousHub));

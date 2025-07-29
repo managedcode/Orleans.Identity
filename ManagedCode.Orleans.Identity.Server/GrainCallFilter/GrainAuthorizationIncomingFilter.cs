@@ -10,16 +10,9 @@ using Orleans;
 
 namespace ManagedCode.Orleans.Identity.Server.GrainCallFilter;
 
-public class GrainAuthorizationIncomingFilter : IIncomingGrainCallFilter
+public class GrainAuthorizationIncomingFilter(IClusterClient client, IGrainFactory grainFactory) : IIncomingGrainCallFilter
 {
-    private readonly IClusterClient _client;
-    private readonly IGrainFactory _grainFactory;
-
-    public GrainAuthorizationIncomingFilter(IClusterClient client, IGrainFactory grainFactory)
-    {
-        _client = client;
-        _grainFactory = grainFactory;
-    }
+    private readonly IClusterClient _client = client;
 
     public async Task Invoke(IIncomingGrainCallContext context)
     {
@@ -28,11 +21,12 @@ public class GrainAuthorizationIncomingFilter : IIncomingGrainCallFilter
             var isSessionExists = await IsAuthorized();
             if (isSessionExists)
             {
-                if (attributes.All(attributes => string.IsNullOrWhiteSpace(attributes.Roles)))
+                if (attributes.All(attribute => string.IsNullOrWhiteSpace(attribute.Roles)))
                 {
                     await context.Invoke();
                     return;
                 }
+                
                 var roles = this.GetRoles().ToHashSet();
                 foreach (var attribute in attributes)
                 {
@@ -46,10 +40,9 @@ public class GrainAuthorizationIncomingFilter : IIncomingGrainCallFilter
             }
             throw new UnauthorizedAccessException();
         }
-        else
-        {
-            await context.Invoke();
-        }
+
+        await context.Invoke();
+        
     }
 
     private async Task<bool> IsAuthorized()
@@ -57,7 +50,7 @@ public class GrainAuthorizationIncomingFilter : IIncomingGrainCallFilter
         var sessionId = this.GetSessionId();
         if (string.IsNullOrWhiteSpace(sessionId) is false)
         {
-            var sessionGrain = _grainFactory.GetGrain<ISessionGrain>(sessionId);
+            var sessionGrain = grainFactory.GetGrain<ISessionGrain>(sessionId);
             var result = await sessionGrain.ValidateAndGetClaimsAsync();
             return result.IsSuccess;
         }
