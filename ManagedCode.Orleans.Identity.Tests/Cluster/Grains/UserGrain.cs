@@ -10,11 +10,6 @@ public class UserGrain : Grain, IUserGrain
     [Authorize]
     public Task<string> GetUser()
     {
-        if (this.IsAuthorizationFailed())
-        {
-            throw new UnauthorizedAccessException(this.GetAuthorizationMessage() ?? "Access denied");
-        }
-
         var user = this.GetCurrentUser();
         var username = user.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ?? "Unknown";
         return Task.FromResult($"Hello, {username}!");
@@ -23,11 +18,6 @@ public class UserGrain : Grain, IUserGrain
     [Authorize(Roles = TestRoles.ADMIN)]
     public Task<string> BanUser()
     {
-        if (this.IsAuthorizationFailed())
-        {
-            throw new UnauthorizedAccessException(this.GetAuthorizationMessage() ?? "Access denied");
-        }
-
         var user = this.GetCurrentUser();
         var username = user.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ?? "Unknown";
         return Task.FromResult($"User {username} is banned");
@@ -36,11 +26,6 @@ public class UserGrain : Grain, IUserGrain
     [Authorize(Roles = TestRoles.ADMIN)]
     public Task<string> GetAdminInfo()
     {
-        if (this.IsAuthorizationFailed())
-        {
-            throw new UnauthorizedAccessException(this.GetAuthorizationMessage() ?? "Access denied");
-        }
-
         var user = this.GetCurrentUser();
         var username = user.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ?? "Unknown";
         return Task.FromResult($"Admin info for {username}: You have admin privileges");
@@ -55,11 +40,6 @@ public class UserGrain : Grain, IUserGrain
     [Authorize(Roles = TestRoles.MODERATOR)]
     public Task<string> ModifyUser()
     {
-        if (this.IsAuthorizationFailed())
-        {
-            throw new UnauthorizedAccessException(this.GetAuthorizationMessage() ?? "Access denied");
-        }
-
         var user = this.GetCurrentUser();
         var username = user.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ?? "Unknown";
         return Task.FromResult($"User {username} has been modified");
@@ -67,11 +47,6 @@ public class UserGrain : Grain, IUserGrain
 
     public Task<string> AddToList()
     {
-        if (this.IsAuthorizationFailed())
-        {
-            throw new UnauthorizedAccessException(this.GetAuthorizationMessage() ?? "Access denied");
-        }
-
         var user = this.GetCurrentUser();
         var username = user.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ?? "Unknown";
         return Task.FromResult($"User {username} added to list");

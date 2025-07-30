@@ -4,37 +4,24 @@ using Orleans;
 namespace ManagedCode.Orleans.Identity.Core.Serializations;
 
 // This is the surrogate which will act as a stand-in for the foreign type.
-// Surrogates should use plain fields instead of properties for better perfomance.
+// Surrogates should use plain fields instead of properties for better performance.
 [GenerateSerializer]
-public struct ClaimSurrogate
+public struct ClaimSurrogate(string type, string value, string valueType, string issuer, string originalIssuer)
 {
-    public ClaimSurrogate(string type, string value, string valueType, string issuer, string originalIssuer, ClaimsIdentity? subject)
-    {
-        Issuer = issuer;
-        OriginalIssuer = originalIssuer;
-        Subject = subject;
-        Type = type;
-        Value = value;
-        ValueType = valueType;
-    }
-
     [Id(0)]
-    public string Issuer { get; set; }
+    public string Issuer { get; set; } = issuer;
 
     [Id(1)]
-    public string OriginalIssuer { get; set; }
+    public string OriginalIssuer { get; set; } = originalIssuer;
 
     [Id(2)]
-    public ClaimsIdentity? Subject { get; set; }
+    public string Type { get; set; } = type;
 
     [Id(3)]
-    public string Type { get; set; }
+    public string Value { get; set; } = value;
 
     [Id(4)]
-    public string Value { get; set; }
-
-    [Id(5)]
-    public string ValueType { get; set; }
+    public string ValueType { get; set; } = valueType;
 }
 
 // This is a converter which converts between the surrogate and the foreign type.

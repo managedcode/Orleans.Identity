@@ -1,8 +1,8 @@
 using System;
 using System.Threading.Tasks;
-using System.Linq;
 using Microsoft.AspNetCore.SignalR;
 using Orleans.Runtime;
+using ManagedCode.Orleans.Identity.Core.Constants;
 
 namespace ManagedCode.Orleans.Identity.Client.Middlewares;
 
@@ -14,12 +14,7 @@ public class SignalRAuthorizationFilter : IHubFilter
     {
         if (invocationContext.Context.User?.Identity?.IsAuthenticated == true)
         {
-            // Store user claims in Orleans RequestContext as serializable dictionary
-            // Group claims by type to handle multiple values (like roles)
-            var claims = invocationContext.Context.User.Claims
-                .GroupBy(c => c.Type)
-                .ToDictionary(g => g.Key, g => string.Join(",", g.Select(c => c.Value)));
-            RequestContext.Set("UserClaims", claims);
+            RequestContext.Set(OrleansIdentityConstants.USER_CLAIMS, invocationContext.Context.User);
         }
 
         return await next(invocationContext);
@@ -29,10 +24,7 @@ public class SignalRAuthorizationFilter : IHubFilter
     {
         if (context.Context.User?.Identity?.IsAuthenticated == true)
         {
-            var claims = context.Context.User.Claims
-                .GroupBy(c => c.Type)
-                .ToDictionary(g => g.Key, g => string.Join(",", g.Select(c => c.Value)));
-            RequestContext.Set("UserClaims", claims);
+            RequestContext.Set(OrleansIdentityConstants.USER_CLAIMS, context.Context.User);
         }
 
         return next(context);

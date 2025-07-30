@@ -6,4 +6,5 @@ public static class OrleansIdentityConstants
     public static string AUTH_TOKEN = "AUTH-TOKEN";
     public static string AUTHENTICATION_TYPE = "MC-OrleansIdentity";
     public const string SESSION_ID_CLAIM_NAME = "SessionId";
+    public const string USER_CLAIMS = "UserClaims";
 }
