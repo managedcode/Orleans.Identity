@@ -2,79 +2,100 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Security.Claims;
 using System.Threading.Tasks;
-using ManagedCode.Orleans.Identity.Core.Extensions;
-using ManagedCode.Orleans.Identity.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Orleans;
+using Orleans.Runtime;
 
 namespace ManagedCode.Orleans.Identity.Server.GrainCallFilter;
 
-public class GrainAuthorizationIncomingFilter(IClusterClient client, IGrainFactory grainFactory) : IIncomingGrainCallFilter
+public class GrainAuthorizationIncomingFilter : IIncomingGrainCallFilter
 {
-    private readonly IClusterClient _client = client;
-
     public async Task Invoke(IIncomingGrainCallContext context)
     {
         if (IsGrainAuthorized(context.ImplementationMethod, out var attributes))
         {
-            var isSessionExists = await IsAuthorized();
-            if (isSessionExists)
+            var user = GetUserFromRequestContext();
+            var isAuthorized = false;
+            
+            if (user?.Identity?.IsAuthenticated == true)
             {
                 if (attributes.All(attribute => string.IsNullOrWhiteSpace(attribute.Roles)))
                 {
-                    await context.Invoke();
-                    return;
+                    isAuthorized = true;
                 }
-                
-                var roles = this.GetRoles().ToHashSet();
-                foreach (var attribute in attributes)
+                else
                 {
-                    var intersect = attribute.Roles?.Split(',') ?? Array.Empty<string>();
-                    if (intersect.Any(role => roles.Contains(role)))
+                    var userRoles = user.FindAll(ClaimTypes.Role).Select(c => c.Value).ToHashSet();
+                    
+                    foreach (var attribute in attributes)
                     {
-                        await context.Invoke();
-                        return;
+                        var requiredRoles = attribute.Roles?.Split(',', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
+                        if (requiredRoles.Any(role => userRoles.Contains(role.Trim())))
+                        {
+                            isAuthorized = true;
+                            break;
+                        }
                     }
                 }
             }
-            throw new UnauthorizedAccessException();
+            
+            if (!isAuthorized)
+            {
+                // Set authorization failure flag instead of throwing exception
+                RequestContext.Set("AuthorizationFailed", true);
+                RequestContext.Set("AuthorizationMessage", "Access denied. User is not authenticated or does not have required roles.");
+            }
         }
 
         await context.Invoke();
-        
     }
 
-    private async Task<bool> IsAuthorized()
+    private static ClaimsPrincipal? GetUserFromRequestContext()
     {
-        var sessionId = this.GetSessionId();
-        if (string.IsNullOrWhiteSpace(sessionId) is false)
+        var requestContext = RequestContext.Get("UserClaims");
+        if (requestContext is Dictionary<string, string> claimsDict)
         {
-            var sessionGrain = grainFactory.GetGrain<ISessionGrain>(sessionId);
-            var result = await sessionGrain.ValidateAndGetClaimsAsync();
-            return result.IsSuccess;
+            var claims = new List<Claim>();
+            foreach (var kvp in claimsDict)
+            {
+                // Handle comma-separated values (like roles)
+                var values = kvp.Value.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                foreach (var value in values)
+                {
+                    claims.Add(new Claim(kvp.Key, value.Trim()));
+                }
+            }
+            var identity = new ClaimsIdentity(claims, "JWT");
+            return new ClaimsPrincipal(identity);
         }
-        return false;
+
+        return null;
     }
 
     private static bool IsGrainAuthorized(MemberInfo methodInfo, out List<AuthorizeAttribute> attributes)
     {
         attributes = new List<AuthorizeAttribute>();
 
-        // for method
+        // Check for AllowAnonymous on method
         if (Attribute.IsDefined(methodInfo, typeof(AllowAnonymousAttribute)))
         {
             return false;
         }
 
+        // Check for Authorize on class
         if (methodInfo.DeclaringType != null && Attribute.IsDefined(methodInfo.DeclaringType, typeof(AuthorizeAttribute)))
         {
-            attributes.AddRange(Attribute.GetCustomAttributes(methodInfo.DeclaringType, typeof(AuthorizeAttribute)).Select(s => (AuthorizeAttribute)s));
+            attributes.AddRange(Attribute.GetCustomAttributes(methodInfo.DeclaringType, typeof(AuthorizeAttribute))
+                .Cast<AuthorizeAttribute>());
         }
 
+        // Check for Authorize on method
         if (Attribute.IsDefined(methodInfo, typeof(AuthorizeAttribute)))
         {
-            attributes.AddRange(Attribute.GetCustomAttributes(methodInfo, typeof(AuthorizeAttribute)).Select(s => (AuthorizeAttribute)s));
+            attributes.AddRange(Attribute.GetCustomAttributes(methodInfo, typeof(AuthorizeAttribute))
+                .Cast<AuthorizeAttribute>());
             return true;
         }
 

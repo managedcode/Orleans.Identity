@@ -1,14 +1,8 @@
-using ManagedCode.Orleans.Identity.Client;
 using ManagedCode.Orleans.Identity.Client.Extensions;
-using ManagedCode.Orleans.Identity.Core.Constants;
-using ManagedCode.Orleans.Identity.Tests.TestApp.Models;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authorization;
+using ManagedCode.Orleans.Identity.Tests.TestApp.Services;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using System.Text;
 
 namespace ManagedCode.Orleans.Identity.Tests.TestApp;
 
@@ -21,27 +15,54 @@ public class HttpHostProgram
         builder.Services.AddControllers();
         builder.Services.AddSignalR();
 
-        
-        // Add services to the container.
-        builder.Services.AddDbContext<TestUserIdentityDbContext>(options =>
-            options.UseInMemoryDatabase("InMemoryDbForTesting"));
-
-        builder.Services.AddIdentity<TestUser, IdentityRole>()
-            .AddEntityFrameworkStores<TestUserIdentityDbContext>()
-            .AddDefaultTokenProviders();
-            
-        // AddProperty it for using Orleans Identity
+        // Add Orleans Identity
         builder.Services.AddOrleansIdentity();
-        
-        
+
+        // Add JWT Authentication
+        builder.Services.AddAuthentication("Bearer")
+            .AddJwtBearer("Bearer", options =>
+            {
+                options.TokenValidationParameters = new()
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = "Orleans.Identity.Test",
+                    ValidAudience = "Orleans.Identity.Test",
+                    IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes("your-super-secret-key-with-at-least-32-characters"))
+                };
+
+                options.Events = new Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Query["access_token"];
+                        var path = context.HttpContext.Request.Path;
+                        if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/TestAuthorizeHub"))
+                        {
+                            context.Token = accessToken;
+                        }
+                        return Task.CompletedTask;
+                    }
+                };
+            });
+
+        builder.Services.AddAuthorization();
+
+        // Add JWT service
+        builder.Services.AddScoped<IJwtService, JwtService>();
 
         var app = builder.Build();
 
-        // AddProperty it for using Orleans Identity
-        // Authentication and Authorization already use
-        app.UseAuthenticationAndOrleansIdentity();
-        
-        
+        // Configure the HTTP request pipeline.
+        app.UseAuthentication();
+        app.UseAuthorization();
+
+        // Add Orleans Identity middleware
+        app.UseOrleansIdentity();
+
         app.MapControllers();
         app.MapHub<TestAnonymousHub>(nameof(TestAnonymousHub));
         app.MapHub<TestAuthorizeHub>(nameof(TestAuthorizeHub));

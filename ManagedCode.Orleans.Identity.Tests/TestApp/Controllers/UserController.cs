@@ -1,5 +1,5 @@
 using ManagedCode.Orleans.Identity.Core.Extensions;
-using ManagedCode.Orleans.Identity.Tests.Cluster.Grains.Interfaces;
+using ManagedCode.Orleans.Identity.Tests.Cluster.Grains;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,52 +19,96 @@ public class UserController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<string>> GetUser()
     {
-        var userId = User.GetGrainId();
-        var userGrain = _clusterClient.GetGrain<IUserGrain>(userId);
-        return await userGrain.GetUser();
+        try
+        {
+            var userId = User.GetGrainId();
+            var userGrain = _clusterClient.GetGrain<IUserGrain>(userId);
+            return await userGrain.GetUser();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
     }
 
     [HttpGet("anonymous")]
     [AllowAnonymous]
     public async Task<ActionResult<string>> TryGetUser()
     {
-        var result = await GetUser();
-        return result;
+        try
+        {
+            var result = await GetUser();
+            return result;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
     }
 
     [HttpGet("ban")]
     public async Task<ActionResult<string>> BanUser()
     {
-        var userId = User.GetGrainId();
-        var userGrain = _clusterClient.GetGrain<IUserGrain>(userId);
-        return await userGrain.BanUser();
+        try
+        {
+            var userId = User.GetGrainId();
+            var userGrain = _clusterClient.GetGrain<IUserGrain>(userId);
+            return await userGrain.BanUser();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
     }
 
     [HttpGet("publicInfo")]
     [AllowAnonymous]
     public async Task<ActionResult<string>> GetPublicInfo()
     {
-        var userId = User.GetGrainId();
-        var userGrain = _clusterClient.GetGrain<IUserGrain>(userId);
-        var result = await userGrain.GetPublicInfo();
-        return result;
+        try
+        {
+            // For public endpoints, use a default grain ID since user might not be authenticated
+            var userId = User.Identity?.IsAuthenticated == true ? User.GetGrainId() : "public";
+            var userGrain = _clusterClient.GetGrain<IUserGrain>(userId);
+            var result = await userGrain.GetPublicInfo();
+            return result;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
     }
 
     [HttpGet("modify")]
     public async Task<ActionResult<string>> ModifyUser()
     {
-        var userId = User.GetGrainId();
-        var userGrain = _clusterClient.GetGrain<IUserGrain>(userId);
-        var result = await userGrain.ModifyUser();
-        return result;
+        try
+        {
+            var userId = User.GetGrainId();
+            var userGrain = _clusterClient.GetGrain<IUserGrain>(userId);
+            var result = await userGrain.ModifyUser();
+            return result;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
     }
 
     [HttpGet("addToList")]
     [AllowAnonymous]
     public async Task<ActionResult<string>> AddToList()
     {
-        var userId = User.GetGrainId();
-        var userGrain = _clusterClient.GetGrain<IUserGrain>(userId);
-        return await userGrain.AddToList();
+        try
+        {
+            // For anonymous endpoints, use a default grain ID since user might not be authenticated
+            var userId = User.Identity?.IsAuthenticated == true ? User.GetGrainId() : "anonymous";
+            var userGrain = _clusterClient.GetGrain<IUserGrain>(userId);
+            return await userGrain.AddToList();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
     }
 }
