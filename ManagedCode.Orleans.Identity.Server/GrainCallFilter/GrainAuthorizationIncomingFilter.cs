@@ -19,12 +19,18 @@ public class GrainAuthorizationIncomingFilter : IIncomingGrainCallFilter
         {
             var user = GetUserFromRequestContext();
             var isAuthorized = false;
-            
-            if (user?.Identity?.IsAuthenticated == false)
+
+            if (user == null)
             {
-                throw new UnauthorizedAccessException("Access denied. User is not authenticated or does not have required roles.");
+                throw new UnauthorizedAccessException("Access denied. User is missing.");
             }
-            
+
+            if (user.Identity?.IsAuthenticated == false)
+            {
+                throw new UnauthorizedAccessException(
+                    "Access denied. User is not authenticated or does not have required roles.");
+            }
+
             if (attributes.All(attribute => string.IsNullOrWhiteSpace(attribute.Roles)))
             {
                 isAuthorized = true;
@@ -32,21 +38,22 @@ public class GrainAuthorizationIncomingFilter : IIncomingGrainCallFilter
             else
             {
                 var userRoles = user.FindAll(ClaimTypes.Role).Select(c => c.Value).ToHashSet();
-                    
+
                 foreach (var attribute in attributes)
                 {
-                    var requiredRoles = attribute.Roles?.Split(',', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
-                    if (requiredRoles.Any(role => userRoles.Contains(role.Trim())))
-                    {
-                        isAuthorized = true;
-                        break;
-                    }
+                    var requiredRoles = attribute.Roles?.Split(',', StringSplitOptions.RemoveEmptyEntries) ?? [];
+                    
+                    if (!requiredRoles.Any(role => userRoles.Contains(role.Trim()))) continue;
+                    
+                    isAuthorized = true;
+                    break;
                 }
             }
-            
+
             if (!isAuthorized)
             {
-                throw new UnauthorizedAccessException("Access denied. User is not authenticated or does not have required roles.");
+                throw new UnauthorizedAccessException(
+                    "Access denied. User is not authenticated or does not have required roles.");
             }
         }
 
@@ -68,7 +75,8 @@ public class GrainAuthorizationIncomingFilter : IIncomingGrainCallFilter
             return false;
         }
 
-        if (methodInfo.DeclaringType != null && Attribute.IsDefined(methodInfo.DeclaringType, typeof(AuthorizeAttribute)))
+        if (methodInfo.DeclaringType != null &&
+            Attribute.IsDefined(methodInfo.DeclaringType, typeof(AuthorizeAttribute)))
         {
             attributes.AddRange(Attribute.GetCustomAttributes(methodInfo.DeclaringType, typeof(AuthorizeAttribute))
                 .Cast<AuthorizeAttribute>());
