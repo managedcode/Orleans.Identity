@@ -18,7 +18,6 @@ public class GrainAuthorizationIncomingFilter : IIncomingGrainCallFilter
         if (IsGrainAuthorized(context.ImplementationMethod, out var attributes))
         {
             var user = GetUserFromRequestContext();
-            var isAuthorized = false;
 
             if (user == null)
             {
