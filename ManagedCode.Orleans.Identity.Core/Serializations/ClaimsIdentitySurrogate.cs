@@ -5,7 +5,7 @@ using Orleans;
 namespace ManagedCode.Orleans.Identity.Core.Serializations;
 
 // This is the surrogate which will act as a stand-in for the foreign type.
-// Surrogates should use plain fields instead of properties for better perfomance.
+// Surrogates should use plain fields instead of properties for better performance.
 [GenerateSerializer]
 public struct ClaimsIdentitySurrogate
 {

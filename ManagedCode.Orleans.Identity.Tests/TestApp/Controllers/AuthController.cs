@@ -1,38 +1,61 @@
-using ManagedCode.Orleans.Identity.Tests.TestApp.Models;
+using ManagedCode.Orleans.Identity.Tests.Constants;
+using ManagedCode.Orleans.Identity.Tests.TestApp.Services;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ManagedCode.Orleans.Identity.Tests.TestApp.Controllers;
 
-[AllowAnonymous]
 [Route("auth")]
 public class AuthController : ControllerBase
 {
-    private readonly SignInManager<TestUser> _signInManager;
-    private readonly UserManager<TestUser> _userManager;
+    private readonly IJwtService _jwtService;
 
-    public AuthController(SignInManager<TestUser> signInManager, UserManager<TestUser> userManager)
+    public AuthController(IJwtService jwtService)
     {
-        _signInManager = signInManager;
-        _userManager = userManager;
+        _jwtService = jwtService;
     }
 
     [AllowAnonymous]
-    [HttpGet("login")]
-    public async Task<ActionResult> Login([FromQuery]string user)
+    [HttpPost("login")]
+    public IActionResult Login([FromBody] LoginRequest request)
     {
-        var testUser = new TestUser(user);
-        var identityResult = await _userManager.CreateAsync(testUser);
-        await _signInManager.SignInAsync(testUser, true);
-        return Ok();
+        // Simple authentication - in real app you'd validate against database
+        if (string.IsNullOrEmpty(request.Username))
+        {
+            return BadRequest("Username is required");
+        }
+
+        var roles = request.Username.ToLower() switch
+        {
+            "admin" => new[] { TestRoles.USER, TestRoles.ADMIN },
+            "moderator" => new[] { TestRoles.USER, TestRoles.MODERATOR },
+            "user" => new[] { TestRoles.USER },
+            _ => new[] { TestRoles.USER }
+        };
+
+        var token = _jwtService.GenerateToken(request.Username, request.Username, roles);
+
+        return Ok(new { token });
     }
-    
+
+    [HttpGet("me")]
     [Authorize]
-    [HttpGet("logout")]
-    public async Task<ActionResult> Logout()
+    public IActionResult GetCurrentUser()
     {
-        await _signInManager.SignOutAsync();
-        return Ok();
+        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        var username = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
+        var roles = User.FindAll(System.Security.Claims.ClaimTypes.Role).Select(c => c.Value);
+
+        return Ok(new
+        {
+            UserId = userId,
+            Username = username,
+            Roles = roles
+        });
     }
+}
+
+public class LoginRequest
+{
+    public string Username { get; set; } = string.Empty;
 }

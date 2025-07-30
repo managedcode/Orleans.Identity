@@ -2,79 +2,78 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Security.Claims;
 using System.Threading.Tasks;
-using ManagedCode.Orleans.Identity.Core.Extensions;
-using ManagedCode.Orleans.Identity.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Orleans;
+using Orleans.Runtime;
+using ManagedCode.Orleans.Identity.Core.Constants;
 
 namespace ManagedCode.Orleans.Identity.Server.GrainCallFilter;
 
-public class GrainAuthorizationIncomingFilter(IClusterClient client, IGrainFactory grainFactory) : IIncomingGrainCallFilter
+public class GrainAuthorizationIncomingFilter : IIncomingGrainCallFilter
 {
-    private readonly IClusterClient _client = client;
-
     public async Task Invoke(IIncomingGrainCallContext context)
     {
         if (IsGrainAuthorized(context.ImplementationMethod, out var attributes))
         {
-            var isSessionExists = await IsAuthorized();
-            if (isSessionExists)
+            var user = GetUserFromRequestContext();
+
+            if (user == null)
             {
-                if (attributes.All(attribute => string.IsNullOrWhiteSpace(attribute.Roles)))
-                {
-                    await context.Invoke();
-                    return;
-                }
-                
-                var roles = this.GetRoles().ToHashSet();
-                foreach (var attribute in attributes)
-                {
-                    var intersect = attribute.Roles?.Split(',') ?? Array.Empty<string>();
-                    if (intersect.Any(role => roles.Contains(role)))
-                    {
-                        await context.Invoke();
-                        return;
-                    }
-                }
+                throw new UnauthorizedAccessException("Access denied. User is missing.");
             }
-            throw new UnauthorizedAccessException();
+
+            if (user.Identity?.IsAuthenticated == false)
+            {
+                throw new UnauthorizedAccessException(
+                    "Access denied. User is not authenticated or does not have required roles.");
+            }
+
+
+            var userRoles = user.FindAll(ClaimTypes.Role).Select(c => c.Value).ToHashSet();
+
+            if (!(attributes.All(attribute => string.IsNullOrWhiteSpace(attribute.Roles)) ||
+                  attributes.Any(attribute =>
+                  {
+                      var requiredRoles = attribute.Roles?.Split(',', StringSplitOptions.RemoveEmptyEntries) ?? [];
+                      return requiredRoles.Any(role => userRoles.Contains(role.Trim()));
+                  })))
+            {
+                throw new UnauthorizedAccessException(
+                    "Access denied. User is not authenticated or does not have required roles.");
+            }
         }
 
         await context.Invoke();
-        
     }
 
-    private async Task<bool> IsAuthorized()
+    private static ClaimsPrincipal? GetUserFromRequestContext()
     {
-        var sessionId = this.GetSessionId();
-        if (string.IsNullOrWhiteSpace(sessionId) is false)
-        {
-            var sessionGrain = grainFactory.GetGrain<ISessionGrain>(sessionId);
-            var result = await sessionGrain.ValidateAndGetClaimsAsync();
-            return result.IsSuccess;
-        }
-        return false;
+        var requestContext = RequestContext.Get(OrleansIdentityConstants.USER_CLAIMS);
+        return requestContext as ClaimsPrincipal;
     }
 
     private static bool IsGrainAuthorized(MemberInfo methodInfo, out List<AuthorizeAttribute> attributes)
     {
-        attributes = new List<AuthorizeAttribute>();
+        attributes = [];
 
-        // for method
         if (Attribute.IsDefined(methodInfo, typeof(AllowAnonymousAttribute)))
         {
             return false;
         }
 
-        if (methodInfo.DeclaringType != null && Attribute.IsDefined(methodInfo.DeclaringType, typeof(AuthorizeAttribute)))
+        if (methodInfo.DeclaringType != null &&
+            Attribute.IsDefined(methodInfo.DeclaringType, typeof(AuthorizeAttribute)))
         {
-            attributes.AddRange(Attribute.GetCustomAttributes(methodInfo.DeclaringType, typeof(AuthorizeAttribute)).Select(s => (AuthorizeAttribute)s));
+            attributes.AddRange(Attribute.GetCustomAttributes(methodInfo.DeclaringType, typeof(AuthorizeAttribute))
+                .Cast<AuthorizeAttribute>());
         }
 
         if (Attribute.IsDefined(methodInfo, typeof(AuthorizeAttribute)))
         {
-            attributes.AddRange(Attribute.GetCustomAttributes(methodInfo, typeof(AuthorizeAttribute)).Select(s => (AuthorizeAttribute)s));
+            attributes.AddRange(Attribute.GetCustomAttributes(methodInfo, typeof(AuthorizeAttribute))
+                .Cast<AuthorizeAttribute>());
             return true;
         }
 
