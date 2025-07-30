@@ -31,26 +31,15 @@ public class GrainAuthorizationIncomingFilter : IIncomingGrainCallFilter
                     "Access denied. User is not authenticated or does not have required roles.");
             }
 
-            if (attributes.All(attribute => string.IsNullOrWhiteSpace(attribute.Roles)))
-            {
-                isAuthorized = true;
-            }
-            else
-            {
-                var userRoles = user.FindAll(ClaimTypes.Role).Select(c => c.Value).ToHashSet();
 
-                foreach (var attribute in attributes)
-                {
-                    var requiredRoles = attribute.Roles?.Split(',', StringSplitOptions.RemoveEmptyEntries) ?? [];
-                    
-                    if (!requiredRoles.Any(role => userRoles.Contains(role.Trim()))) continue;
-                    
-                    isAuthorized = true;
-                    break;
-                }
-            }
+            var userRoles = user.FindAll(ClaimTypes.Role).Select(c => c.Value).ToHashSet();
 
-            if (!isAuthorized)
+            if (!(attributes.All(attribute => string.IsNullOrWhiteSpace(attribute.Roles)) ||
+                  attributes.Any(attribute =>
+                  {
+                      var requiredRoles = attribute.Roles?.Split(',', StringSplitOptions.RemoveEmptyEntries) ?? [];
+                      return requiredRoles.Any(role => userRoles.Contains(role.Trim()));
+                  })))
             {
                 throw new UnauthorizedAccessException(
                     "Access denied. User is not authenticated or does not have required roles.");
