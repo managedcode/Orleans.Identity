@@ -26,8 +26,7 @@ var builder = Host.CreateDefaultBuilder(args)
     {
         siloBuilder
             .UseLocalhostClustering()
-            .AddOrleansIdentity() // Add the authorization filter
-            .ConfigureApplicationParts(parts => parts.AddApplicationPart(typeof(YourGrain).Assembly));
+            .AddOrleansIdentity(); // Add the authorization filter;
     });
 ```
 
