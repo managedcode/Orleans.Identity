@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Logging;
 using Orleans;
 using Orleans.Runtime;
 using ManagedCode.Orleans.Identity.Core.Constants;
@@ -15,36 +16,42 @@ public class GrainAuthorizationIncomingFilter : IIncomingGrainCallFilter
 {
     public async Task Invoke(IIncomingGrainCallContext context)
     {
+        // Check both interface method and implementation method
         if (IsGrainAuthorized(context.ImplementationMethod, out var attributes))
         {
             var user = GetUserFromRequestContext();
-
-            if (user == null)
+            
+            if (user == null || user.Identity?.IsAuthenticated != true)
             {
-                throw new UnauthorizedAccessException("Access denied. User is missing.");
+                throw new UnauthorizedAccessException("Access denied. User is not authenticated.");
             }
 
-            if (user.Identity?.IsAuthenticated == false)
+            // Check if any attribute requires specific roles
+            var rolesRequired = attributes.Any(attr => !string.IsNullOrWhiteSpace(attr.Roles));
+            
+            if (rolesRequired)
             {
-                throw new UnauthorizedAccessException(
-                    "Access denied. User is not authenticated or does not have required roles.");
-            }
+                var userRoles = user.FindAll(ClaimTypes.Role).Select(c => c.Value).ToHashSet();
+                
+                // Check if user has any of the required roles from any attribute
+                var hasRequiredRole = attributes.Any(attribute =>
+                {
+                    if (string.IsNullOrWhiteSpace(attribute.Roles))
+                        return true; // No specific role required by this attribute
+                    
+                    var requiredRoles = attribute.Roles.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                        .Select(r => r.Trim());
+                    
+                    return requiredRoles.Any(role => userRoles.Contains(role));
+                });
 
-
-            var userRoles = user.FindAll(ClaimTypes.Role).Select(c => c.Value).ToHashSet();
-
-            if (!(attributes.All(attribute => string.IsNullOrWhiteSpace(attribute.Roles)) ||
-                  attributes.Any(attribute =>
-                  {
-                      var requiredRoles = attribute.Roles?.Split(',', StringSplitOptions.RemoveEmptyEntries) ?? [];
-                      return requiredRoles.Any(role => userRoles.Contains(role.Trim()));
-                  })))
-            {
-                throw new UnauthorizedAccessException(
-                    "Access denied. User is not authenticated or does not have required roles.");
+                if (!hasRequiredRole)
+                {
+                    throw new UnauthorizedAccessException("Access denied. User does not have required roles.");
+                }
             }
         }
-
+        
         await context.Invoke();
     }
 
@@ -63,8 +70,7 @@ public class GrainAuthorizationIncomingFilter : IIncomingGrainCallFilter
             return false;
         }
 
-        if (methodInfo.DeclaringType != null &&
-            Attribute.IsDefined(methodInfo.DeclaringType, typeof(AuthorizeAttribute)))
+        if (methodInfo.DeclaringType != null && Attribute.IsDefined(methodInfo.DeclaringType, typeof(AuthorizeAttribute)))
         {
             attributes.AddRange(Attribute.GetCustomAttributes(methodInfo.DeclaringType, typeof(AuthorizeAttribute))
                 .Cast<AuthorizeAttribute>());

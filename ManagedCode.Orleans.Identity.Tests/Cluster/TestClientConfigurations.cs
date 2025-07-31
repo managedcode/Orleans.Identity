@@ -1,3 +1,4 @@
+using ManagedCode.Orleans.Identity.Client.Extensions;
 using Microsoft.Extensions.Configuration;
 using Orleans.TestingHost;
 
@@ -7,6 +8,6 @@ public class TestClientConfigurations : IClientBuilderConfigurator
 {
     public void Configure(IConfiguration configuration, IClientBuilder clientBuilder)
     {
-        //clientBuilder.UseScaler();
+        // Add Orleans Identity client-side components
     }
 }

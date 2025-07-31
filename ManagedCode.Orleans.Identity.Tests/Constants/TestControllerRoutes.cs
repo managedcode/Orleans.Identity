@@ -18,8 +18,8 @@ public static class TestControllerRoutes
 
     public const string USER_CONTROLLER_DEFAULT_ROUTE = "/userController";
     public const string USER_CONTROLLER_ANONYMOUS_ROUTE = "/userController/anonymous";
-    public const string USER_CONTROLLER_BAN_ROUTE = "/userController/ban";
-    public const string USER_CONTROLLER_PUBLIC_INFO_ROUTE = "/userController/publicInfo";
+    public const string USER_CONTROLLER_BAN = "/userController/ban";
+    public const string USER_CONTROLLER_PUBLIC_INFO = "/userController/publicInfo";
     public const string USER_CONTROLLER_MODIFY = "/userController/modify";
     public const string USER_CONTROLLER_ADD_TO_LIST = "/userController/addToList";
 

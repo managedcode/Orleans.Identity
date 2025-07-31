@@ -25,12 +25,7 @@ public static class ClaimsPrincipalExtensions
     {
         return user.FindFirst(ClaimTypes.HomePhone)?.Value ?? string.Empty;
     }
-
-    public static string GetSessionId(this ClaimsPrincipal user)
-    {
-        return user.FindFirst(OrleansIdentityConstants.SESSION_ID_CLAIM_NAME)?.Value ?? string.Empty;
-    }
-
+    
     public static string GetGrainId(this ClaimsPrincipal user)
     {
         return user.FindFirst(ClaimTypes.Actor)?.Value ?? string.Empty;
@@ -39,11 +34,5 @@ public static class ClaimsPrincipalExtensions
     public static string[] GetRoles(this ClaimsPrincipal user)
     {
         return user.FindAll(ClaimTypes.Role).Select(s => s.Value).ToArray();
-    }
-
-    public static bool IsUnauthorizedClient(this ClaimsPrincipal user)
-    {
-        //TODO: this is strange 
-        return user.GetGrainId() == OrleansIdentityConstants.AUTH_TOKEN;
     }
 }

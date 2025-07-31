@@ -1,6 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
-using FluentAssertions;
+using Shouldly;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.SignalR.Client;
 using ManagedCode.Orleans.Identity.Tests.Cluster;
@@ -27,7 +27,7 @@ public class JwtSignalRTests
         var loginRequest = new { Username = username };
         var response = await client.PostAsJsonAsync("/auth/login", loginRequest);
         
-        response.IsSuccessStatusCode.Should().BeTrue();
+        response.IsSuccessStatusCode.ShouldBeTrue();
         var result = await response.Content.ReadFromJsonAsync<LoginResponse>();
         return result!.Token;
     }
@@ -38,7 +38,7 @@ public class JwtSignalRTests
         {
             builder.WithUrl($"{_testApp.Server.BaseAddress}TestAuthorizeHub", options =>
             {
-                options.AccessTokenProvider = () => Task.FromResult(token);
+                options.AccessTokenProvider = () => Task.FromResult<string?>(token);
             });
         });
 
@@ -59,8 +59,8 @@ public class JwtSignalRTests
             var result = await connection.InvokeAsync<string>("GetUserInfo");
 
             // Assert
-            result.Should().NotBeNullOrEmpty();
-            result.Should().Contain("Hello, user!");
+            result.ShouldNotBeNullOrEmpty();
+            result.ShouldContain("Hello, user!");
         }
         finally
         {
@@ -81,8 +81,8 @@ public class JwtSignalRTests
             var result = await connection.InvokeAsync<string>("GetPublicInfo");
 
             // Assert
-            result.Should().NotBeNullOrEmpty();
-            result.Should().Contain("public information");
+            result.ShouldNotBeNullOrEmpty();
+            result.ShouldContain("public information");
         }
         finally
         {
@@ -103,9 +103,9 @@ public class JwtSignalRTests
             var result = await connection.InvokeAsync<string>("GetAdminInfo");
 
             // Assert
-            result.Should().NotBeNullOrEmpty();
-            result.Should().Contain("admin");
-            result.Should().Contain("admin privileges");
+            result.ShouldNotBeNullOrEmpty();
+            result.ShouldContain("admin");
+            result.ShouldContain("admin privileges");
         }
         finally
         {
@@ -126,7 +126,7 @@ public class JwtSignalRTests
             var exception = await Assert.ThrowsAsync<HubException>(() => 
                 connection.InvokeAsync<string>("GetAdminInfo"));
             
-            exception.Message.Should().Contain("Failed to invoke 'GetAdminInfo' because user is unauthorized");
+            exception.Message.ShouldContain("Failed to invoke 'GetAdminInfo' because user is unauthorized");
         }
         finally
         {

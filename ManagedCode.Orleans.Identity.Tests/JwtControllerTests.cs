@@ -1,7 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Security.Claims;
-using FluentAssertions;
+using Shouldly;
 using ManagedCode.Orleans.Identity.Tests.Cluster;
 using Xunit;
 using Xunit.Abstractions;
@@ -19,7 +19,7 @@ public class JwtControllerTests(TestClusterApplication testApp, ITestOutputHelpe
         var loginRequest = new { Username = username };
         var response = await client.PostAsJsonAsync("/auth/login", loginRequest);
         
-        response.IsSuccessStatusCode.Should().BeTrue();
+        response.IsSuccessStatusCode.ShouldBeTrue();
         var result = await response.Content.ReadFromJsonAsync<LoginResponse>();
         return result!.Token;
     }
@@ -42,10 +42,10 @@ public class JwtControllerTests(TestClusterApplication testApp, ITestOutputHelpe
         var response = await client.PostAsJsonAsync("/auth/login", loginRequest);
 
         // Assert
-        response.IsSuccessStatusCode.Should().BeTrue();
+        response.IsSuccessStatusCode.ShouldBeTrue();
         var result = await response.Content.ReadFromJsonAsync<LoginResponse>();
-        result.Should().NotBeNull();
-        result!.Token.Should().NotBeNullOrEmpty();
+        result.ShouldNotBeNull();
+        result!.Token.ShouldNotBeNullOrEmpty();
     }
 
     [Fact]
@@ -59,11 +59,11 @@ public class JwtControllerTests(TestClusterApplication testApp, ITestOutputHelpe
         var response = await client.GetAsync("/auth/me");
 
         // Assert
-        response.IsSuccessStatusCode.Should().BeTrue();
+        response.IsSuccessStatusCode.ShouldBeTrue();
         var userInfo = await response.Content.ReadFromJsonAsync<UserInfo>();
-        userInfo.Should().NotBeNull();
-        userInfo!.Username.Should().Be("user");
-        userInfo.Roles.Should().Contain("user");
+        userInfo.ShouldNotBeNull();
+        userInfo!.Username.ShouldBe("user");
+        userInfo.Roles.ShouldContain("user");
     }
 
     [Fact]
@@ -77,9 +77,9 @@ public class JwtControllerTests(TestClusterApplication testApp, ITestOutputHelpe
         var response = await client.GetAsync("/userController");
 
         // Assert
-        response.IsSuccessStatusCode.Should().BeTrue();
+        response.IsSuccessStatusCode.ShouldBeTrue();
         var result = await response.Content.ReadAsStringAsync();
-        result.Should().Contain("Hello, user!");
+        result.ShouldContain("Hello, user!");
     }
 
     [Fact]
@@ -92,7 +92,7 @@ public class JwtControllerTests(TestClusterApplication testApp, ITestOutputHelpe
         var response = await client.GetAsync("/userController");
 
         // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
@@ -106,10 +106,10 @@ public class JwtControllerTests(TestClusterApplication testApp, ITestOutputHelpe
         var response = await client.GetAsync("/userController/ban");
 
         // Assert
-        response.IsSuccessStatusCode.Should().BeTrue();
+        response.IsSuccessStatusCode.ShouldBeTrue();
         var result = await response.Content.ReadAsStringAsync();
-        result.Should().Contain("admin");
-        result.Should().Contain("banned");
+        result.ShouldContain("admin");
+        result.ShouldContain("banned");
     }
 
     [Fact]
@@ -123,7 +123,7 @@ public class JwtControllerTests(TestClusterApplication testApp, ITestOutputHelpe
         var response = await client.GetAsync("/userController/ban");
 
         // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 
     [Fact]
@@ -136,9 +136,9 @@ public class JwtControllerTests(TestClusterApplication testApp, ITestOutputHelpe
         var response = await client.GetAsync("/userController/publicInfo");
 
         // Assert
-        response.IsSuccessStatusCode.Should().BeTrue();
+        response.IsSuccessStatusCode.ShouldBeTrue();
         var result = await response.Content.ReadAsStringAsync();
-        result.Should().Contain("public information");
+        result.ShouldContain("public information");
     }
 
     [Fact]
@@ -152,10 +152,10 @@ public class JwtControllerTests(TestClusterApplication testApp, ITestOutputHelpe
         var response = await client.GetAsync("/userController/modify");
 
         // Assert
-        response.IsSuccessStatusCode.Should().BeTrue();
+        response.IsSuccessStatusCode.ShouldBeTrue();
         var result = await response.Content.ReadAsStringAsync();
-        result.Should().Contain("moderator");
-        result.Should().Contain("modified");
+        result.ShouldContain("moderator");
+        result.ShouldContain("modified");
     }
 
     [Fact]
@@ -169,7 +169,7 @@ public class JwtControllerTests(TestClusterApplication testApp, ITestOutputHelpe
         var response = await client.GetAsync("/userController/modify");
 
         // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        response.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 
     [Fact]
@@ -183,10 +183,10 @@ public class JwtControllerTests(TestClusterApplication testApp, ITestOutputHelpe
         var response = await client.GetAsync("/userController/addToList");
 
         // Assert
-        response.IsSuccessStatusCode.Should().BeTrue();
+        response.IsSuccessStatusCode.ShouldBeTrue();
         var result = await response.Content.ReadAsStringAsync();
-        result.Should().Contain("user");
-        result.Should().Contain("added to list");
+        result.ShouldContain("user");
+        result.ShouldContain("added to list");
     }
 }
 

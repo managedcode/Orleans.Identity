@@ -2,9 +2,9 @@
 
 public static class OrleansIdentityConstants
 {
-    public const string SESSION_STORAGE = "sessionStore";
-    public static string AUTH_TOKEN = "AUTH-TOKEN";
-    public static string AUTHENTICATION_TYPE = "MC-OrleansIdentity";
-    public const string SESSION_ID_CLAIM_NAME = "SessionId";
-    public const string USER_CLAIMS = "UserClaims";
+    /// <summary>
+    /// Key used to store user claims in Orleans RequestContext.
+    /// Works with any ASP.NET Core authentication method (JWT, Cookie, etc.)
+    /// </summary>
+    public const string USER_CLAIMS = "MC-UserClaims";
 }

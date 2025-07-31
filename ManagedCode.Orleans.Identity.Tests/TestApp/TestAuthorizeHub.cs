@@ -6,21 +6,14 @@ using Orleans;
 namespace ManagedCode.Orleans.Identity.Tests.TestApp;
 
 [Authorize]
-public class TestAuthorizeHub : Hub
+public class TestAuthorizeHub(IClusterClient clusterClient) : Hub
 {
-    private readonly IClusterClient _clusterClient;
-
-    public TestAuthorizeHub(IClusterClient clusterClient)
-    {
-        _clusterClient = clusterClient;
-    }
-
     public async Task<string> GetUserInfo()
     {
         try
         {
             var userId = Context.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "anonymous";
-            var userGrain = _clusterClient.GetGrain<IUserGrain>(userId);
+            var userGrain = clusterClient.GetGrain<IUserGrain>(userId);
             return await userGrain.GetUser();
         }
         catch (UnauthorizedAccessException)
@@ -33,7 +26,7 @@ public class TestAuthorizeHub : Hub
     public async Task<string> GetAdminInfo()
     {
         var userId = Context.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "anonymous";
-        var userGrain = _clusterClient.GetGrain<IUserGrain>(userId);
+        var userGrain = clusterClient.GetGrain<IUserGrain>(userId);
         return await userGrain.GetAdminInfo();
     }
 
@@ -42,8 +35,27 @@ public class TestAuthorizeHub : Hub
         try
         {
             var userId = Context.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "anonymous";
-            var userGrain = _clusterClient.GetGrain<IUserGrain>(userId);
+            var userGrain = clusterClient.GetGrain<IUserGrain>(userId);
             return await userGrain.GetPublicInfo();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            throw new HubException("Forbidden: Access denied");
+        }
+    }
+
+    public async Task SendAuthorizedMessage(string message)
+    {
+        try
+        {
+            var userId = Context.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "anonymous";
+            var userGrain = clusterClient.GetGrain<IUserGrain>(userId);
+            
+            // Call grain method to get user info (this will trigger authorization filter)
+            var userInfo = await userGrain.GetUser();
+            
+            // Send message back to caller
+            await Clients.Caller.SendAsync("ReceiveMessage", $"{userInfo} received authorized message: {message}");
         }
         catch (UnauthorizedAccessException)
         {
