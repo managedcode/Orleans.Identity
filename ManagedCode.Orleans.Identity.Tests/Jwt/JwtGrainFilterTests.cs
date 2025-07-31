@@ -1,18 +1,16 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using System.Text;
-using System.Text.Json;
-using Shouldly;
 using ManagedCode.Orleans.Identity.Tests.Cluster;
 using ManagedCode.Orleans.Identity.Tests.Constants;
 using ManagedCode.Orleans.Identity.Tests.TestApp.Controllers;
 using ManagedCode.Orleans.Identity.Tests.TestApp.Services;
-using Microsoft.Extensions.DependencyInjection;
+using Shouldly;
 using Xunit;
 using Xunit.Abstractions;
+using LoginRequest = ManagedCode.Orleans.Identity.Tests.Cookies.LoginRequest;
 
-namespace ManagedCode.Orleans.Identity.Tests;
+namespace ManagedCode.Orleans.Identity.Tests.Jwt;
 
 [Collection(nameof(TestClusterApplication))]
 public class JwtGrainFilterTests

@@ -11,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Xunit;
 using Xunit.Abstractions;
+using LoginRequest = ManagedCode.Orleans.Identity.Tests.Cookies.LoginRequest;
 
 namespace ManagedCode.Orleans.Identity.Tests;
 

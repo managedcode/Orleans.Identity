@@ -5,14 +5,15 @@ using Orleans;
 
 namespace ManagedCode.Orleans.Identity.Tests.TestApp;
 
-[Authorize]
 public class TestAuthorizeHub(IClusterClient clusterClient) : Hub
 {
+    [Authorize]
     public async Task<string> GetUserInfo()
     {
         try
         {
-            var userId = Context.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "anonymous";
+            var userId = Context.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ??
+                         "anonymous";
             var userGrain = clusterClient.GetGrain<IUserGrain>(userId);
             return await userGrain.GetUser();
         }
@@ -30,11 +31,13 @@ public class TestAuthorizeHub(IClusterClient clusterClient) : Hub
         return await userGrain.GetAdminInfo();
     }
 
+    [AllowAnonymous]
     public async Task<string> GetPublicInfo()
     {
         try
         {
-            var userId = Context.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "anonymous";
+            var userId = Context.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ??
+                         "anonymous";
             var userGrain = clusterClient.GetGrain<IUserGrain>(userId);
             return await userGrain.GetPublicInfo();
         }
@@ -44,16 +47,18 @@ public class TestAuthorizeHub(IClusterClient clusterClient) : Hub
         }
     }
 
+    [Authorize]
     public async Task SendAuthorizedMessage(string message)
     {
         try
         {
-            var userId = Context.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "anonymous";
+            var userId = Context.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ??
+                         "anonymous";
             var userGrain = clusterClient.GetGrain<IUserGrain>(userId);
-            
+
             // Call grain method to get user info (this will trigger authorization filter)
             var userInfo = await userGrain.GetUser();
-            
+
             // Send message back to caller
             await Clients.Caller.SendAsync("ReceiveMessage", $"{userInfo} received authorized message: {message}");
         }
