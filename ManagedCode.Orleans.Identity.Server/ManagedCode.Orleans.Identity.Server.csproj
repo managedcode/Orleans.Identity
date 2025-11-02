@@ -16,11 +16,11 @@
 
     <ItemGroup>
 
-        <PackageReference Include="ManagedCode.Communication" Version="9.0.0" />
-        <PackageReference Include="ManagedCode.Communication.Orleans" Version="9.0.0" />
-        
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.7" />
-        
+        <PackageReference Include="ManagedCode.Communication" Version="9.6.5" />
+        <PackageReference Include="ManagedCode.Communication.Orleans" Version="9.6.5" />
+
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.10" />
+
         <PackageReference Include="Microsoft.Orleans.Reminders" Version="9.2.1" />
         <PackageReference Include="Microsoft.Orleans.Server" Version="9.2.1" />
     </ItemGroup>
