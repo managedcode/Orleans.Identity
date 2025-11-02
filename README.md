@@ -2,123 +2,123 @@
 
 # Orleans.Identity
 
-A simplified Orleans library for handling authorization context propagation from ASP.NET Core controllers and SignalR hubs to Orleans grains.
+Orleans.Identity expands ASP.NET Core authentication and authorization into Orleans grains. It forwards the `ClaimsPrincipal`
+created by ASP.NET Identity (JWT, cookies, etc.) to grains, validates `[Authorize]` attributes inside the cluster, and exposes
+helpers that make the current user available inside grain code.
 
-## Overview
+The repository ships three NuGet packages:
 
-This library provides a simple way to pass user authorization context from your ASP.NET Core application to Orleans grains, allowing you to implement authorization at the grain level using standard ASP.NET Core authorization attributes.
+| Package | Purpose |
+| --- | --- |
+| `ManagedCode.Orleans.Identity.Server` | Registers an Orleans incoming grain call filter that enforces ASP.NET Core authorization attributes in the silo. |
+| `ManagedCode.Orleans.Identity.Client` | Adds MVC and SignalR filters that copy the authenticated `ClaimsPrincipal` into Orleans `RequestContext` before grains are invoked. |
+| `ManagedCode.Orleans.Identity.Core` | Shared helpers (claim surrogates, extensions, constants). |
 
-## Features
+## Key capabilities
 
-- **JWT-based authentication**: Works with standard JWT tokens
-- **Controller authorization**: Automatically passes user claims to grains called from controllers
-- **SignalR authorization**: Supports authorization in SignalR hubs
-- **Grain-level authorization**: Use `[Authorize]` and `[Authorize(Roles = "RoleName")]` attributes on grains
-- **Simple grain extension**: Use `this.GetCurrentUser().Claims` to access user claims in grains
+- **Authorization parity with ASP.NET Core** – Grains honor `[Authorize]`, `[AllowAnonymous]`, and role restrictions declared on
+grains or grain interfaces. Unauthorized calls throw `UnauthorizedAccessException` before grain logic runs.
+- **Automatic claim propagation** – HTTP controllers and SignalR hubs copy the authenticated user into Orleans `RequestContext`
+so that the grain filter can evaluate claims and roles consistently.
+- **Grain-side helpers** – Call `this.GetCurrentUser()` inside a grain to access the caller’s `ClaimsPrincipal` without repeating
+boilerplate request-context lookups.
+- **SignalR and REST coverage** – Integration tests verify JWT, cookie, and SignalR scenarios end-to-end with role checks and
+anonymous access rules.
 
-## Quick Start
+## Getting started
 
-### 1. Orleans Cluster Setup
+### 1. Configure the Orleans silo
 
 ```csharp
-var builder = Host.CreateDefaultBuilder(args)
+var host = Host.CreateDefaultBuilder(args)
     .UseOrleans(siloBuilder =>
     {
         siloBuilder
             .UseLocalhostClustering()
-            .AddOrleansIdentity(); // Add the authorization filter;
-    });
+            .AddOrleansIdentity(); // registers the authorization grain filter
+    })
+    .Build();
+
+await host.RunAsync();
 ```
 
-### 2. ASP.NET Core API Setup
+The extension registers `GrainAuthorizationIncomingFilter`, which inspects grain metadata and enforces ASP.NET authorization
+attributes inside the silo.
+
+### 2. Configure the ASP.NET Core host
 
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
 
-// Add Orleans client
+builder.Services.AddControllers();
+builder.Services.AddSignalR();
+
+// Add authentication (JWT, cookies, etc.)
+builder.Services.AddAuthentication(/* your schemes */);
+
+// Forward ClaimsPrincipal values to Orleans
+builder.Services.AddOrleansIdentity();
+
 builder.Services.AddOrleansClient(client =>
 {
     client.UseLocalhostClustering();
 });
 
-// Add Orleans Identity
-builder.Services.AddOrleansIdentity();
-
-// Add JWT authentication
-builder.Services.AddAuthentication("Bearer")
-    .AddJwtBearer("Bearer", options => { /* JWT configuration */ });
-
 var app = builder.Build();
 
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseOrleansIdentity(); // Add the middleware
 
 app.MapControllers();
-app.MapHub<YourHub>("/hub");
+app.MapHub<ChatHub>("/chat");
+
+app.Run();
 ```
 
-### 3. Using in Grains
+The MVC and SignalR filters installed by `AddOrleansIdentity` push the authenticated user into `RequestContext` whenever a
+controller action or hub method is invoked.
+
+### 3. Enforce authorization in grains
 
 ```csharp
 [Authorize]
-public class MyGrain : Grain, IMyGrain
+public interface IUserGrain : IGrainWithGuidKey
 {
-    [AllowAnonymous]
-    public Task<string> GetPublicInfo()
-    {
-        return Task.FromResult("Public info");
-    }
-
-    [Authorize]
-    public Task<string> GetUserInfo()
-    {
-        var user = this.GetCurrentUser();
-        var username = user.FindFirst(ClaimTypes.Name)?.Value;
-        return Task.FromResult($"Hello, {username}!");
-    }
+    Task<string> GetProfileAsync();
 
     [Authorize(Roles = "Admin")]
-    public Task<string> GetAdminInfo()
+    Task<string> GetAdminPanelAsync();
+}
+
+public class UserGrain : Grain, IUserGrain
+{
+    public Task<string> GetProfileAsync()
     {
-        return Task.FromResult("Admin only info");
+        var user = this.GetCurrentUser();
+        return Task.FromResult($"Hello, {user.Identity?.Name ?? "anonymous"}!");
+    }
+
+    public Task<string> GetAdminPanelAsync()
+    {
+        return Task.FromResult("Admin only data");
     }
 }
 ```
 
+When the grain call arrives, the filter validates the caller’s authentication state and roles before executing grain logic, and
+the grain extension retrieves the caller’s claims for business logic.
+
 ## Testing
 
-The library includes comprehensive integration tests in the `ManagedCode.Orleans.Identity.Tests` project that demonstrate:
-
-- JWT token generation and validation
-- Controller → Grain authorization flow
-- SignalR → Grain authorization flow
-- Role-based access control
-- Grain authorization with user claims
-
-### Running Tests
+Run the integration suite to exercise the ASP.NET + Orleans pipeline:
 
 ```bash
 dotnet test
 ```
 
-### Test Structure
-
-The tests use the existing integration test infrastructure with:
-- **TestApp**: ASP.NET Core application with controllers and SignalR hubs
-- **Cluster**: Orleans test cluster with grains
-- **Integration Tests**: Comprehensive tests covering all scenarios
-
-## Architecture
-
-The library works by:
-
-1. **Middleware**: Extracts user claims from JWT tokens and stores them in Orleans `RequestContext`
-2. **SignalR Filter**: Handles authorization in SignalR hubs and stores claims in `RequestContext`
-3. **Grain Filter**: Intercepts grain calls and validates authorization based on `[Authorize]` attributes
-4. **Grain Extension**: Provides `this.GetCurrentUser()` method to access claims in grains
+The tests spin up an Orleans test cluster and an ASP.NET Core host to validate JWT, cookie, and SignalR flows, including role
+checks and anonymous endpoints.
 
 ## License
 
 MIT License
-
