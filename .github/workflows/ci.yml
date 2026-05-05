@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+env:
+  DOTNET_VERSION: '10.0.x'
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v5
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Restore dependencies
+      run: dotnet restore ManagedCode.Orleans.Identity.sln
+
+    - name: Build
+      run: dotnet build ManagedCode.Orleans.Identity.sln --configuration Release --no-restore
+
+    - name: Analyze
+      run: dotnet build ManagedCode.Orleans.Identity.sln --configuration Release --no-restore -p:RunAnalyzers=true
+
+    - name: Test
+      run: dotnet test ManagedCode.Orleans.Identity.sln --configuration Release --no-build --verbosity normal -p:CollectCoverage=true -p:CoverletOutput=coverage/ -p:CoverletOutputFormat=opencover
+
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v5
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: ./**/coverage.opencover.xml
+        fail_ci_if_error: false
