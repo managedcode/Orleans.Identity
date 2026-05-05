@@ -43,7 +43,18 @@ await host.RunAsync();
 ```
 
 The extension registers `GrainAuthorizationIncomingFilter`, which inspects grain metadata and enforces ASP.NET authorization
-attributes inside the silo.
+attributes inside the silo. Policies used by grain attributes must be registered in the silo because the check runs in the
+Orleans server process, not in the ASP.NET Core frontend process.
+
+```csharp
+siloBuilder.AddOrleansIdentity(options =>
+{
+    options.AddPolicy("RequireAdminDepartment", policy =>
+    {
+        policy.RequireClaim("department", "administration");
+    });
+});
+```
 
 ### 2. Configure the ASP.NET Core host
 
@@ -108,6 +119,10 @@ public class UserGrain : Grain, IUserGrain
 When the grain call arrives, the filter validates the caller’s authentication state and roles before executing grain logic, and
 the grain extension retrieves the caller’s claims for business logic.
 
+`[Authorize(Policy = "...")]` is supported through ASP.NET Core authorization services registered in the silo.
+`AuthorizeAttribute.AuthenticationSchemes` is rejected for grain authorization because Orleans grain calls do not run through
+the HTTP authentication scheme selector.
+
 ## Testing
 
 Run the integration suite to exercise the ASP.NET + Orleans pipeline:
@@ -115,7 +130,7 @@ Run the integration suite to exercise the ASP.NET + Orleans pipeline:
 ```bash
 dotnet restore ManagedCode.Orleans.Identity.sln
 dotnet build ManagedCode.Orleans.Identity.sln --configuration Release --no-restore
-dotnet test ManagedCode.Orleans.Identity.sln --configuration Release --no-build
+dotnet test ManagedCode.Orleans.Identity.sln --configuration Release --no-build -p:CollectCoverage=true -p:CoverletOutput=coverage/ -p:CoverletOutputFormat=opencover -p:Threshold=85 -p:ThresholdType=line -p:ThresholdStat=total
 ```
 
 The tests spin up an Orleans test cluster and an ASP.NET Core host to validate JWT, cookie, and SignalR flows, including role

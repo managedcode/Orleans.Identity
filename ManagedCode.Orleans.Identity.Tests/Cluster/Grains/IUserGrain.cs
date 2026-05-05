@@ -14,4 +14,10 @@ public interface IUserGrain : IGrainWithStringKey
 
     [Authorize(Roles = TestRoles.ADMIN)]
     Task<string> GetInterfaceAdminInfo();
+
+    [Authorize(Policy = TestAuthorizationPolicies.RequireAdminDepartment)]
+    Task<string> GetPolicyInfo();
+
+    [Authorize(AuthenticationSchemes = TestAuthorizationPolicies.UnsupportedAuthenticationScheme)]
+    Task<string> GetAuthenticationSchemeInfo();
 }

@@ -39,7 +39,7 @@ jobs:
       run: dotnet build ManagedCode.Orleans.Identity.sln --configuration Release --no-restore
 
     - name: Test
-      run: dotnet test ManagedCode.Orleans.Identity.sln --configuration Release --no-build --verbosity normal
+      run: dotnet test ManagedCode.Orleans.Identity.sln --configuration Release --no-build --verbosity normal -p:CollectCoverage=true -p:CoverletOutput=coverage/ -p:CoverletOutputFormat=opencover -p:Threshold=85 -p:ThresholdType=line -p:ThresholdStat=total
 
     - name: Pack NuGet packages
       run: dotnet pack ManagedCode.Orleans.Identity.sln -p:IncludeSymbols=false -p:SymbolPackageFormat=snupkg --configuration Release --no-build --output ./artifacts

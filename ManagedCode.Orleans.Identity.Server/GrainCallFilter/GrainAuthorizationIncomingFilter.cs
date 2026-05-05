@@ -10,16 +10,19 @@ using Orleans.Runtime;
 
 namespace ManagedCode.Orleans.Identity.Server.GrainCallFilter;
 
-public class GrainAuthorizationIncomingFilter : IIncomingGrainCallFilter
+public class GrainAuthorizationIncomingFilter(
+    IAuthorizationService authorizationService,
+    IAuthorizationPolicyProvider policyProvider) : IIncomingGrainCallFilter
 {
     private const int EmptyAttributeCount = 0;
-    private const char RoleSeparator = ',';
     private const string AccessDeniedNotAuthenticated = "Access denied. User is not authenticated.";
-    private const string AccessDeniedMissingRoles = "Access denied. User does not have required roles.";
+    private const string AccessDeniedNotAuthorized = "Access denied. User is not authorized.";
+    private const string UnsupportedAuthenticationSchemes =
+        "AuthorizeAttribute.AuthenticationSchemes is not supported by Orleans grain authorization.";
 
     public async Task Invoke(IIncomingGrainCallContext context)
     {
-        if (IsGrainAuthorized(context, out var attributes))
+        if (IsGrainAuthorized(context, out var authorizeData))
         {
             var user = GetUserFromRequestContext();
 
@@ -28,10 +31,8 @@ public class GrainAuthorizationIncomingFilter : IIncomingGrainCallFilter
                 throw new UnauthorizedAccessException(AccessDeniedNotAuthenticated);
             }
 
-            if (!HasRequiredRoles(attributes, user))
-            {
-                throw new UnauthorizedAccessException(AccessDeniedMissingRoles);
-            }
+            ThrowIfUnsupportedAuthenticationSchemes(authorizeData);
+            await AuthorizeAsync(context, user, authorizeData);
         }
 
         await context.Invoke();
@@ -43,9 +44,9 @@ public class GrainAuthorizationIncomingFilter : IIncomingGrainCallFilter
         return requestContext as ClaimsPrincipal;
     }
 
-    private static bool IsGrainAuthorized(IIncomingGrainCallContext context, out List<AuthorizeAttribute> attributes)
+    private static bool IsGrainAuthorized(IIncomingGrainCallContext context, out List<AuthorizeAttribute> authorizeData)
     {
-        attributes = [];
+        authorizeData = [];
         var members = GetAuthorizationMembers(context);
 
         if (members.Any(HasAllowAnonymousAttribute))
@@ -53,8 +54,8 @@ public class GrainAuthorizationIncomingFilter : IIncomingGrainCallFilter
             return false;
         }
 
-        attributes.AddRange(members.SelectMany(GetAuthorizeAttributes));
-        return attributes.Count != EmptyAttributeCount;
+        authorizeData.AddRange(members.SelectMany(GetAuthorizeAttributes));
+        return authorizeData.Count != EmptyAttributeCount;
     }
 
     private static IReadOnlyList<MemberInfo> GetAuthorizationMembers(IIncomingGrainCallContext context)
@@ -89,25 +90,30 @@ public class GrainAuthorizationIncomingFilter : IIncomingGrainCallFilter
             .Cast<AuthorizeAttribute>();
     }
 
-    private static bool HasRequiredRoles(IEnumerable<AuthorizeAttribute> attributes, ClaimsPrincipal user)
+    private static void ThrowIfUnsupportedAuthenticationSchemes(IEnumerable<AuthorizeAttribute> authorizeData)
     {
-        return attributes
-            .Where(attribute => !string.IsNullOrWhiteSpace(attribute.Roles))
-            .All(attribute => HasAnyRequiredRole(attribute, user));
+        if (authorizeData.Any(attribute => !string.IsNullOrWhiteSpace(attribute.AuthenticationSchemes)))
+        {
+            throw new InvalidOperationException(UnsupportedAuthenticationSchemes);
+        }
     }
 
-    private static bool HasAnyRequiredRole(AuthorizeAttribute attribute, ClaimsPrincipal user)
+    private async Task AuthorizeAsync(
+        IIncomingGrainCallContext context,
+        ClaimsPrincipal user,
+        IEnumerable<IAuthorizeData> authorizeData)
     {
-        if (string.IsNullOrWhiteSpace(attribute.Roles))
+        var authorizationPolicy = await AuthorizationPolicy.CombineAsync(policyProvider, authorizeData);
+        if (authorizationPolicy is null)
         {
-            return true;
+            return;
         }
 
-        var roles = attribute.Roles.Split(
-            RoleSeparator,
-            StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries
-        );
+        var authorizationResult = await authorizationService.AuthorizeAsync(user, context, authorizationPolicy);
 
-        return roles.Any(user.IsInRole);
+        if (!authorizationResult.Succeeded)
+        {
+            throw new UnauthorizedAccessException(AccessDeniedNotAuthorized);
+        }
     }
 }

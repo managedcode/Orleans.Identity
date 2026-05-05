@@ -18,6 +18,11 @@ namespace ManagedCode.Orleans.Identity.Tests;
 [Collection(nameof(TestClusterApplication))]
 public class AuthenticationIntegrationTests
 {
+    private const int SignalRMessageTimeoutSeconds = 5;
+    private const string ReceiveMessageMethod = "ReceiveMessage";
+    private const string SendAuthorizedMessageMethod = "SendAuthorizedMessage";
+    private const string SignalRMessageText = "test message";
+
     private readonly ITestOutputHelper _outputHelper;
     private readonly TestClusterApplication _testApp;
     private readonly IJwtService _jwtService;
@@ -72,13 +77,11 @@ public class AuthenticationIntegrationTests
             })
             .Build();
 
-        var messageReceived = false;
-        var receivedMessage = string.Empty;
-        
-        hubConnection.On<string>("ReceiveMessage", message =>
+        var messageCompletion = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        hubConnection.On<string>(ReceiveMessageMethod, message =>
         {
-            receivedMessage = message;
-            messageReceived = true;
+            messageCompletion.TrySetResult(message);
             _outputHelper.WriteLine($"SignalR received: {message}");
         });
 
@@ -86,12 +89,9 @@ public class AuthenticationIntegrationTests
         _outputHelper.WriteLine("SignalR connected with JWT");
 
         // Send message that triggers grain call
-        await hubConnection.InvokeAsync("SendAuthorizedMessage", "test message");
-        
-        // Wait for response
-        await Task.Delay(500);
-        
-        messageReceived.ShouldBeTrue();
+        await hubConnection.InvokeAsync(SendAuthorizedMessageMethod, SignalRMessageText);
+
+        var receivedMessage = await messageCompletion.Task.WaitAsync(TimeSpan.FromSeconds(SignalRMessageTimeoutSeconds));
         receivedMessage.ShouldContain("admin");
         receivedMessage.ShouldContain("authorized message");
         

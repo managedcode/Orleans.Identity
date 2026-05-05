@@ -33,7 +33,7 @@ jobs:
       run: dotnet build ManagedCode.Orleans.Identity.sln --configuration Release --no-restore -p:RunAnalyzers=true
 
     - name: Test
-      run: dotnet test ManagedCode.Orleans.Identity.sln --configuration Release --no-build --verbosity normal -p:CollectCoverage=true -p:CoverletOutput=coverage/ -p:CoverletOutputFormat=opencover
+      run: dotnet test ManagedCode.Orleans.Identity.sln --configuration Release --no-build --verbosity normal -p:CollectCoverage=true -p:CoverletOutput=coverage/ -p:CoverletOutputFormat=opencover -p:Threshold=85 -p:ThresholdType=line -p:ThresholdStat=total
 
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v5
