@@ -6,63 +6,74 @@ using ManagedCode.Orleans.Identity.Tests.Constants;
 using Orleans.Runtime;
 using Shouldly;
 using Xunit;
-using Xunit.Abstractions;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
-using ManagedCode.Orleans.Identity.Client.Filters;
 
 namespace ManagedCode.Orleans.Identity.Tests;
 
 [Collection(nameof(TestClusterApplication))]
-public class VerifyFilterTest(TestClusterApplication testApp, ITestOutputHelper outputHelper)
+public class VerifyFilterTest
 {
+    private const string AccessDeniedMessage = "Access denied";
+    private const string TestAuthenticationType = "Test";
+    private const string TestUserName = "testuser";
+
+    private readonly TestClusterApplication testApp;
+
+    public VerifyFilterTest(TestClusterApplication testApp)
+    {
+        this.testApp = testApp;
+    }
+
     [Fact]
     public async Task VerifyFilter_DirectGrainCall_WithoutRole_ShouldThrow()
     {
-        // First test through HTTP to ensure the setup is correct
-        var client = testApp.CreateClient();
-        
-        // Create HttpContext and setup authentication
-        var httpContext = new DefaultHttpContext();
-        var claims = new List<Claim>
-        {
-            new(ClaimTypes.Name, "testuser"),
-            new(ClaimTypes.NameIdentifier, "testuser"), 
-            new(ClaimTypes.Actor, "testuser"),
-            new(ClaimTypes.Role, TestRoles.USER) // Only user role, not admin
-        };
-        var identity = new ClaimsIdentity(claims, "Test");
-        var principal = new ClaimsPrincipal(identity);
-        httpContext.User = principal;
-        
-        // Simulate the action filter behavior
-        RequestContext.Set(OrleansIdentityConstants.USER_CLAIMS, principal);
-        
+        var userGrain = SetUserContextAndGetUserGrain(TestRoles.USER);
+
         try
         {
-            // Get grain directly from cluster client
-            var userGrain = testApp.Cluster.Client.GetGrain<IUserGrain>("testuser");
-            
-            // This should throw UnauthorizedAccessException
-            var result = await userGrain.BanUser();
-            
-            // If we get here, filter is not working
-            outputHelper.WriteLine($"ERROR: Method returned: {result}");
-            true.ShouldBe(false, "Expected UnauthorizedAccessException but method succeeded");
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            outputHelper.WriteLine($"Success: Got expected exception - {ex.Message}");
-            ex.Message.ShouldContain("Access denied");
-        }
-        catch (Exception ex)
-        {
-            outputHelper.WriteLine($"ERROR: Got unexpected exception type {ex.GetType().Name}: {ex.Message}");
-            throw;
+            var exception = await Should.ThrowAsync<UnauthorizedAccessException>(async () => await userGrain.BanUser());
+            exception.Message.ShouldContain(AccessDeniedMessage);
         }
         finally
         {
             RequestContext.Clear();
         }
+    }
+
+    [Fact]
+    public async Task VerifyFilter_InterfaceMethodAuthorization_WithoutRole_ShouldThrow()
+    {
+        var userGrain = SetUserContextAndGetUserGrain(TestRoles.USER);
+
+        try
+        {
+            var exception = await Should.ThrowAsync<UnauthorizedAccessException>(
+                async () => await userGrain.GetInterfaceAdminInfo()
+            );
+            exception.Message.ShouldContain(AccessDeniedMessage);
+        }
+        finally
+        {
+            RequestContext.Clear();
+        }
+    }
+
+    private IUserGrain SetUserContextAndGetUserGrain(string role)
+    {
+        RequestContext.Set(OrleansIdentityConstants.USER_CLAIMS, CreatePrincipal(role));
+        return testApp.Cluster.Client.GetGrain<IUserGrain>(TestUserName);
+    }
+
+    private static ClaimsPrincipal CreatePrincipal(string role)
+    {
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.Name, TestUserName),
+            new(ClaimTypes.NameIdentifier, TestUserName),
+            new(ClaimTypes.Actor, TestUserName),
+            new(ClaimTypes.Role, role),
+        };
+        var identity = new ClaimsIdentity(claims, TestAuthenticationType);
+
+        return new ClaimsPrincipal(identity);
     }
 }

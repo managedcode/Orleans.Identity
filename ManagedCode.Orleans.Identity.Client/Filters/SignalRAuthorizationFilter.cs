@@ -1,9 +1,6 @@
 using System;
-using System.Security.Claims;
 using System.Threading.Tasks;
-using ManagedCode.Orleans.Identity.Core.Constants;
 using Microsoft.AspNetCore.SignalR;
-using Orleans.Runtime;
 
 namespace ManagedCode.Orleans.Identity.Client.Filters;
 
@@ -13,8 +10,15 @@ public sealed class SignalRAuthorizationFilter : IHubFilter
         HubInvocationContext invocationContext,
         Func<HubInvocationContext, ValueTask<object?>> next)
     {
-        RequestContext.Set(OrleansIdentityConstants.USER_CLAIMS, invocationContext.Context.User!); // can be null
-        return next(invocationContext);
+        return InvokeMethodWithRequestContextAsync(invocationContext, next);
+    }
+
+    private static async ValueTask<object?> InvokeMethodWithRequestContextAsync(
+        HubInvocationContext invocationContext,
+        Func<HubInvocationContext, ValueTask<object?>> next)
+    {
+        using var requestContextScope = new OrleansRequestContextScope(invocationContext.Context.User);
+        return await next(invocationContext);
     }
 
     public Task OnConnectedAsync(HubLifetimeContext context, Func<HubLifetimeContext, Task> next)
@@ -27,4 +31,4 @@ public sealed class SignalRAuthorizationFilter : IHubFilter
     {
         return next(context, exception);
     }
-} 
+}

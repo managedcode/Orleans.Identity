@@ -4,54 +4,36 @@ using System.Linq;
 using System.Reflection;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.Extensions.Logging;
-using Orleans;
-using Orleans.Runtime;
 using ManagedCode.Orleans.Identity.Core.Constants;
+using Microsoft.AspNetCore.Authorization;
+using Orleans.Runtime;
 
 namespace ManagedCode.Orleans.Identity.Server.GrainCallFilter;
 
 public class GrainAuthorizationIncomingFilter : IIncomingGrainCallFilter
 {
+    private const int EmptyAttributeCount = 0;
+    private const char RoleSeparator = ',';
+    private const string AccessDeniedNotAuthenticated = "Access denied. User is not authenticated.";
+    private const string AccessDeniedMissingRoles = "Access denied. User does not have required roles.";
+
     public async Task Invoke(IIncomingGrainCallContext context)
     {
-        // Check both interface method and implementation method
-        if (IsGrainAuthorized(context.ImplementationMethod, out var attributes))
+        if (IsGrainAuthorized(context, out var attributes))
         {
             var user = GetUserFromRequestContext();
-            
+
             if (user == null || user.Identity?.IsAuthenticated != true)
             {
-                throw new UnauthorizedAccessException("Access denied. User is not authenticated.");
+                throw new UnauthorizedAccessException(AccessDeniedNotAuthenticated);
             }
 
-            // Check if any attribute requires specific roles
-            var rolesRequired = attributes.Any(attr => !string.IsNullOrWhiteSpace(attr.Roles));
-            
-            if (rolesRequired)
+            if (!HasRequiredRoles(attributes, user))
             {
-                var userRoles = user.FindAll(ClaimTypes.Role).Select(c => c.Value).ToHashSet();
-                
-                // Check if user has any of the required roles from any attribute
-                var hasRequiredRole = attributes.Any(attribute =>
-                {
-                    if (string.IsNullOrWhiteSpace(attribute.Roles))
-                        return true; // No specific role required by this attribute
-                    
-                    var requiredRoles = attribute.Roles.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                        .Select(r => r.Trim());
-                    
-                    return requiredRoles.Any(role => userRoles.Contains(role));
-                });
-
-                if (!hasRequiredRole)
-                {
-                    throw new UnauthorizedAccessException("Access denied. User does not have required roles.");
-                }
+                throw new UnauthorizedAccessException(AccessDeniedMissingRoles);
             }
         }
-        
+
         await context.Invoke();
     }
 
@@ -61,28 +43,71 @@ public class GrainAuthorizationIncomingFilter : IIncomingGrainCallFilter
         return requestContext as ClaimsPrincipal;
     }
 
-    private static bool IsGrainAuthorized(MemberInfo methodInfo, out List<AuthorizeAttribute> attributes)
+    private static bool IsGrainAuthorized(IIncomingGrainCallContext context, out List<AuthorizeAttribute> attributes)
     {
         attributes = [];
+        var members = GetAuthorizationMembers(context);
 
-        if (Attribute.IsDefined(methodInfo, typeof(AllowAnonymousAttribute)))
+        if (members.Any(HasAllowAnonymousAttribute))
         {
             return false;
         }
 
-        if (methodInfo.DeclaringType != null && Attribute.IsDefined(methodInfo.DeclaringType, typeof(AuthorizeAttribute)))
+        attributes.AddRange(members.SelectMany(GetAuthorizeAttributes));
+        return attributes.Count != EmptyAttributeCount;
+    }
+
+    private static IReadOnlyList<MemberInfo> GetAuthorizationMembers(IIncomingGrainCallContext context)
+    {
+        var members = new List<MemberInfo>();
+
+        if (context.InterfaceMethod.DeclaringType is { } interfaceType)
         {
-            attributes.AddRange(Attribute.GetCustomAttributes(methodInfo.DeclaringType, typeof(AuthorizeAttribute))
-                .Cast<AuthorizeAttribute>());
+            members.Add(interfaceType);
         }
 
-        if (Attribute.IsDefined(methodInfo, typeof(AuthorizeAttribute)))
+        if (context.ImplementationMethod.DeclaringType is { } implementationType)
         {
-            attributes.AddRange(Attribute.GetCustomAttributes(methodInfo, typeof(AuthorizeAttribute))
-                .Cast<AuthorizeAttribute>());
+            members.Add(implementationType);
+        }
+
+        members.Add(context.InterfaceMethod);
+        members.Add(context.ImplementationMethod);
+
+        return members;
+    }
+
+    private static bool HasAllowAnonymousAttribute(MemberInfo memberInfo)
+    {
+        return Attribute.IsDefined(memberInfo, typeof(AllowAnonymousAttribute), inherit: true);
+    }
+
+    private static IEnumerable<AuthorizeAttribute> GetAuthorizeAttributes(MemberInfo memberInfo)
+    {
+        return Attribute
+            .GetCustomAttributes(memberInfo, typeof(AuthorizeAttribute), inherit: true)
+            .Cast<AuthorizeAttribute>();
+    }
+
+    private static bool HasRequiredRoles(IEnumerable<AuthorizeAttribute> attributes, ClaimsPrincipal user)
+    {
+        return attributes
+            .Where(attribute => !string.IsNullOrWhiteSpace(attribute.Roles))
+            .All(attribute => HasAnyRequiredRole(attribute, user));
+    }
+
+    private static bool HasAnyRequiredRole(AuthorizeAttribute attribute, ClaimsPrincipal user)
+    {
+        if (string.IsNullOrWhiteSpace(attribute.Roles))
+        {
             return true;
         }
 
-        return attributes.Count != 0;
+        var roles = attribute.Roles.Split(
+            RoleSeparator,
+            StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries
+        );
+
+        return roles.Any(user.IsInRole);
     }
 }

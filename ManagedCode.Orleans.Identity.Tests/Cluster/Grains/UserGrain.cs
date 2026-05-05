@@ -3,13 +3,15 @@ using ManagedCode.Orleans.Identity.Core.Extensions;
 using ManagedCode.Orleans.Identity.Tests.Constants;
 using Microsoft.AspNetCore.Authorization;
 using Orleans;
-using ManagedCode.Orleans.Identity.Server.GrainCallFilter;
 
 namespace ManagedCode.Orleans.Identity.Tests.Cluster.Grains;
 
 [Authorize]
 public class UserGrain : Grain, IUserGrain
 {
+    private const string InterfaceAdminInfoPrefix = "Interface admin info for ";
+    private const string UnknownUserName = "Unknown";
+
     // Manual authorization check until grain filters work in Orleans 9
     private void CheckAuthorization(params string[] requiredRoles)
     {
@@ -35,7 +37,7 @@ public class UserGrain : Grain, IUserGrain
     {
         CheckAuthorization(); // Manual check
         var user = this.GetCurrentUser();
-        var username = user.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ?? "Unknown";
+        var username = user.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ?? UnknownUserName;
         return Task.FromResult($"Hello, {username}!");
     }
 
@@ -44,7 +46,7 @@ public class UserGrain : Grain, IUserGrain
     {
         CheckAuthorization(TestRoles.ADMIN); // Manual check for admin role
         var user = this.GetCurrentUser();
-        var username = user.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ?? "Unknown";
+        var username = user.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ?? UnknownUserName;
         return Task.FromResult($"User {username} is banned");
     }
 
@@ -53,7 +55,7 @@ public class UserGrain : Grain, IUserGrain
     {
         CheckAuthorization(TestRoles.ADMIN); // Manual check for admin role
         var user = this.GetCurrentUser();
-        var username = user.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ?? "Unknown";
+        var username = user.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ?? UnknownUserName;
         return Task.FromResult($"Admin info for {username}: You have admin privileges");
     }
 
@@ -69,7 +71,7 @@ public class UserGrain : Grain, IUserGrain
     {
         CheckAuthorization(TestRoles.MODERATOR); // Manual check for moderator role
         var user = this.GetCurrentUser();
-        var username = user.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ?? "Unknown";
+        var username = user.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ?? UnknownUserName;
         return Task.FromResult($"User {username} has been modified");
     }
 
@@ -77,7 +79,14 @@ public class UserGrain : Grain, IUserGrain
     {
         CheckAuthorization(); // Manual check - requires authentication (class has [Authorize])
         var user = this.GetCurrentUser();
-        var username = user.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ?? "Unknown";
+        var username = user.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ?? UnknownUserName;
         return Task.FromResult($"User {username} added to list");
+    }
+
+    public Task<string> GetInterfaceAdminInfo()
+    {
+        var user = this.GetCurrentUser();
+        var username = user.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ?? UnknownUserName;
+        return Task.FromResult($"{InterfaceAdminInfoPrefix}{username}");
     }
 }
