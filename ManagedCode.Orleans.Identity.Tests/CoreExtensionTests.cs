@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using ManagedCode.Orleans.Identity.Core.Constants;
 using ManagedCode.Orleans.Identity.Core.Extensions;
 using ManagedCode.Orleans.Identity.Core.Serializations;
 using Orleans.Runtime;
@@ -10,6 +11,8 @@ namespace ManagedCode.Orleans.Identity.Tests;
 public class CoreExtensionTests
 {
     private const string AuthenticationType = "test";
+    private const string ClaimPropertyKey = "metadata-key";
+    private const string ClaimPropertyValue = "metadata-value";
     private const string ClaimValue = "claim-value";
     private const string CustomClaimType = "custom";
     private const string Delimiter = "|";
@@ -55,10 +58,10 @@ public class CoreExtensionTests
     {
         try
         {
-            var roles = new[] { RoleUser, RoleAdmin };
-            RequestContext.Set(ClaimTypes.Role, roles);
+            var user = CreatePrincipal();
+            RequestContext.Set(OrleansIdentityConstants.USER_CLAIMS, user);
 
-            OrleansExtensions.GetRoles(null!).ShouldBe(roles);
+            OrleansExtensions.GetRoles(null!).ShouldBe([RoleUser, RoleAdmin], ignoreOrder: true);
         }
         finally
         {
@@ -85,6 +88,18 @@ public class CoreExtensionTests
         convertedIdentity.AuthenticationType.ShouldBe(AuthenticationType);
         convertedIdentity.Claims.Select(item => item.Type).ShouldContain(ClaimTypes.Email);
         convertedPrincipal.Identity!.AuthenticationType.ShouldBe(AuthenticationType);
+    }
+
+    [Fact]
+    public void ClaimConverter_RoundTripsClaimProperties()
+    {
+        var converter = new ClaimSurrogateConverter();
+        var claim = new Claim(CustomClaimType, ClaimValue);
+        claim.Properties[ClaimPropertyKey] = ClaimPropertyValue;
+
+        var convertedClaim = converter.ConvertFromSurrogate(converter.ConvertToSurrogate(claim));
+
+        convertedClaim.Properties[ClaimPropertyKey].ShouldBe(ClaimPropertyValue);
     }
 
     [Fact]

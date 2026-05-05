@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Security.Claims;
 using Orleans;
 
@@ -8,6 +9,8 @@ namespace ManagedCode.Orleans.Identity.Core.Serializations;
 [GenerateSerializer]
 public struct ClaimSurrogate(string type, string value, string valueType, string issuer, string originalIssuer)
 {
+    private const int PropertiesFieldId = 5;
+
     [Id(0)]
     public string Issuer { get; set; } = issuer;
 
@@ -22,6 +25,9 @@ public struct ClaimSurrogate(string type, string value, string valueType, string
 
     [Id(4)]
     public string ValueType { get; set; } = valueType;
+
+    [Id(PropertiesFieldId)]
+    public Dictionary<string, string>? Properties { get; set; }
 }
 
 // This is a converter which converts between the surrogate and the foreign type.

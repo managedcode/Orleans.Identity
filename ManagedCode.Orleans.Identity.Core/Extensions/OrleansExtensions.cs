@@ -1,7 +1,5 @@
-using System;
 using System.Security.Claims;
 using ManagedCode.Orleans.Identity.Core.Constants;
-using ManagedCode.Orleans.Identity.Core.Extensions;
 using Orleans;
 using Orleans.Runtime;
 
@@ -15,6 +13,7 @@ public static class OrleansExtensions
     /// <param name="filter">The incoming grain call filter instance.</param>
     public static string[] GetRoles(this IIncomingGrainCallFilter filter)
     {
-        return RequestContext.Get(ClaimTypes.Role) as string[] ?? [];
+        var requestContext = RequestContext.Get(OrleansIdentityConstants.USER_CLAIMS);
+        return requestContext is ClaimsPrincipal user ? user.GetRoles() : [];
     }
 }
