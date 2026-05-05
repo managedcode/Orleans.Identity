@@ -8,6 +8,7 @@ public class TestAnonymousHub : Hub
 {
     public Task<int> DoTest()
     {
-        return Task.FromResult(new Random().Next());
+        _ = Context.ConnectionId;
+        return Task.FromResult(Random.Shared.Next());
     }
 }

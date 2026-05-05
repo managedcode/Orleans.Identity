@@ -13,20 +13,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
       - name: Setup .NET
-        uses: actions/setup-dotnet@v3
+        uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 9.0.x
+          dotnet-version: 10.0.x
 
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore ManagedCode.Orleans.Identity.sln
       - name: Build
-        run: dotnet build --configuration Release
+        run: dotnet build ManagedCode.Orleans.Identity.sln --configuration Release --no-restore
       #      - name: Test
       #        run: dotnet test --configuration Release
       - name: Pack
-        run: dotnet pack -p:IncludeSymbols=false -p:SymbolPackageFormat=snupkg --configuration Release
+        run: dotnet pack ManagedCode.Orleans.Identity.sln -p:IncludeSymbols=false -p:SymbolPackageFormat=snupkg --configuration Release --no-build
 
       - name: publish nuget packages
         run: |

@@ -121,72 +121,6 @@ public class AuthenticationIntegrationTests
         // which is complex with WebApplicationFactory. In production, cookies work correctly.
         _outputHelper.WriteLine("Skipping cookie-based requests due to test infrastructure limitations");
         
-        return; // Skip the rest of the test
-
-        // 2. Test HTTP Controller with Cookie
-        // Test authorized endpoint
-        var userResponse = await client.GetAsync("/userController");
-        userResponse.IsSuccessStatusCode.ShouldBeTrue();
-        var userContent = await userResponse.Content.ReadAsStringAsync();
-        userContent.ShouldContain("Hello, moderator!");
-        _outputHelper.WriteLine("HTTP Controller test passed - got user greeting");
-
-        // Test moderator endpoint
-        var modifyResponse = await client.GetAsync("/userController/modify");
-        modifyResponse.IsSuccessStatusCode.ShouldBeTrue();
-        var modifyContent = await modifyResponse.Content.ReadAsStringAsync();
-        modifyContent.ShouldContain("User moderator has been modified");
-        _outputHelper.WriteLine("HTTP Controller test passed - moderator can modify users");
-
-        // Test admin endpoint (should fail)
-        var banResponse = await client.GetAsync("/userController/ban");
-        banResponse.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
-        _outputHelper.WriteLine("HTTP Controller test passed - moderator cannot ban users");
-
-        // 3. Test SignalR with Cookie
-        var hubUrl2 = new Uri(_testApp.Server.BaseAddress, "TestAuthorizeHub");
-        var hubConnection = new HubConnectionBuilder()
-            .WithUrl(hubUrl2, options =>
-            {
-                options.HttpMessageHandlerFactory = _ => _testApp.Server.CreateHandler();
-            })
-            .Build();
-
-        var messageReceived = false;
-        var receivedMessage = string.Empty;
-        
-        hubConnection.On<string>("ReceiveMessage", message =>
-        {
-            receivedMessage = message;
-            messageReceived = true;
-            _outputHelper.WriteLine($"SignalR received: {message}");
-        });
-
-        await hubConnection.StartAsync();
-        _outputHelper.WriteLine("SignalR connected with Cookie");
-
-        // Send message that triggers grain call
-        await hubConnection.InvokeAsync("SendAuthorizedMessage", "test from moderator");
-        
-        // Wait for response
-        await Task.Delay(500);
-        
-        messageReceived.ShouldBeTrue();
-        receivedMessage.ShouldContain("moderator");
-        receivedMessage.ShouldContain("authorized message");
-        
-        await hubConnection.DisposeAsync();
-        _outputHelper.WriteLine("SignalR test passed - received authorized message");
-
-        // 4. Test logout
-        var logoutResponse = await client.PostAsync("/auth/logout", null);
-        logoutResponse.IsSuccessStatusCode.ShouldBeTrue();
-        _outputHelper.WriteLine("Logged out successfully");
-
-        // Verify access is denied after logout
-        var afterLogoutResponse = await client.GetAsync("/userController");
-        afterLogoutResponse.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
-        _outputHelper.WriteLine("Confirmed - access denied after logout");
     }
 
     [Fact]
@@ -250,17 +184,17 @@ public class AuthenticationIntegrationTests
         }
     }
 
-    private class TokenResponse
+    private sealed class TokenResponse
     {
         public string Token { get; set; } = string.Empty;
     }
 
-    private class MessageResponse
+    private sealed class MessageResponse
     {
         public string Message { get; set; } = string.Empty;
     }
 
-    private class UserInfo
+    private sealed class UserInfo
     {
         public string UserId { get; set; } = string.Empty;
         public string Username { get; set; } = string.Empty;

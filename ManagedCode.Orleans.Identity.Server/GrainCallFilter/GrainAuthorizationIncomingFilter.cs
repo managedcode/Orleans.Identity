@@ -83,6 +83,6 @@ public class GrainAuthorizationIncomingFilter : IIncomingGrainCallFilter
             return true;
         }
 
-        return attributes.Any();
+        return attributes.Count != 0;
     }
 }

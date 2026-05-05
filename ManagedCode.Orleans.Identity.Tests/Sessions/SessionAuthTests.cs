@@ -197,12 +197,12 @@ public class TestAuthenticationHandler(IOptionsMonitor<TestAuthenticationSchemeO
     protected override Task<AuthenticateResult> HandleAuthenticateAsync()
     {
         var headers = Request.Headers;
-        if (!headers.ContainsKey("Test-User"))
+        if (!headers.TryGetValue("Test-User", out var testUser))
         {
             return Task.FromResult(AuthenticateResult.NoResult());
         }
 
-        var username = headers["Test-User"].ToString();
+        var username = testUser.ToString();
         var roles = headers["Test-Roles"].ToString().Split(',');
 
         var claims = new List<Claim>

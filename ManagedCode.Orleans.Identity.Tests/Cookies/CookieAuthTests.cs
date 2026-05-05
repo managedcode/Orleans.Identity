@@ -158,7 +158,7 @@ public class CookieAuthTests(TestClusterApplication testApp, ITestOutputHelper o
 
     #region Helper Methods
 
-    private async Task LoginWithCookie(HttpClient client, string username)
+    private static async Task LoginWithCookie(HttpClient client, string username)
     {
         var loginRequest = new LoginRequest { Username = username };
         var response = await client.PostAsJsonAsync("/auth/login-cookie", loginRequest);
@@ -172,4 +172,4 @@ public class CookieAuthTests(TestClusterApplication testApp, ITestOutputHelper o
 public class LoginRequest
 {
     public string Username { get; set; } = string.Empty;
-} 
+}

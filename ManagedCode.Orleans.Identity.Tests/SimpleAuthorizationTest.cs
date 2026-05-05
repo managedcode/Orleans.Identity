@@ -11,6 +11,9 @@ namespace ManagedCode.Orleans.Identity.Tests;
 [Collection(nameof(TestClusterApplication))]
 public class SimpleAuthorizationTest
 {
+    private static readonly string[] AdminRoles = ["user", "admin"];
+    private static readonly string[] UserRoles = ["user"];
+
     private readonly ITestOutputHelper _outputHelper;
     private readonly TestClusterApplication _testApp;
     private readonly IJwtService _jwtService;
@@ -29,7 +32,7 @@ public class SimpleAuthorizationTest
         
         // Create a client with user role only
         var client = _testApp.CreateClient();
-        var token = _jwtService.GenerateToken("normaluser", "normaluser", new[] { "user" });
+        var token = _jwtService.GenerateToken("normaluser", "normaluser", UserRoles);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
         
         _outputHelper.WriteLine($"Created JWT token for user 'normaluser' with role 'user'");
@@ -51,7 +54,7 @@ public class SimpleAuthorizationTest
         
         // Create a client with admin role
         var client = _testApp.CreateClient();
-        var token = _jwtService.GenerateToken("adminuser", "adminuser", new[] { "user", "admin" });
+        var token = _jwtService.GenerateToken("adminuser", "adminuser", AdminRoles);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
         
         _outputHelper.WriteLine($"Created JWT token for user 'adminuser' with roles 'user, admin'");

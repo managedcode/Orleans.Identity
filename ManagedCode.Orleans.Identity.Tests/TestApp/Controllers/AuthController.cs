@@ -28,7 +28,7 @@ public class AuthController : ControllerBase
             return BadRequest("Username is required");
         }
 
-        var roles = request.Username.ToLower() switch
+        var roles = request.Username.ToLowerInvariant() switch
         {
             "admin" => new[] { TestRoles.USER, TestRoles.ADMIN },
             "moderator" => new[] { TestRoles.USER, TestRoles.MODERATOR },
@@ -51,7 +51,7 @@ public class AuthController : ControllerBase
             return BadRequest("Username is required");
         }
 
-        var roles = request.Username.ToLower() switch
+        var roles = request.Username.ToLowerInvariant() switch
         {
             "admin" => new[] { TestRoles.USER, TestRoles.ADMIN },
             "moderator" => new[] { TestRoles.USER, TestRoles.MODERATOR },

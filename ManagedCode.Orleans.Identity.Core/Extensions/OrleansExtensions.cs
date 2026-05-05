@@ -10,9 +10,9 @@ namespace ManagedCode.Orleans.Identity.Core.Extensions;
 public static class OrleansExtensions
 {
     /// <summary>
-    /// Parse roles from <typeparam>RequestContext</typeparam>
+    /// Gets roles stored in the Orleans request context.
     /// </summary>
-    /// <param name="filter">The incoming grain call filter instance used to access <typeparam>Request
+    /// <param name="filter">The incoming grain call filter instance.</param>
     public static string[] GetRoles(this IIncomingGrainCallFilter filter)
     {
         return RequestContext.Get(ClaimTypes.Role) as string[] ?? [];

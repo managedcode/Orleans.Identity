@@ -2,7 +2,7 @@
 
 # Orleans.Identity
 
-A simplified Orleans library for handling authorization context propagation from ASP.NET Core controllers and SignalR hubs to Orleans grains.
+A simplified Orleans 10 library for handling authorization context propagation from ASP.NET Core controllers and SignalR hubs to Orleans grains.
 
 ## Overview
 
@@ -99,7 +99,9 @@ The library includes comprehensive integration tests in the `ManagedCode.Orleans
 ### Running Tests
 
 ```bash
-dotnet test
+dotnet restore ManagedCode.Orleans.Identity.sln
+dotnet build ManagedCode.Orleans.Identity.sln --configuration Release --no-restore
+dotnet test ManagedCode.Orleans.Identity.sln --configuration Release --no-build
 ```
 
 ### Test Structure
@@ -121,4 +123,3 @@ The library works by:
 ## License
 
 MIT License
-

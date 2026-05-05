@@ -17,21 +17,24 @@ jobs:
     
     steps:
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
       - name: Setup .NET
-        uses: actions/setup-dotnet@v3
+        uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 9.0.x
+          dotnet-version: 10.0.x
         
         # run build and test           
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore ManagedCode.Orleans.Identity.sln
 
       - name: Build
-        run: dotnet build --no-restore
+        run: dotnet build ManagedCode.Orleans.Identity.sln --configuration Release --no-restore
+
+      - name: Analyze
+        run: dotnet build ManagedCode.Orleans.Identity.sln --configuration Release --no-restore -p:RunAnalyzers=true
 
       - name: Test and Collect Code Coverage
-        run: dotnet test -p:CollectCoverage=true -p:CoverletOutput=coverage/
+        run: dotnet test ManagedCode.Orleans.Identity.sln --configuration Release --no-build --verbosity normal -p:CollectCoverage=true -p:CoverletOutput=coverage/ -p:CoverletOutputFormat=opencover
 
       - name: Copy coverage files
         run: |
@@ -43,9 +46,11 @@ jobs:
 
 
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v3
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/*.opencover.xml
+          fail_ci_if_error: false
 
 #      - name: coveralls
 #        uses: coverallsapp/github-action@master

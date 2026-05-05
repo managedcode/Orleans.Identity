@@ -52,5 +52,6 @@ public class TestClusterApplication : WebApplicationFactory<HttpHostProgram>, IC
     {
         await base.DisposeAsync();
         await Cluster.DisposeAsync();
+        GC.SuppressFinalize(this);
     }
 }
