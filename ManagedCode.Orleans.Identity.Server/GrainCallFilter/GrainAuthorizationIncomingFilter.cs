@@ -7,6 +7,10 @@ using System.Threading.Tasks;
 using ManagedCode.Orleans.Identity.Core.Constants;
 using Microsoft.AspNetCore.Authorization;
 using Orleans.Runtime;
+using Orleans.Configuration;
+using Orleans.Serialization.Invocation;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace ManagedCode.Orleans.Identity.Server.GrainCallFilter;
 
@@ -22,6 +26,17 @@ public class GrainAuthorizationIncomingFilter(
 
     public async Task Invoke(IIncomingGrainCallContext context)
     {
+        if (context.InterfaceMethod.DeclaringType == typeof(IAsyncEnumerableGrainExtension))
+        {
+            await InvokeStreamingAsync(context);
+            return;
+        }
+        await RequireAuthorizationAsync(context);
+        await context.Invoke();
+    }
+
+    private async Task RequireAuthorizationAsync(IIncomingGrainCallContext context)
+    {
         if (IsGrainAuthorized(context, out var authorizeData))
         {
             var user = GetUserFromRequestContext();
@@ -35,7 +50,75 @@ public class GrainAuthorizationIncomingFilter(
             await AuthorizeAsync(context, user, authorizeData);
         }
 
-        await context.Invoke();
+    }
+
+    private async Task InvokeStreamingAsync(IIncomingGrainCallContext context)
+    {
+        if (context.Request.GetArgument(0) is not Guid id || id == Guid.Empty)
+        {
+            throw new UnauthorizedAccessException(AccessDeniedNotAuthorized);
+        }
+        var state = context.TargetContext.GetComponent<StreamingAuthorizationState>();
+        if (state is null)
+        {
+            var timeout = context.TargetContext.ActivationServices.GetRequiredService<IOptions<MessagingOptions>>().Value.ResponseTimeout;
+            state = new StreamingAuthorizationState(timeout * 3);
+            context.TargetContext.SetComponent(state);
+        }
+        var principal = GetUserFromRequestContext();
+        var start = context.InterfaceMethod.Name == nameof(IAsyncEnumerableGrainExtension.StartEnumeration);
+        StreamingAuthorizationState.Entry entry;
+        if (start)
+        {
+            if (context.Request.GetArgument(1) is not IInvokable request)
+            {
+                throw new UnauthorizedAccessException(AccessDeniedNotAuthorized);
+            }
+            await RequireAuthorizationAsync(new StreamingGrainCallContext(context, request));
+            entry = state.Add(id, request, context.SourceId, principal);
+        }
+        else
+        {
+            entry = state.Find(id)!;
+            if (entry is null)
+            {
+                // Completed/expired enumerations have no data left to expose. Dispose remains idempotent.
+                if (context.InterfaceMethod.Name == nameof(IAsyncEnumerableGrainExtension.DisposeAsync))
+                {
+                    await context.Invoke();
+                    return;
+                }
+                throw new UnauthorizedAccessException(AccessDeniedNotAuthorized);
+            }
+            if (entry.InFlight || !entry.Matches(context.SourceId, principal))
+            {
+                throw new UnauthorizedAccessException(AccessDeniedNotAuthorized);
+            }
+            await RequireAuthorizationAsync(new StreamingGrainCallContext(context, entry.Request));
+            if (entry.InFlight)
+            {
+                throw new UnauthorizedAccessException(AccessDeniedNotAuthorized);
+            }
+            entry.InFlight = true;
+        }
+        try
+        {
+            await context.Invoke();
+            if (context.InterfaceMethod.Name == nameof(IAsyncEnumerableGrainExtension.DisposeAsync))
+            {
+                state.Remove(id);
+            }
+        }
+        catch
+        {
+            if (start) state.Remove(id);
+            throw;
+        }
+        finally
+        {
+            entry.InFlight = false;
+            entry.LastSeen = TimeProvider.System.GetUtcNow();
+        }
     }
 
     private static ClaimsPrincipal? GetUserFromRequestContext()

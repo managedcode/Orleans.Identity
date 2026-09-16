@@ -56,6 +56,12 @@ siloBuilder.AddOrleansIdentity(options =>
 });
 ```
 
+### Streaming grain methods
+
+`IAsyncEnumerable<T>` methods use the same interface, implementation, class, role, and policy checks as ordinary grain calls. Orleans transports these calls through its enumeration extension; the filter resolves the original method and arguments before starting it. Custom policies receive an `IIncomingGrainCallContext` for that original operation, including the target grain and method metadata.
+
+Every continuation and disposal rechecks authorization and must retain the initiating principal and source identity. Another caller cannot read or close an existing enumeration. Authority is kept only on the target activation, bounded to 128 pending enumerations, removed on disposal, and pruned after three configured response-timeout intervals of inactivity when new enumerations arrive. Orleans retains responsibility for iterator execution and disposal. Anonymous streams still require an explicit `[AllowAnonymous]` override when their grain is protected.
+
 ### 2. Configure the ASP.NET Core host
 
 ```csharp

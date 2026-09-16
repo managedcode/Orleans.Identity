@@ -10,6 +10,13 @@ public class TestSiloConfigurations : ISiloConfigurator
     {
         siloBuilder.AddOrleansIdentity(options =>
         {
+            options.AddPolicy(Grains.StreamingAuthorizationGrain.ResourcePolicy, policy =>
+                policy.RequireAssertion(context => context.Resource is IIncomingGrainCallContext call &&
+                    call.Grain is Grains.StreamingAuthorizationGrain &&
+                    call.InterfaceMethod.DeclaringType == typeof(Grains.IStreamingAuthorizationGrain) &&
+                    call.ImplementationMethod.DeclaringType == typeof(Grains.StreamingAuthorizationGrain) &&
+                    call.Request.GetArgument(0) is "allowed" &&
+                    call.MethodName == nameof(Grains.IStreamingAuthorizationGrain.ResourceProtected)));
             options.AddPolicy(
                 TestAuthorizationPolicies.RequireAdminDepartment,
                 policy =>
