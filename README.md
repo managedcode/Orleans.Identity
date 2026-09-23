@@ -125,6 +125,13 @@ public class UserGrain : Grain, IUserGrain
 When the grain call arrives, the filter validates the caller’s authentication state and roles before executing grain logic, and
 the grain extension retrieves the caller’s claims for business logic.
 
+For grain operations that require authentication, use
+`OrleansIdentityContext.RequireAuthenticatedPrincipal()` or
+`OrleansIdentityContext.RequireAuthenticatedUserId()` from the Core package.
+These read the propagated Orleans request context and throw when the principal
+is missing, anonymous, or lacks a user id. Product-specific roles and resource
+authorization remain the application's responsibility.
+
 `[Authorize(Policy = "...")]` is supported through ASP.NET Core authorization services registered in the silo.
 `AuthorizeAttribute.AuthenticationSchemes` is rejected for grain authorization because Orleans grain calls do not run through
 the HTTP authentication scheme selector.

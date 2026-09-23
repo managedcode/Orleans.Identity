@@ -42,7 +42,6 @@
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
         <PackageReference Include="Microsoft.Orleans.Sdk" />
-        <PackageReference Include="Microsoft.Orleans.Serialization.TestKit" />
         <PackageReference Include="ManagedCode.Communication" />
         <PackageReference Include="ManagedCode.Communication.Orleans" />
     </ItemGroup>

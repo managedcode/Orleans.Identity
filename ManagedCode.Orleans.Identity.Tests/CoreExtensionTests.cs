@@ -70,6 +70,30 @@ public class CoreExtensionTests
     }
 
     [Fact]
+    public void OrleansIdentityContext_RequiresAuthenticatedPrincipalAndUserId()
+    {
+        try
+        {
+            RequestContext.Clear();
+            Should.Throw<UnauthorizedAccessException>(OrleansIdentityContext.RequireAuthenticatedPrincipal);
+            RequestContext.Set(OrleansIdentityConstants.USER_CLAIMS, new ClaimsPrincipal(new ClaimsIdentity()));
+            Should.Throw<UnauthorizedAccessException>(OrleansIdentityContext.RequireAuthenticatedPrincipal);
+            RequestContext.Set(OrleansIdentityConstants.USER_CLAIMS,
+                new ClaimsPrincipal(new ClaimsIdentity([], AuthenticationType)));
+            Should.Throw<UnauthorizedAccessException>(OrleansIdentityContext.RequireAuthenticatedUserId);
+
+            var principal = CreatePrincipal();
+            RequestContext.Set(OrleansIdentityConstants.USER_CLAIMS, principal);
+            OrleansIdentityContext.RequireAuthenticatedPrincipal().ShouldBeSameAs(principal);
+            OrleansIdentityContext.RequireAuthenticatedUserId().ShouldBe(UserId);
+        }
+        finally
+        {
+            RequestContext.Clear();
+        }
+    }
+
+    [Fact]
     public void ClaimConverters_RoundTripClaimsPrincipal()
     {
         var claimConverter = new ClaimSurrogateConverter();
