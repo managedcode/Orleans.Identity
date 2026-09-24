@@ -90,16 +90,16 @@ public class GrainAuthorizationIncomingFilter(
                 }
                 throw new UnauthorizedAccessException(AccessDeniedNotAuthorized);
             }
-            if (entry.InFlight || !entry.Matches(context.SourceId, principal))
+            var disposing = context.InterfaceMethod.Name == nameof(IAsyncEnumerableGrainExtension.DisposeAsync);
+            if (!entry.CanContinue(context.SourceId, principal, disposing))
             {
                 throw new UnauthorizedAccessException(AccessDeniedNotAuthorized);
             }
             await RequireAuthorizationAsync(new StreamingGrainCallContext(context, entry.Request));
-            if (entry.InFlight)
+            if (!entry.TryBegin(context.SourceId, principal, disposing))
             {
                 throw new UnauthorizedAccessException(AccessDeniedNotAuthorized);
             }
-            entry.InFlight = true;
         }
         try
         {
@@ -116,8 +116,7 @@ public class GrainAuthorizationIncomingFilter(
         }
         finally
         {
-            entry.InFlight = false;
-            entry.LastSeen = TimeProvider.System.GetUtcNow();
+            entry.Finish(context.InterfaceMethod.Name == nameof(IAsyncEnumerableGrainExtension.DisposeAsync));
         }
     }
 

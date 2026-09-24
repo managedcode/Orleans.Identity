@@ -15,7 +15,7 @@ internal sealed class StreamingAuthorizationState(TimeSpan retention)
     public Entry Add(Guid id, IInvokable request, GrainId? sourceId, ClaimsPrincipal? principal)
     {
         var now = TimeProvider.System.GetUtcNow();
-        foreach (var expired in entries.Where(pair => !pair.Value.InFlight && now - pair.Value.LastSeen > retention)
+        foreach (var expired in entries.Where(pair => !pair.Value.InFlight && !pair.Value.Disposing && now - pair.Value.LastSeen > retention)
                      .Select(pair => pair.Key).ToArray())
         {
             entries.Remove(expired);
@@ -36,10 +36,27 @@ internal sealed class StreamingAuthorizationState(TimeSpan retention)
         private readonly string[] identity = Identity(principal);
         public IInvokable Request { get; } = request;
         public bool InFlight { get; set; }
-        public DateTimeOffset LastSeen { get; set; } = TimeProvider.System.GetUtcNow();
+        public bool Disposing { get; private set; }
+        public DateTimeOffset LastSeen { get; private set; } = TimeProvider.System.GetUtcNow();
 
-        public bool Matches(GrainId? caller, ClaimsPrincipal? current) =>
+        public bool CanContinue(GrainId? caller, ClaimsPrincipal? current, bool disposing) =>
+            !Disposing && (!InFlight || disposing) &&
             caller == sourceId && identity.SequenceEqual(Identity(current), StringComparer.Ordinal);
+
+        public bool TryBegin(GrainId? caller, ClaimsPrincipal? current, bool disposing)
+        {
+            if (!CanContinue(caller, current, disposing)) return false;
+            if (disposing) Disposing = true;
+            else InFlight = true;
+            return true;
+        }
+
+        public void Finish(bool disposing)
+        {
+            if (disposing) Disposing = false;
+            else InFlight = false;
+            LastSeen = TimeProvider.System.GetUtcNow();
+        }
 
         private static string[] Identity(ClaimsPrincipal? value) => value is null ? [] :
             value.Identities.SelectMany(identity => new[]

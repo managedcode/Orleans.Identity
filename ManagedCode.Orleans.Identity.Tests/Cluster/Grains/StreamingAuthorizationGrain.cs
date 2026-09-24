@@ -1,5 +1,8 @@
 using System.Runtime.CompilerServices;
 using ManagedCode.Orleans.Identity.Tests.Constants;
+using ManagedCode.Orleans.Identity.Server.GrainCallFilter;
+using Orleans.Concurrency;
+using Orleans.Runtime;
 using Microsoft.AspNetCore.Authorization;
 
 namespace ManagedCode.Orleans.Identity.Tests.Cluster.Grains;
@@ -19,6 +22,17 @@ public interface IStreamingAuthorizationGrain : IGrainWithGuidKey
     IAsyncEnumerable<T> GenericProtected<T>(T value);
     [AllowAnonymous]
     Task<(int Started, int Disposed)> Counts();
+    [Authorize(Roles = TestRoles.ADMIN)]
+    IAsyncEnumerable<string> BlockAfterFirst();
+    [AllowAnonymous]
+    [AlwaysInterleave]
+    Task WaitForBlockedMoveNext();
+    [AllowAnonymous]
+    [AlwaysInterleave]
+    Task ReleaseBlockedMoveNext();
+    [AllowAnonymous]
+    [AlwaysInterleave]
+    Task<bool> IsDisposing(Guid enumerationId);
 }
 
 public sealed class StreamingAuthorizationGrain : Grain, IStreamingAuthorizationGrain
@@ -26,6 +40,8 @@ public sealed class StreamingAuthorizationGrain : Grain, IStreamingAuthorization
     public const string ResourcePolicy = "stream-original-resource";
     private int started;
     private int disposed;
+    private readonly TaskCompletionSource blockedMoveNextStarted = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private readonly TaskCompletionSource blockedMoveNextRelease = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
     public IAsyncEnumerable<string> InterfaceProtected(string value, CancellationToken cancellationToken = default) =>
         Enumerate(value, cancellationToken);
@@ -40,6 +56,28 @@ public sealed class StreamingAuthorizationGrain : Grain, IStreamingAuthorization
         await Task.Yield();
     }
     public Task<(int Started, int Disposed)> Counts() => Task.FromResult((started, disposed));
+    public Task WaitForBlockedMoveNext() => blockedMoveNextStarted.Task;
+    public Task ReleaseBlockedMoveNext()
+    {
+        blockedMoveNextRelease.TrySetResult();
+        return Task.CompletedTask;
+    }
+    public Task<bool> IsDisposing(Guid enumerationId) => Task.FromResult(
+        this.GrainContext.GetComponent<StreamingAuthorizationState>()?.Find(enumerationId)?.Disposing == true);
+    public async IAsyncEnumerable<string> BlockAfterFirst()
+    {
+        started++;
+        try
+        {
+            yield return "first";
+            blockedMoveNextStarted.TrySetResult();
+            await blockedMoveNextRelease.Task;
+        }
+        finally
+        {
+            disposed++;
+        }
+    }
 
     private async IAsyncEnumerable<string> Enumerate(string value,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)

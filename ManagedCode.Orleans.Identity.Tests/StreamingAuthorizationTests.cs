@@ -100,6 +100,38 @@ public sealed class StreamingAuthorizationTests(TestClusterApplication app)
         finally { RequestContext.Clear(); }
     }
 
+    [Fact(Timeout = 30000)]
+    public async Task Stream_AuthorizedDisposeCanEnterWhileMoveNextIsBlocked()
+    {
+        SetUser(TestRoles.ADMIN);
+        var grain = app.Cluster.Client.GetGrain<IStreamingAuthorizationGrain>(Guid.NewGuid());
+        var transport = grain.AsReference<IAsyncEnumerableGrainExtension>();
+        var id = Guid.NewGuid();
+        var request = (IAsyncEnumerableRequest<string>)grain.BlockAfterFirst();
+        request.MaxBatchSize = 1;
+        try
+        {
+            (await transport.StartEnumeration(id, request)).Value.ShouldBe("first");
+            var pendingMoveNext = transport.MoveNext<string>(id);
+            await grain.WaitForBlockedMoveNext();
+            var disposal = transport.DisposeAsync(id).AsTask();
+            while (!disposal.IsCompleted && !await grain.IsDisposing(id))
+                await Task.Yield();
+            if (disposal.IsCompleted) await disposal;
+            else (await grain.IsDisposing(id)).ShouldBeTrue();
+            await grain.ReleaseBlockedMoveNext();
+            await disposal;
+            try { await pendingMoveNext; }
+            catch (OperationCanceledException) { }
+            (await grain.Counts()).Disposed.ShouldBe(1);
+        }
+        finally
+        {
+            await grain.ReleaseBlockedMoveNext();
+            RequestContext.Clear();
+        }
+    }
+
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
