@@ -38,13 +38,13 @@ public class AuthenticationIntegrationTests
     public async Task JWT_Authentication_FullFlow_Test()
     {
         _outputHelper.WriteLine("=== JWT Authentication Full Flow Test ===");
-        
+
         // 1. Login and get JWT token
         var client = _testApp.CreateClient();
         var loginRequest = new LoginRequest { Username = "admin" };
         var loginResponse = await client.PostAsJsonAsync("/auth/login", loginRequest);
         loginResponse.IsSuccessStatusCode.ShouldBeTrue();
-        
+
         var tokenResponse = await loginResponse.Content.ReadFromJsonAsync<TokenResponse>();
         tokenResponse.ShouldNotBeNull();
         tokenResponse.Token.ShouldNotBeNullOrEmpty();
@@ -52,7 +52,7 @@ public class AuthenticationIntegrationTests
 
         // 2. Test HTTP Controller with JWT
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenResponse.Token);
-        
+
         // Test authorized endpoint
         var userResponse = await client.GetAsync("/userController");
         userResponse.IsSuccessStatusCode.ShouldBeTrue();
@@ -94,7 +94,7 @@ public class AuthenticationIntegrationTests
         var receivedMessage = await messageCompletion.Task.WaitAsync(TimeSpan.FromSeconds(SignalRMessageTimeoutSeconds));
         receivedMessage.ShouldContain("admin");
         receivedMessage.ShouldContain("authorized message");
-        
+
         await hubConnection.DisposeAsync();
         _outputHelper.WriteLine("SignalR test passed - received authorized message");
     }
@@ -103,31 +103,31 @@ public class AuthenticationIntegrationTests
     public async Task Cookie_Authentication_FullFlow_Test()
     {
         _outputHelper.WriteLine("=== Cookie Authentication Full Flow Test ===");
-        
+
         // Cookie authentication with WebApplicationFactory is complex due to cookie handling
         // For now, just test that the login endpoint works
         var client = _testApp.CreateClient();
-        
+
         var loginRequest = new LoginRequest { Username = "moderator" };
         var loginResponse = await client.PostAsJsonAsync("/auth/login-cookie", loginRequest);
         loginResponse.IsSuccessStatusCode.ShouldBeTrue();
-        
+
         var loginContent = await loginResponse.Content.ReadFromJsonAsync<MessageResponse>();
         loginContent.ShouldNotBeNull();
         loginContent.Message.ShouldContain("Logged in successfully with cookie");
         _outputHelper.WriteLine("Cookie login endpoint works");
-        
+
         // Note: Full cookie authentication flow would require proper cookie handling
         // which is complex with WebApplicationFactory. In production, cookies work correctly.
         _outputHelper.WriteLine("Skipping cookie-based requests due to test infrastructure limitations");
-        
+
     }
 
     [Fact]
     public async Task Mixed_Authentication_RoleBased_Test()
     {
         _outputHelper.WriteLine("=== Mixed Authentication Role-Based Test ===");
-        
+
         // Test different users with different roles
         var testCases = new[]
         {
@@ -139,13 +139,13 @@ public class AuthenticationIntegrationTests
         foreach (var testCase in testCases)
         {
             _outputHelper.WriteLine($"\nTesting user: {testCase.Username}");
-            
+
             // Get JWT token
             var client = _testApp.CreateClient();
             var loginRequest = new LoginRequest { Username = testCase.Username };
             var loginResponse = await client.PostAsJsonAsync("/auth/login", loginRequest);
             loginResponse.IsSuccessStatusCode.ShouldBeTrue();
-            
+
             var tokenResponse = await loginResponse.Content.ReadFromJsonAsync<TokenResponse>();
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenResponse!.Token);
 
@@ -155,7 +155,7 @@ public class AuthenticationIntegrationTests
             var userInfo = await meResponse.Content.ReadFromJsonAsync<UserInfo>();
             userInfo!.Username.ShouldBe(testCase.Username);
             userInfo.Roles.ShouldBe(testCase.ExpectedRoles);
-            
+
             // Test ban endpoint
             var banResponse = await client.GetAsync("/userController/ban");
             if (testCase.CanBan)
@@ -168,7 +168,7 @@ public class AuthenticationIntegrationTests
                 banResponse.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
                 _outputHelper.WriteLine($"✓ {testCase.Username} cannot ban users");
             }
-            
+
             // Test modify endpoint
             var modifyResponse = await client.GetAsync("/userController/modify");
             if (testCase.CanModify)

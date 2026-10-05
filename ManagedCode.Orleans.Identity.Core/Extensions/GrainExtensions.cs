@@ -13,4 +13,4 @@ public static class GrainExtensions
         var requestContext = RequestContext.Get(OrleansIdentityConstants.USER_CLAIMS);
         return requestContext as ClaimsPrincipal ?? new ClaimsPrincipal(new ClaimsIdentity());
     }
-} 
+}

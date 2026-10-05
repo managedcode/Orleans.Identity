@@ -86,7 +86,7 @@ public class HttpHostProgram
                 options.Cookie.SameSite = SameSiteMode.Lax;
                 options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
                 options.SlidingExpiration = true;
-                
+
                 // For SignalR support and API responses
                 options.Events = new CookieAuthenticationEvents
                 {

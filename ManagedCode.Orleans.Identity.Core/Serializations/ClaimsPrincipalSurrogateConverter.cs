@@ -23,4 +23,4 @@ public sealed class ClaimsPrincipalSurrogateConverter : IConverter<ClaimsPrincip
         var identities = value.Identities?.ToList();
         return new ClaimsPrincipalSurrogate(identities, value.Identity?.AuthenticationType);
     }
-} 
+}

@@ -193,7 +193,7 @@ public class JwtGrainFilterTests
         // Assert
         adminResponse.IsSuccessStatusCode.ShouldBeTrue();
         adminContent.ShouldContain("User superuser is banned");
-        
+
         modResponse.IsSuccessStatusCode.ShouldBeTrue();
         modContent.ShouldContain("User superuser has been modified");
     }

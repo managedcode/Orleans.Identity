@@ -92,7 +92,7 @@ public class JwtSignalRTests
             await connection.DisposeAsync();
         }
     }
-    
+
     [Fact]
     public async Task SignalR_GetPublicInfo_WhenNotAuthenticated_ShouldReturnPublicInfo()
     {

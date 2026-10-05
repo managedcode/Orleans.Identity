@@ -14,4 +14,4 @@ public struct ClaimsPrincipalSurrogate(List<ClaimsIdentity>? identities, string?
 
     [Id(1)]
     public string? PrimaryIdentityType { get; set; } = primaryIdentityType;
-} 
+}

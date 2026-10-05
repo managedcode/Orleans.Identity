@@ -69,7 +69,7 @@ public class UserController : ControllerBase
         {
             // For public endpoints, use a unique grain ID for unauthenticated users
             var userId = User.Identity?.IsAuthenticated == true ? User.GetGrainId() : Guid.NewGuid().ToString();
-            
+
             var userGrain = _clusterClient.GetGrain<IUserGrain>(userId);
             var result = await userGrain.GetPublicInfo();
             return result;
@@ -104,7 +104,7 @@ public class UserController : ControllerBase
         {
             // For anonymous endpoints, generate a unique grain ID for unauthenticated users
             var userId = User.Identity?.IsAuthenticated == true ? User.GetGrainId() : Guid.NewGuid().ToString();
-            
+
             var userGrain = _clusterClient.GetGrain<IUserGrain>(userId);
             return await userGrain.AddToList();
         }

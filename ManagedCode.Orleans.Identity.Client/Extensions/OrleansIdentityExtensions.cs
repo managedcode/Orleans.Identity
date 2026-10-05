@@ -17,14 +17,14 @@ public static class OrleansIdentityExtensions
         {
             options.Filters.Add<OrleansAuthorizationActionFilter>();
         });
-        
+
         // Configure SignalR with the authorization filter
         services.Configure<HubOptions>(options =>
         {
             options.AddFilter<SignalRAuthorizationFilter>();
         });
-        
+
 
         return services;
     }
-} 
+}

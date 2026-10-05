@@ -25,7 +25,7 @@ public static class ClaimsPrincipalExtensions
     {
         return user.FindFirst(ClaimTypes.HomePhone)?.Value ?? string.Empty;
     }
-    
+
     public static string GetGrainId(this ClaimsPrincipal user)
     {
         return user.FindFirst(ClaimTypes.Actor)?.Value ?? string.Empty;

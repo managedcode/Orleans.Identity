@@ -162,7 +162,7 @@ public class CookieAuthTests(TestClusterApplication testApp, ITestOutputHelper o
     {
         var loginRequest = new LoginRequest { Username = username };
         var response = await client.PostAsJsonAsync("/auth/login-cookie", loginRequest);
-        
+
         response.IsSuccessStatusCode.ShouldBeTrue();
     }
 
