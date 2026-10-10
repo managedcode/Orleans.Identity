@@ -1,18 +1,25 @@
-<img alt="managed code Identity" src="https://github.com/managed-code-hub/Identity/raw/main/logo.png" width="300px" />
+<img alt="managed code Identity" src="https://raw.githubusercontent.com/managedcode/Orleans.Identity/main/logo.png" width="300px" />
 
 # Orleans.Identity
+
+[![CI](https://github.com/managedcode/Orleans.Identity/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/managedcode/Orleans.Identity/actions/workflows/ci.yml)
+[![Release](https://github.com/managedcode/Orleans.Identity/actions/workflows/release.yml/badge.svg?branch=main)](https://github.com/managedcode/Orleans.Identity/actions/workflows/release.yml)
+[![CodeQL](https://github.com/managedcode/Orleans.Identity/actions/workflows/codeql-analysis.yml/badge.svg?branch=main)](https://github.com/managedcode/Orleans.Identity/actions/workflows/codeql-analysis.yml)
+[![NuGet](https://img.shields.io/nuget/v/ManagedCode.Orleans.Identity.Server.svg?style=flat-square&logo=nuget)](https://www.nuget.org/packages/ManagedCode.Orleans.Identity.Server)
+[![Downloads](https://img.shields.io/nuget/dt/ManagedCode.Orleans.Identity.Server.svg?style=flat-square&logo=nuget)](https://www.nuget.org/packages/ManagedCode.Orleans.Identity.Server)
+[![License](https://img.shields.io/github/license/managedcode/Orleans.Identity.svg?style=flat-square)](LICENSE)
 
 Orleans.Identity expands ASP.NET Core authentication and authorization into Orleans grains. It forwards the `ClaimsPrincipal`
 created by ASP.NET Identity (JWT, cookies, etc.) to grains, validates `[Authorize]` attributes inside the cluster, and exposes
 helpers that make the current user available inside grain code.
 
-The repository ships three NuGet packages:
+The repository ships three NuGet packages. Package links open the latest stable release on NuGet; badges update automatically.
 
-| Package | Purpose |
-| --- | --- |
-| `ManagedCode.Orleans.Identity.Server` | Registers an Orleans incoming grain call filter that enforces ASP.NET Core authorization attributes in the silo. |
-| `ManagedCode.Orleans.Identity.Client` | Adds MVC and SignalR filters that copy the authenticated `ClaimsPrincipal` into Orleans `RequestContext` before grains are invoked. |
-| `ManagedCode.Orleans.Identity.Core` | Shared helpers (claim surrogates, extensions, constants). |
+| Package | Latest version | Downloads | Purpose |
+| --- | --- | --- | --- |
+| [ManagedCode.Orleans.Identity.Server](https://www.nuget.org/packages/ManagedCode.Orleans.Identity.Server) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Orleans.Identity.Server.svg?style=flat-square&logo=nuget)](https://www.nuget.org/packages/ManagedCode.Orleans.Identity.Server) | [![Downloads](https://img.shields.io/nuget/dt/ManagedCode.Orleans.Identity.Server.svg?style=flat-square&logo=nuget)](https://www.nuget.org/packages/ManagedCode.Orleans.Identity.Server) | Registers an Orleans incoming grain call filter that enforces ASP.NET Core authorization attributes in the silo. |
+| [ManagedCode.Orleans.Identity.Client](https://www.nuget.org/packages/ManagedCode.Orleans.Identity.Client) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Orleans.Identity.Client.svg?style=flat-square&logo=nuget)](https://www.nuget.org/packages/ManagedCode.Orleans.Identity.Client) | [![Downloads](https://img.shields.io/nuget/dt/ManagedCode.Orleans.Identity.Client.svg?style=flat-square&logo=nuget)](https://www.nuget.org/packages/ManagedCode.Orleans.Identity.Client) | Adds MVC and SignalR filters that copy the authenticated `ClaimsPrincipal` into Orleans `RequestContext` before grains are invoked. |
+| [ManagedCode.Orleans.Identity.Core](https://www.nuget.org/packages/ManagedCode.Orleans.Identity.Core) | [![NuGet](https://img.shields.io/nuget/v/ManagedCode.Orleans.Identity.Core.svg?style=flat-square&logo=nuget)](https://www.nuget.org/packages/ManagedCode.Orleans.Identity.Core) | [![Downloads](https://img.shields.io/nuget/dt/ManagedCode.Orleans.Identity.Core.svg?style=flat-square&logo=nuget)](https://www.nuget.org/packages/ManagedCode.Orleans.Identity.Core) | Shared helpers (claim surrogates, extensions, constants). |
 
 ## Key capabilities
 
