@@ -248,6 +248,134 @@ public sealed class StreamingAuthorizationTests(TestClusterApplication app)
         }
     }
 
+
+    [Theory]
+    [InlineData(false, false, false)]
+    [InlineData(false, false, true)]
+    [InlineData(false, true, false)]
+    [InlineData(false, true, true)]
+    [InlineData(true, false, false)]
+    [InlineData(true, false, true)]
+    [InlineData(true, true, false)]
+    [InlineData(true, true, true)]
+    public async Task AnonymousDefault_ProtectedTaskRejectsUnauthorizedCallerBeforeBody(
+        bool interfaceDefault, bool implementation, bool authenticated)
+    {
+        SetUser(authenticated ? TestRoles.USER : null);
+        var calls = GetAnonymousDefaultCalls(interfaceDefault, implementation);
+        try
+        {
+            await Should.ThrowAsync<UnauthorizedAccessException>(async () => await calls.ProtectedTask());
+            (await calls.Counts()).ShouldBe((0, 0));
+        }
+        finally { RequestContext.Clear(); }
+    }
+
+    [Theory]
+    [InlineData(false, false, false)]
+    [InlineData(false, false, true)]
+    [InlineData(false, true, false)]
+    [InlineData(false, true, true)]
+    [InlineData(true, false, false)]
+    [InlineData(true, false, true)]
+    [InlineData(true, true, false)]
+    [InlineData(true, true, true)]
+    public async Task AnonymousDefault_ProtectedStreamRejectsUnauthorizedCallerBeforeBody(
+        bool interfaceDefault, bool implementation, bool authenticated)
+    {
+        SetUser(authenticated ? TestRoles.USER : null);
+        var calls = GetAnonymousDefaultCalls(interfaceDefault, implementation);
+        try
+        {
+            await Should.ThrowAsync<UnauthorizedAccessException>(async () =>
+            { await foreach (var _ in calls.ProtectedStream()) { } });
+            (await calls.Counts()).ShouldBe((0, 0));
+        }
+        finally { RequestContext.Clear(); }
+    }
+
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public async Task AnonymousDefault_ProtectedMethodsAllowAuthorizedCaller(bool interfaceDefault, bool implementation)
+    {
+        SetUser(TestRoles.ADMIN);
+        var calls = GetAnonymousDefaultCalls(interfaceDefault, implementation);
+        try
+        {
+            (await calls.ProtectedTask()).ShouldBe("secret");
+            var stream = calls.ProtectedStream();
+            ((IAsyncEnumerableRequest<string>)stream).MaxBatchSize = 1;
+            var values = new List<string>();
+            await foreach (var value in stream) values.Add(value);
+            values.ShouldBe(["secret", "secret"]);
+            (await calls.Counts()).ShouldBe((1, 1));
+        }
+        finally { RequestContext.Clear(); }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task AnonymousDefault_DefaultAndMethodPublicOverridesRemainAnonymous(bool interfaceDefault)
+    {
+        RequestContext.Clear();
+        var calls = GetAnonymousDefaultCalls(interfaceDefault, false);
+        try
+        {
+            (await calls.DefaultTask()).ShouldBe("default");
+            (await calls.PublicTask()).ShouldBe("public");
+            var defaultValues = new List<string>();
+            await foreach (var value in calls.DefaultStream()) defaultValues.Add(value);
+            defaultValues.ShouldBe(["default", "default"]);
+            var publicValues = new List<string>();
+            await foreach (var value in calls.PublicStream()) publicValues.Add(value);
+            publicValues.ShouldBe(["public", "public"]);
+            (await calls.Counts()).ShouldBe((2, 2));
+        }
+        finally { RequestContext.Clear(); }
+    }
+
+    [Fact]
+    public async Task UnannotatedMethodsKeepExistingAnonymousDefault()
+    {
+        RequestContext.Clear();
+        var grain = app.Cluster.Client.GetGrain<IUnannotatedAuthorizationGrain>(Guid.NewGuid());
+        (await grain.ReadTask()).ShouldBe("unannotated");
+        var values = new List<string>();
+        await foreach (var value in grain.ReadStream()) values.Add(value);
+        values.ShouldBe(["unannotated"]);
+    }
+
+    private (
+        Func<Task<string>> ProtectedTask,
+        Func<IAsyncEnumerable<string>> ProtectedStream,
+        Func<Task<string>> DefaultTask,
+        Func<IAsyncEnumerable<string>> DefaultStream,
+        Func<Task<string>> PublicTask,
+        Func<IAsyncEnumerable<string>> PublicStream,
+        Func<Task<(int Tasks, int Streams)>> Counts)
+        GetAnonymousDefaultCalls(bool interfaceDefault, bool implementation)
+    {
+        if (interfaceDefault)
+        {
+            var grain = app.Cluster.Client.GetGrain<IInterfaceAnonymousAuthorizationGrain>(Guid.NewGuid());
+            return (
+                implementation ? grain.TaskImplementationProtected : grain.TaskInterfaceProtected,
+                implementation ? grain.StreamImplementationProtected : grain.StreamInterfaceProtected,
+                grain.TaskDefault, grain.StreamDefault, grain.TaskPublicOverride, grain.StreamPublicOverride, grain.Counts);
+        }
+
+        var classGrain = app.Cluster.Client.GetGrain<IClassAnonymousAuthorizationGrain>(Guid.NewGuid());
+        return (
+            implementation ? classGrain.TaskImplementationProtected : classGrain.TaskInterfaceProtected,
+            implementation ? classGrain.StreamImplementationProtected : classGrain.StreamInterfaceProtected,
+            classGrain.TaskDefault, classGrain.StreamDefault,
+            classGrain.TaskPublicOverride, classGrain.StreamPublicOverride, classGrain.Counts);
+    }
+
     private static void SetUser(string? role, string name = "owner")
     {
         RequestContext.Clear();

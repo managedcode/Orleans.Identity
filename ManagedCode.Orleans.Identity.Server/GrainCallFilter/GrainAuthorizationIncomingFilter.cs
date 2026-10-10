@@ -131,12 +131,24 @@ public class GrainAuthorizationIncomingFilter(
         authorizeData = [];
         var members = GetAuthorizationMembers(context);
 
-        if (members.Any(HasAllowAnonymousAttribute))
+        var methods = new MemberInfo[] { context.InterfaceMethod, context.ImplementationMethod };
+        if (methods.Any(HasAllowAnonymousAttribute))
         {
             return false;
         }
 
         authorizeData.AddRange(members.SelectMany(GetAuthorizeAttributes));
+        if (methods.Any(member => GetAuthorizeAttributes(member).Any()))
+        {
+            return true;
+        }
+
+        if (members.Any(HasAllowAnonymousAttribute))
+        {
+            authorizeData.Clear();
+            return false;
+        }
+
         return authorizeData.Count != EmptyAttributeCount;
     }
 

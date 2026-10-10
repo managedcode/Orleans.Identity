@@ -62,6 +62,8 @@ siloBuilder.AddOrleansIdentity(options =>
 
 Every continuation and disposal rechecks authorization and must retain the initiating principal and source identity. Another caller cannot read or close an existing enumeration. Authority is kept only on the target activation, bounded to 128 pending enumerations, removed on disposal, and pruned after three configured response-timeout intervals of inactivity when new enumerations arrive. Orleans retains responsibility for iterator execution and disposal. Anonymous streams still require an explicit `[AllowAnonymous]` override when their grain is protected.
 
+Method-level access attributes override interface/class anonymous defaults. Use `[GrainAllowAnonymous]` from `ManagedCode.Orleans.Identity.Core.Attributes` to put an anonymous default on an interface; the ASP.NET Core `[AllowAnonymous]` attribute supports only classes and methods. An explicit `[Authorize]` on either the interface method or its implementation enforces the collected authorization requirements even when the interface or class is anonymous. A method-level `[AllowAnonymous]` remains a public override. Methods without any authorization attributes retain their existing behavior.
+
 ### 2. Configure the ASP.NET Core host
 
 ```csharp

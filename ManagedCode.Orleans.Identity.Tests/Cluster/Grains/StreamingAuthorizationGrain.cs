@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using ManagedCode.Orleans.Identity.Core.Attributes;
 using ManagedCode.Orleans.Identity.Tests.Constants;
 using ManagedCode.Orleans.Identity.Server.GrainCallFilter;
 using Orleans.Concurrency;
@@ -110,6 +111,126 @@ public sealed class ClassProtectedStreamingGrain : Grain, IClassProtectedStreami
     public async IAsyncEnumerable<int> Read()
     {
         yield return 1;
+        await Task.Yield();
+    }
+}
+
+[GrainAllowAnonymous]
+public interface IInterfaceAnonymousAuthorizationGrain : IGrainWithGuidKey
+{
+    [Authorize(Roles = TestRoles.ADMIN)]
+    Task<string> TaskInterfaceProtected();
+    Task<string> TaskImplementationProtected();
+    Task<string> TaskDefault();
+    [Authorize(Roles = TestRoles.ADMIN)]
+    Task<string> TaskPublicOverride();
+    [Authorize(Roles = TestRoles.ADMIN)]
+    IAsyncEnumerable<string> StreamInterfaceProtected();
+    IAsyncEnumerable<string> StreamImplementationProtected();
+    IAsyncEnumerable<string> StreamDefault();
+    [Authorize(Roles = TestRoles.ADMIN)]
+    IAsyncEnumerable<string> StreamPublicOverride();
+    Task<(int Tasks, int Streams)> Counts();
+}
+
+public interface IClassAnonymousAuthorizationGrain : IGrainWithGuidKey
+{
+    [Authorize(Roles = TestRoles.ADMIN)]
+    Task<string> TaskInterfaceProtected();
+    Task<string> TaskImplementationProtected();
+    Task<string> TaskDefault();
+    [Authorize(Roles = TestRoles.ADMIN)]
+    Task<string> TaskPublicOverride();
+    [Authorize(Roles = TestRoles.ADMIN)]
+    IAsyncEnumerable<string> StreamInterfaceProtected();
+    IAsyncEnumerable<string> StreamImplementationProtected();
+    IAsyncEnumerable<string> StreamDefault();
+    [Authorize(Roles = TestRoles.ADMIN)]
+    IAsyncEnumerable<string> StreamPublicOverride();
+    Task<(int Tasks, int Streams)> Counts();
+}
+
+public sealed class InterfaceAnonymousAuthorizationGrain : Grain, IInterfaceAnonymousAuthorizationGrain
+{
+    private int tasks;
+    private int streams;
+
+    public Task<string> TaskInterfaceProtected() => ReadTask("secret");
+    [Authorize(Roles = TestRoles.ADMIN)]
+    public Task<string> TaskImplementationProtected() => ReadTask("secret");
+    public Task<string> TaskDefault() => ReadTask("default");
+    [AllowAnonymous]
+    public Task<string> TaskPublicOverride() => ReadTask("public");
+    public IAsyncEnumerable<string> StreamInterfaceProtected() => ReadStream("secret");
+    [Authorize(Roles = TestRoles.ADMIN)]
+    public IAsyncEnumerable<string> StreamImplementationProtected() => ReadStream("secret");
+    public IAsyncEnumerable<string> StreamDefault() => ReadStream("default");
+    [AllowAnonymous]
+    public IAsyncEnumerable<string> StreamPublicOverride() => ReadStream("public");
+    public Task<(int Tasks, int Streams)> Counts() => Task.FromResult((tasks, streams));
+
+    private Task<string> ReadTask(string value)
+    {
+        tasks++;
+        return Task.FromResult(value);
+    }
+
+    private async IAsyncEnumerable<string> ReadStream(string value)
+    {
+        streams++;
+        yield return value;
+        await Task.Yield();
+        yield return value;
+    }
+}
+
+[AllowAnonymous]
+public sealed class ClassAnonymousAuthorizationGrain : Grain, IClassAnonymousAuthorizationGrain
+{
+    private int tasks;
+    private int streams;
+
+    public Task<string> TaskInterfaceProtected() => ReadTask("secret");
+    [Authorize(Roles = TestRoles.ADMIN)]
+    public Task<string> TaskImplementationProtected() => ReadTask("secret");
+    public Task<string> TaskDefault() => ReadTask("default");
+    [AllowAnonymous]
+    public Task<string> TaskPublicOverride() => ReadTask("public");
+    public IAsyncEnumerable<string> StreamInterfaceProtected() => ReadStream("secret");
+    [Authorize(Roles = TestRoles.ADMIN)]
+    public IAsyncEnumerable<string> StreamImplementationProtected() => ReadStream("secret");
+    public IAsyncEnumerable<string> StreamDefault() => ReadStream("default");
+    [AllowAnonymous]
+    public IAsyncEnumerable<string> StreamPublicOverride() => ReadStream("public");
+    public Task<(int Tasks, int Streams)> Counts() => Task.FromResult((tasks, streams));
+
+    private Task<string> ReadTask(string value)
+    {
+        tasks++;
+        return Task.FromResult(value);
+    }
+
+    private async IAsyncEnumerable<string> ReadStream(string value)
+    {
+        streams++;
+        yield return value;
+        await Task.Yield();
+        yield return value;
+    }
+}
+
+public interface IUnannotatedAuthorizationGrain : IGrainWithGuidKey
+{
+    Task<string> ReadTask();
+    IAsyncEnumerable<string> ReadStream();
+}
+
+public sealed class UnannotatedAuthorizationGrain : Grain, IUnannotatedAuthorizationGrain
+{
+    public Task<string> ReadTask() => Task.FromResult("unannotated");
+    public async IAsyncEnumerable<string> ReadStream()
+    {
+        yield return "unannotated";
         await Task.Yield();
     }
 }
