@@ -102,7 +102,7 @@ app.Run();
 ```
 
 The filters installed by `AddOrleansIdentity` forward the authenticated principal through MVC action and result execution,
-SignalR hub callbacks, and enumeration of async streams returned by hub methods.
+SignalR hub callbacks, and reads from `IAsyncEnumerable<T>` and `ChannelReader<T>` streams returned by hub methods.
 
 ### 3. Enforce authorization in grains
 

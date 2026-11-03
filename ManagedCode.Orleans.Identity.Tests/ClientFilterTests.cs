@@ -1,7 +1,9 @@
 using System.Security.Claims;
+using System.Threading.Channels;
 using ManagedCode.Orleans.Identity.Client.Extensions;
 using ManagedCode.Orleans.Identity.Client.Filters;
 using ManagedCode.Orleans.Identity.Core.Constants;
+using ManagedCode.Orleans.Identity.Tests.TestApp;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
@@ -132,6 +134,41 @@ public class ClientFilterTests
             await Task.Yield();
             RequestContext.Get(OrleansIdentityConstants.USER_CLAIMS).ShouldBeSameAs(current);
         }
+    }
+
+    [Fact]
+    public async Task SignalRChannel_PreservesReaderCapabilitiesAndCancellation()
+    {
+        var channel = Channel.CreateUnbounded<string>();
+        var user = CreatePrincipal(CurrentUserName);
+        using var hub = new TestAuthorizeHub(null!);
+        using var services = new ServiceCollection().BuildServiceProvider();
+        var method = typeof(TestAuthorizeHub).GetMethod(nameof(TestAuthorizeHub.ReadChannel))!;
+        var context = new HubInvocationContext(new LifecycleCallerContext(user), services, hub, method, []);
+        var result = await new SignalRAuthorizationFilter().InvokeMethodAsync(context,
+            _ => ValueTask.FromResult<object?>(channel.Reader));
+        var reader = Assert.IsAssignableFrom<ChannelReader<string>>(result);
+
+        reader.Completion.ShouldBeSameAs(channel.Reader.Completion);
+        reader.CanCount.ShouldBe(channel.Reader.CanCount);
+        reader.CanPeek.ShouldBe(channel.Reader.CanPeek);
+        using var cancellation = new CancellationTokenSource();
+        var pending = reader.ReadAsync(cancellation.Token).AsTask();
+        await cancellation.CancelAsync();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => pending);
+
+        channel.Writer.TryWrite("first").ShouldBeTrue();
+        channel.Writer.TryWrite("second").ShouldBeTrue();
+        channel.Writer.Complete();
+
+        reader.Count.ShouldBe(2);
+        reader.TryPeek(out var first).ShouldBeTrue();
+        first.ShouldBe("first");
+        (await reader.ReadAsync()).ShouldBe("first");
+        var remaining = new List<string>();
+        await foreach (var item in reader.ReadAllAsync()) remaining.Add(item);
+        remaining.ShouldBe(["second"]);
+        await reader.Completion;
     }
 
     private sealed class LifecycleHub : Hub;

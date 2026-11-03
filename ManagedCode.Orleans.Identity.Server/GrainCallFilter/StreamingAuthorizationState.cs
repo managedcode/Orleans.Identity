@@ -80,8 +80,19 @@ internal sealed class StreamingAuthorizationState(TimeSpan retention)
                 return identities.Length == 0;
             }
 
+            var currentIdentities = current.Identities;
+            if (currentIdentities is IReadOnlyList<ClaimsIdentity> list)
+            {
+                if (identities.Length != list.Count) return false;
+                for (var i = 0; i < identities.Length; i++)
+                {
+                    if (!identities[i].Matches(list[i])) return false;
+                }
+                return true;
+            }
+
             var index = 0;
-            foreach (var identity in current.Identities)
+            foreach (var identity in currentIdentities)
             {
                 if (index == identities.Length || !identities[index++].Matches(identity))
                 {
@@ -109,8 +120,19 @@ internal sealed class StreamingAuthorizationState(TimeSpan retention)
                 return false;
             }
 
+            var currentClaims = current.Claims;
+            if (currentClaims is IReadOnlyList<Claim> list)
+            {
+                if (claims.Length != list.Count) return false;
+                for (var i = 0; i < claims.Length; i++)
+                {
+                    if (!claims[i].Matches(list[i])) return false;
+                }
+                return true;
+            }
+
             var index = 0;
-            foreach (var claim in current.Claims)
+            foreach (var claim in currentClaims)
             {
                 if (index == claims.Length || !claims[index++].Matches(claim))
                 {

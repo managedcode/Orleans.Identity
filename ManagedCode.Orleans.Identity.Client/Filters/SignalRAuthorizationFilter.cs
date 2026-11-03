@@ -1,6 +1,8 @@
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Security.Claims;
+using System.Threading.Channels;
 using Microsoft.AspNetCore.SignalR;
 
 namespace ManagedCode.Orleans.Identity.Client.Filters;
@@ -10,6 +12,8 @@ public sealed class SignalRAuthorizationFilter : IHubFilter
     private static readonly ConcurrentDictionary<Type, Func<object, ClaimsPrincipal?, object>?> StreamWrappers = new();
     private static readonly MethodInfo WrapStreamMethod = typeof(SignalRAuthorizationFilter)
         .GetMethod(nameof(WrapStream), BindingFlags.NonPublic | BindingFlags.Static)!;
+    private static readonly MethodInfo WrapChannelMethod = typeof(SignalRAuthorizationFilter)
+        .GetMethod(nameof(WrapChannel), BindingFlags.NonPublic | BindingFlags.Static)!;
 
     public async ValueTask<object?> InvokeMethodAsync(
         HubInvocationContext invocationContext,
@@ -39,9 +43,22 @@ public sealed class SignalRAuthorizationFilter : IHubFilter
         }
 
         var stream = IsAsyncEnumerable(returnType) ? returnType : Array.Find(returnType.GetInterfaces(), IsAsyncEnumerable);
-        return stream is null ? null : WrapStreamMethod
-            .MakeGenericMethod(stream.GenericTypeArguments[0])
-            .CreateDelegate<Func<object, ClaimsPrincipal?, object>>();
+        if (stream is not null)
+        {
+            return WrapStreamMethod.MakeGenericMethod(stream.GenericTypeArguments[0])
+                .CreateDelegate<Func<object, ClaimsPrincipal?, object>>();
+        }
+
+        for (Type? type = returnType; type is not null; type = type.BaseType)
+        {
+            if (type.IsConstructedGenericType && type.GetGenericTypeDefinition() == typeof(ChannelReader<>))
+            {
+                return WrapChannelMethod.MakeGenericMethod(type.GenericTypeArguments[0])
+                    .CreateDelegate<Func<object, ClaimsPrincipal?, object>>();
+            }
+        }
+
+        return null;
     }
 
     private static bool IsAsyncEnumerable(Type type) =>
@@ -80,6 +97,47 @@ public sealed class SignalRAuthorizationFilter : IHubFilter
                 using var scope = new OrleansRequestContextScope(user);
                 await enumerator.DisposeAsync();
             }
+        }
+    }
+
+    private static object WrapChannel<T>(object channel, ClaimsPrincipal? user) =>
+        new ScopedChannelReader<T>((ChannelReader<T>)channel, user);
+
+    private sealed class ScopedChannelReader<T>(ChannelReader<T> reader, ClaimsPrincipal? user) : ChannelReader<T>
+    {
+        public override Task Completion => reader.Completion;
+        public override bool CanCount => reader.CanCount;
+        public override bool CanPeek => reader.CanPeek;
+        public override int Count => reader.Count;
+
+        public override bool TryRead([MaybeNullWhen(false)] out T item)
+        {
+            using var scope = new OrleansRequestContextScope(user);
+            return reader.TryRead(out item);
+        }
+
+        public override bool TryPeek([MaybeNullWhen(false)] out T item)
+        {
+            using var scope = new OrleansRequestContextScope(user);
+            return reader.TryPeek(out item);
+        }
+
+        public override async ValueTask<bool> WaitToReadAsync(CancellationToken cancellationToken = default)
+        {
+            using var scope = new OrleansRequestContextScope(user);
+            return await reader.WaitToReadAsync(cancellationToken);
+        }
+
+        public override async ValueTask<T> ReadAsync(CancellationToken cancellationToken = default)
+        {
+            using var scope = new OrleansRequestContextScope(user);
+            return await reader.ReadAsync(cancellationToken);
+        }
+
+        public override IAsyncEnumerable<T> ReadAllAsync(CancellationToken cancellationToken = default)
+        {
+            using var scope = new OrleansRequestContextScope(user);
+            return new ScopedStream<T>(reader.ReadAllAsync(cancellationToken), user);
         }
     }
 

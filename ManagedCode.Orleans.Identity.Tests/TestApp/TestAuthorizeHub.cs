@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+using System.Threading.Channels;
 using ManagedCode.Orleans.Identity.Tests.Cluster.Grains;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
@@ -37,6 +39,36 @@ public class TestAuthorizeHub(IClusterClient clusterClient) : Hub
 
     [Authorize]
     public Task<IAsyncEnumerable<string>> ReadStreamAsync() => Task.FromResult(ReadStream());
+
+    [Authorize]
+    public ChannelReader<string> ReadChannel() => new GrainChannelReader(clusterClient.GetGrain<IUserGrain>("channel"));
+
+    [Authorize]
+    public Task<ChannelReader<string>> ReadChannelAsync() => Task.FromResult(ReadChannel());
+
+    private sealed class GrainChannelReader(IUserGrain grain) : ChannelReader<string>
+    {
+        private string? pending;
+        private bool fetched;
+
+        public override async ValueTask<bool> WaitToReadAsync(CancellationToken cancellationToken = default)
+        {
+            if (!fetched)
+            {
+                pending = await grain.GetUser().WaitAsync(cancellationToken);
+                fetched = true;
+            }
+
+            return pending is not null;
+        }
+
+        public override bool TryRead([MaybeNullWhen(false)] out string item)
+        {
+            item = pending;
+            pending = null;
+            return item is not null;
+        }
+    }
 
     [AllowAnonymous]
     public async Task<string> GetPublicInfo()

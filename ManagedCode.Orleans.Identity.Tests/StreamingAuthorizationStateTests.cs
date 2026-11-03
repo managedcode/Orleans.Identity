@@ -99,6 +99,30 @@ public sealed class StreamingAuthorizationStateTests
         entry.Finish(disposing: false).ShouldBeTrue();
     }
 
+    [Fact]
+    public void Continuation_MatchesIteratorBackedIdentitiesAndClaims()
+    {
+        var entry = new StreamingAuthorizationState.Entry(default, null, Principal("owner"));
+        var identity = new IteratorIdentity("owner");
+        var principal = new IteratorPrincipal(identity);
+
+        entry.CanContinue(null, principal, disposing: false).ShouldBeTrue();
+
+        identity.AddClaim(new Claim(ClaimTypes.Role, "additional"));
+        entry.CanContinue(null, principal, disposing: false).ShouldBeFalse();
+    }
+
+    private sealed class IteratorPrincipal(ClaimsIdentity identity) : ClaimsPrincipal(identity)
+    {
+        public override IEnumerable<ClaimsIdentity> Identities => base.Identities.Where(static _ => true);
+    }
+
+    private sealed class IteratorIdentity(string name)
+        : ClaimsIdentity([new Claim(ClaimTypes.NameIdentifier, name)], "stream-test")
+    {
+        public override IEnumerable<Claim> Claims => base.Claims.Where(static _ => true);
+    }
+
     private static ClaimsPrincipal PrincipalWithIdentities(string first, string second) =>
         new([Principal(first).Identities.Single(), Principal(second).Identities.Single()]);
 
