@@ -31,6 +31,10 @@ public class UserController : ControllerBase
         }
     }
 
+    [HttpGet("stream")]
+    public IAsyncEnumerable<string> ReadStream() =>
+        _clusterClient.GetGrain<IStreamingAuthorizationGrain>(Guid.NewGuid()).InterfaceProtected("http");
+
     [HttpGet("anonymous")]
     [AllowAnonymous]
     public async Task<ActionResult<string>> TryGetUser()

@@ -1,6 +1,7 @@
 using ManagedCode.Orleans.Identity.Server.GrainCallFilter;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Orleans.Hosting;
 
 namespace ManagedCode.Orleans.Identity.Server.Extensions;
@@ -17,7 +18,7 @@ public static class SiloBuilderExtensions
         ArgumentNullException.ThrowIfNull(siloBuilder);
 
         siloBuilder.Services.AddAuthorizationCore();
-        siloBuilder.AddIncomingGrainCallFilter<GrainAuthorizationIncomingFilter>();
+        siloBuilder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<IIncomingGrainCallFilter, GrainAuthorizationIncomingFilter>());
         return siloBuilder;
     }
 
@@ -26,8 +27,8 @@ public static class SiloBuilderExtensions
         ArgumentNullException.ThrowIfNull(siloBuilder);
         ArgumentNullException.ThrowIfNull(configureOptions);
 
-        siloBuilder.Services.AddAuthorizationCore(configureOptions);
-        siloBuilder.AddIncomingGrainCallFilter<GrainAuthorizationIncomingFilter>();
+        siloBuilder.AddOrleansIdentity();
+        siloBuilder.Services.Configure(configureOptions);
         return siloBuilder;
     }
 }

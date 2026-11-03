@@ -34,6 +34,16 @@ public class JwtGrainFilterTests
         return client;
     }
 
+    [Fact]
+    public async Task StreamResult_ForwardsPrincipalDuringEnumeration()
+    {
+        using var client = CreateAuthenticatedClient("admin", TestRoles.ADMIN);
+
+        var values = await client.GetFromJsonAsync<string[]>("/userController/stream");
+
+        values.ShouldBe(["http0", "http1", "http2"]);
+    }
+
     #region User authorized no roles required
 
     [Fact]

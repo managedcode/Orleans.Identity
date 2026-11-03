@@ -8,28 +8,25 @@ namespace ManagedCode.Orleans.Identity.Client.Filters;
 internal readonly struct OrleansRequestContextScope : IDisposable
 {
     private readonly object? previousUser;
-    private readonly bool hasPreviousUser;
 
     public OrleansRequestContextScope(ClaimsPrincipal? user)
     {
         previousUser = RequestContext.Get(OrleansIdentityConstants.USER_CLAIMS);
-        hasPreviousUser = previousUser is not null;
-
-        SetUser(user);
+        if (user is null || !ReferenceEquals(previousUser, user))
+        {
+            SetUser(user);
+        }
     }
 
     public void Dispose()
     {
-        if (hasPreviousUser)
+        if (previousUser is null || !ReferenceEquals(previousUser, RequestContext.Get(OrleansIdentityConstants.USER_CLAIMS)))
         {
-            RequestContext.Set(OrleansIdentityConstants.USER_CLAIMS, previousUser!);
-            return;
+            SetUser(previousUser);
         }
-
-        RequestContext.Remove(OrleansIdentityConstants.USER_CLAIMS);
     }
 
-    private static void SetUser(ClaimsPrincipal? user)
+    private static void SetUser(object? user)
     {
         if (user is null)
         {

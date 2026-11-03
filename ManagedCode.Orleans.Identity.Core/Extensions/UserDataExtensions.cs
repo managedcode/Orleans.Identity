@@ -18,7 +18,7 @@ public static class UserDataExtensions
     public static void ParseRoles(this ClaimsIdentity claimsIdentity, HashSet<string> roles)
     {
         foreach (var role in roles)
-            claimsIdentity.AddClaim(new Claim(ClaimTypes.Role, role));
+            claimsIdentity.AddClaim(new Claim(claimsIdentity.RoleClaimType, role));
     }
 
     /// <summary>

@@ -1,6 +1,5 @@
 using System.Security.Claims;
 using Orleans.Runtime;
-using Orleans.Serialization.Invocation;
 
 namespace ManagedCode.Orleans.Identity.Server.GrainCallFilter;
 
@@ -12,36 +11,50 @@ internal sealed class StreamingAuthorizationState(TimeSpan retention)
 
     public Entry? Find(Guid id) => entries.GetValueOrDefault(id);
 
-    public Entry Add(Guid id, IInvokable request, GrainId? sourceId, ClaimsPrincipal? principal)
+    public Entry Add(Guid id, StreamingGrainCallContext.Operation operation, GrainId? sourceId, ClaimsPrincipal? principal)
     {
-        var now = TimeProvider.System.GetUtcNow();
-        foreach (var expired in entries.Where(pair => !pair.Value.InFlight && !pair.Value.Disposing && now - pair.Value.LastSeen > retention)
-                     .Select(pair => pair.Key).ToArray())
+        var now = TimeProvider.System.GetTimestamp();
+        foreach (var (key, existing) in entries)
         {
-            entries.Remove(expired);
+            if (!existing.InFlight && !existing.Disposing && TimeProvider.System.GetElapsedTime(existing.LastSeen, now) > retention)
+            {
+                entries.Remove(key);
+            }
         }
         if (entries.Count >= MaximumEnumerations || entries.ContainsKey(id))
         {
             throw new UnauthorizedAccessException("Streaming authorization capacity or identity conflict.");
         }
-        var entry = new Entry(request, sourceId, principal) { InFlight = true };
+        var entry = new Entry(operation, sourceId, principal) { InFlight = true };
         entries.Add(id, entry);
         return entry;
     }
 
-    public void Remove(Guid id) => entries.Remove(id);
+    public bool TryBegin(Guid id, Entry entry, GrainId? caller, ClaimsPrincipal? principal, bool disposing) =>
+        ReferenceEquals(Find(id), entry) && entry.TryBegin(caller, principal, disposing);
 
-    internal sealed class Entry(IInvokable request, GrainId? sourceId, ClaimsPrincipal? principal)
+    public void Remove(Guid id, Entry entry)
     {
-        private readonly string[] identity = Identity(principal);
-        public IInvokable Request { get; } = request;
+        if (ReferenceEquals(Find(id), entry))
+        {
+            entries.Remove(id);
+        }
+    }
+
+    internal sealed class Entry(StreamingGrainCallContext.Operation operation, GrainId? sourceId, ClaimsPrincipal? principal)
+    {
+        private readonly IdentitySnapshot[] identities = principal is null
+            ? []
+            : principal.Identities.Select(static identity => new IdentitySnapshot(identity)).ToArray();
+        public StreamingGrainCallContext.Operation Operation { get; } = operation;
         public bool InFlight { get; set; }
         public bool Disposing { get; private set; }
-        public DateTimeOffset LastSeen { get; private set; } = TimeProvider.System.GetUtcNow();
+        public long LastSeen { get; private set; } = TimeProvider.System.GetTimestamp();
+        private bool retired;
 
         public bool CanContinue(GrainId? caller, ClaimsPrincipal? current, bool disposing) =>
-            !Disposing && (!InFlight || disposing) &&
-            caller == sourceId && identity.SequenceEqual(Identity(current), StringComparer.Ordinal);
+            !retired && !Disposing && (!InFlight || disposing) &&
+            caller == sourceId && MatchesPrincipal(current);
 
         public bool TryBegin(GrainId? caller, ClaimsPrincipal? current, bool disposing)
         {
@@ -51,26 +64,68 @@ internal sealed class StreamingAuthorizationState(TimeSpan retention)
             return true;
         }
 
-        public void Finish(bool disposing)
+        public bool Finish(bool disposing, bool terminated = false)
         {
             if (disposing) Disposing = false;
             else InFlight = false;
-            LastSeen = TimeProvider.System.GetUtcNow();
+            LastSeen = TimeProvider.System.GetTimestamp();
+            retired |= terminated;
+            return retired && !InFlight && !Disposing;
         }
 
-        private static string[] Identity(ClaimsPrincipal? value) => value is null ? [] :
-            value.Identities.SelectMany(identity => new[]
+        private bool MatchesPrincipal(ClaimsPrincipal? current)
+        {
+            if (current is null)
+            {
+                return identities.Length == 0;
+            }
+
+            var index = 0;
+            foreach (var identity in current.Identities)
+            {
+                if (index == identities.Length || !identities[index++].Matches(identity))
                 {
-                    System.Text.Json.JsonSerializer.Serialize(new[]
-                    {
-                        identity.AuthenticationType, identity.NameClaimType, identity.RoleClaimType
-                    })
-                }.Concat(identity.Claims.Select(claim =>
-                    System.Text.Json.JsonSerializer.Serialize(new[]
-                    {
-                        identity.AuthenticationType, identity.NameClaimType, identity.RoleClaimType,
-                        claim.Type, claim.Value, claim.ValueType, claim.Issuer, claim.OriginalIssuer
-                    }))))
-                .Order(StringComparer.Ordinal).ToArray();
+                    return false;
+                }
+            }
+
+            return index == identities.Length;
+        }
+    }
+
+    private sealed class IdentitySnapshot(ClaimsIdentity identity)
+    {
+        private readonly string? authenticationType = identity.AuthenticationType;
+        private readonly string nameClaimType = identity.NameClaimType;
+        private readonly string roleClaimType = identity.RoleClaimType;
+        private readonly ClaimSnapshot[] claims = identity.Claims.Select(ClaimSnapshot.FromClaim).ToArray();
+
+        public bool Matches(ClaimsIdentity current)
+        {
+            if (authenticationType != current.AuthenticationType
+                || nameClaimType != current.NameClaimType
+                || roleClaimType != current.RoleClaimType)
+            {
+                return false;
+            }
+
+            var index = 0;
+            foreach (var claim in current.Claims)
+            {
+                if (index == claims.Length || claims[index++] != ClaimSnapshot.FromClaim(claim))
+                {
+                    return false;
+                }
+            }
+
+            return index == claims.Length;
+        }
+    }
+
+    private readonly record struct ClaimSnapshot(
+        string Type, string Value, string ValueType, string Issuer, string OriginalIssuer)
+    {
+        public static ClaimSnapshot FromClaim(Claim claim) =>
+            new(claim.Type, claim.Value, claim.ValueType, claim.Issuer, claim.OriginalIssuer);
     }
 }

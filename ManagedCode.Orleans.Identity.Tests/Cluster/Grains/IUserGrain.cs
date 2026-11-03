@@ -20,4 +20,7 @@ public interface IUserGrain : IGrainWithStringKey
 
     [Authorize(AuthenticationSchemes = TestAuthorizationPolicies.UnsupportedAuthenticationScheme)]
     Task<string> GetAuthenticationSchemeInfo();
+
+    [Authorize(Policy = TestAuthorizationPolicies.RequireScheme)]
+    Task<string> GetPolicyAuthenticationSchemeInfo();
 }

@@ -22,7 +22,9 @@ public static class OrleansIdentityContext
     public static string RequireAuthenticatedUserId()
     {
         var principal = RequireAuthenticatedPrincipal();
-        var userId = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var userId = principal.Identity is ClaimsIdentity { IsAuthenticated: true } identity
+            ? identity.FindFirst(ClaimTypes.NameIdentifier)?.Value
+            : null;
         return string.IsNullOrWhiteSpace(userId)
             ? throw new UnauthorizedAccessException("Authenticated Orleans caller user id is required.")
             : userId;

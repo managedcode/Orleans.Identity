@@ -158,6 +158,24 @@ public class JwtSignalRTests
         }
     }
 
+    [Theory]
+    [InlineData("ReadStream")]
+    [InlineData("ReadStreamAsync")]
+    public async Task SignalR_StreamForwardsPrincipalForEachItem(string method)
+    {
+        var token = await GetJwtToken("admin");
+        await using var connection = await CreateSignalRConnection(token);
+
+        var values = new List<string>();
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        await foreach (var value in connection.StreamAsync<string>(method, timeout.Token))
+        {
+            values.Add(value);
+        }
+
+        values.ShouldBe(["hub0", "hub1", "hub2"]);
+    }
+
     [Fact]
     public async Task SignalR_ConnectWithoutToken_ShouldFail()
     {

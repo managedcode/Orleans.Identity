@@ -33,6 +33,15 @@ public static class ClaimsPrincipalExtensions
 
     public static string[] GetRoles(this ClaimsPrincipal user)
     {
-        return user.FindAll(ClaimTypes.Role).Select(s => s.Value).ToArray();
+        List<string>? roles = null;
+        foreach (var identity in user.Identities)
+        {
+            foreach (var claim in identity.FindAll(identity.RoleClaimType))
+            {
+                (roles ??= []).Add(claim.Value);
+            }
+        }
+
+        return roles?.ToArray() ?? [];
     }
 }

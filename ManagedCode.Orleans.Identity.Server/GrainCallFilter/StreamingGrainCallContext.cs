@@ -7,54 +7,56 @@ using Orleans.Serialization.Invocation;
 namespace ManagedCode.Orleans.Identity.Server.GrainCallFilter;
 
 /// <summary>Exposes the original streamed grain operation to authorization policies.</summary>
-internal sealed class StreamingGrainCallContext : IIncomingGrainCallContext
+internal sealed class StreamingGrainCallContext(
+    IIncomingGrainCallContext transport, StreamingGrainCallContext.Operation operation) : IIncomingGrainCallContext
 {
-    private readonly IIncomingGrainCallContext transport;
-
-    public StreamingGrainCallContext(IIncomingGrainCallContext transport, IInvokable request)
+    public static Operation ResolveOperation(IGrainContext target, IInvokable request)
     {
-        this.transport = transport;
-        Request = request;
-        Grain = transport.TargetContext.GrainInstance
+        var grain = target.GrainInstance
             ?? throw new UnauthorizedAccessException("Streaming target is unavailable.");
-        InterfaceMethod = request.GetMethod();
-        var declaringType = InterfaceMethod.DeclaringType
+        var interfaceMethod = request.GetMethod();
+        var declaringType = interfaceMethod.DeclaringType
             ?? throw new UnauthorizedAccessException("Streaming operation is unavailable.");
-        if (!declaringType.IsInterface || !declaringType.IsInstanceOfType(Grain) ||
-            !InterfaceMethod.ReturnType.IsGenericType ||
-            InterfaceMethod.ReturnType.GetGenericTypeDefinition() != typeof(IAsyncEnumerable<>))
+        if (!declaringType.IsInterface || !declaringType.IsInstanceOfType(grain) ||
+            !interfaceMethod.ReturnType.IsGenericType ||
+            interfaceMethod.ReturnType.GetGenericTypeDefinition() != typeof(IAsyncEnumerable<>))
         {
             throw new UnauthorizedAccessException("Streaming operation is invalid.");
         }
 
-        request.SetTarget(transport.TargetContext);
-        var map = Grain.GetType().GetInterfaceMap(declaringType);
-        var definition = InterfaceMethod.IsGenericMethod ? InterfaceMethod.GetGenericMethodDefinition() : InterfaceMethod;
-        var index = Array.FindIndex(map.InterfaceMethods, method => method == definition);
+        request.SetTarget(target);
+        var map = grain.GetType().GetInterfaceMap(declaringType);
+        var definition = interfaceMethod.IsGenericMethod ? interfaceMethod.GetGenericMethodDefinition() : interfaceMethod;
+        var index = Array.IndexOf(map.InterfaceMethods, definition);
         if (index < 0)
         {
             throw new UnauthorizedAccessException("Streaming implementation is unavailable.");
         }
-        ImplementationMethod = map.TargetMethods[index];
-        if (ImplementationMethod.IsGenericMethodDefinition)
+        var implementationMethod = map.TargetMethods[index];
+        if (implementationMethod.IsGenericMethodDefinition)
         {
-            ImplementationMethod = ImplementationMethod.MakeGenericMethod(InterfaceMethod.GetGenericArguments());
+            implementationMethod = implementationMethod.MakeGenericMethod(interfaceMethod.GetGenericArguments());
         }
-        InterfaceType = transport.TargetContext.ActivationServices
+        var interfaceType = target.ActivationServices
             .GetRequiredService<GrainInterfaceTypeResolver>().GetGrainInterfaceType(request.GetInterfaceType());
+
+        return new Operation(request, interfaceMethod, implementationMethod, interfaceType);
     }
 
-    public IInvokable Request { get; }
-    public object Grain { get; }
+    public IInvokable Request => operation.Request;
+    public object Grain => TargetContext.GrainInstance!;
     public GrainId? SourceId => transport.SourceId;
     public GrainId TargetId => transport.TargetId;
-    public GrainInterfaceType InterfaceType { get; }
+    public GrainInterfaceType InterfaceType => operation.InterfaceType;
     public string InterfaceName => Request.GetInterfaceName();
     public string MethodName => Request.GetMethodName();
-    public MethodInfo InterfaceMethod { get; }
-    public MethodInfo ImplementationMethod { get; }
+    public MethodInfo InterfaceMethod => operation.InterfaceMethod;
+    public MethodInfo ImplementationMethod => operation.ImplementationMethod;
     public IGrainContext TargetContext => transport.TargetContext;
     public object? Result { get => transport.Result; set => transport.Result = value; }
     public Response? Response { get => transport.Response; set => transport.Response = value; }
     public Task Invoke() => throw new InvalidOperationException("Authorization must not invoke the streaming transport.");
+
+    internal readonly record struct Operation(
+        IInvokable Request, MethodInfo InterfaceMethod, MethodInfo ImplementationMethod, GrainInterfaceType InterfaceType);
 }

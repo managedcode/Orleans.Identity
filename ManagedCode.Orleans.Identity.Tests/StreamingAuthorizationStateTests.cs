@@ -12,7 +12,7 @@ public sealed class StreamingAuthorizationStateTests
     {
         var owner = Principal("owner");
         var stranger = Principal("stranger");
-        var entry = new StreamingAuthorizationState.Entry(null!, null, owner)
+        var entry = new StreamingAuthorizationState.Entry(default, null, owner)
         {
             InFlight = true
         };
@@ -30,6 +30,57 @@ public sealed class StreamingAuthorizationStateTests
         entry.Finish(disposing: false);
         entry.TryBegin(null, owner, disposing: false).ShouldBeTrue();
     }
+
+    [Fact]
+    public void Continuation_PreservesIdentityOrderAndClaimOwnership()
+    {
+        var owner = PrincipalWithIdentities("owner", "other");
+        var equivalent = PrincipalWithIdentities("owner", "other");
+        var reordered = PrincipalWithIdentities("other", "owner");
+        var reassigned = new ClaimsPrincipal([
+            new ClaimsIdentity([
+                new Claim(ClaimTypes.NameIdentifier, "owner"),
+                new Claim(ClaimTypes.NameIdentifier, "other")
+            ], "stream-test"),
+            new ClaimsIdentity([], "stream-test")
+        ]);
+        var entry = new StreamingAuthorizationState.Entry(default, null, owner);
+
+        entry.CanContinue(null, equivalent, disposing: false).ShouldBeTrue();
+        entry.CanContinue(null, reordered, disposing: false).ShouldBeFalse();
+        entry.CanContinue(null, reassigned, disposing: true).ShouldBeFalse();
+    }
+
+    [Fact]
+    public void StaleEntry_CannotBeginOrRemoveReplacementWithSameId()
+    {
+        var state = new StreamingAuthorizationState(TimeSpan.FromMinutes(1));
+        var id = Guid.NewGuid();
+        var owner = Principal("owner");
+        var original = state.Add(id, default, null, owner);
+        original.Finish(disposing: false);
+        state.Remove(id, original);
+        var replacement = state.Add(id, default, null, Principal("replacement"));
+
+        state.TryBegin(id, original, null, owner, disposing: false).ShouldBeFalse();
+        state.Remove(id, original);
+        state.Find(id).ShouldBeSameAs(replacement);
+    }
+
+    [Fact]
+    public void TerminatedEntry_WaitsForBothInFlightOperationsBeforeRemoval()
+    {
+        var owner = Principal("owner");
+        var entry = new StreamingAuthorizationState.Entry(default, null, owner) { InFlight = true };
+        entry.TryBegin(null, owner, disposing: true).ShouldBeTrue();
+
+        entry.Finish(disposing: true, terminated: true).ShouldBeFalse();
+        entry.CanContinue(null, owner, disposing: true).ShouldBeFalse();
+        entry.Finish(disposing: false).ShouldBeTrue();
+    }
+
+    private static ClaimsPrincipal PrincipalWithIdentities(string first, string second) =>
+        new([Principal(first).Identities.Single(), Principal(second).Identities.Single()]);
 
     private static ClaimsPrincipal Principal(string name) =>
         new(new ClaimsIdentity([new Claim(ClaimTypes.NameIdentifier, name)], "stream-test"));

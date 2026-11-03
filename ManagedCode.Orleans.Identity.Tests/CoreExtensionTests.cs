@@ -2,7 +2,9 @@ using System.Security.Claims;
 using ManagedCode.Orleans.Identity.Core.Constants;
 using ManagedCode.Orleans.Identity.Core.Extensions;
 using ManagedCode.Orleans.Identity.Core.Serializations;
+using Microsoft.Extensions.DependencyInjection;
 using Orleans.Runtime;
+using Orleans.Serialization;
 using Shouldly;
 using Xunit;
 
@@ -94,6 +96,34 @@ public class CoreExtensionTests
     }
 
     [Fact]
+    public void UserDataExtensions_AddsRoleUsingIdentityRoleClaimType()
+    {
+        var identity = new ClaimsIdentity([], AuthenticationType, ClaimTypes.Name, "custom-role");
+        identity.ParseRoles([RoleAdmin]);
+
+        var principal = new ClaimsPrincipal(identity);
+        principal.IsInRole(RoleAdmin).ShouldBeTrue();
+        principal.GetRoles().ShouldBe([RoleAdmin]);
+    }
+
+    [Fact]
+    public void RequireAuthenticatedUserId_DoesNotUseAnUnauthenticatedIdentity()
+    {
+        var authenticated = new ClaimsIdentity([], AuthenticationType);
+        var unauthenticated = new ClaimsIdentity([new Claim(ClaimTypes.NameIdentifier, UserId)]);
+        RequestContext.Set(OrleansIdentityConstants.USER_CLAIMS, new ClaimsPrincipal([authenticated, unauthenticated]));
+
+        try
+        {
+            Should.Throw<UnauthorizedAccessException>(OrleansIdentityContext.RequireAuthenticatedUserId);
+        }
+        finally
+        {
+            RequestContext.Clear();
+        }
+    }
+
+    [Fact]
     public void ClaimConverters_RoundTripClaimsPrincipal()
     {
         var claimConverter = new ClaimSurrogateConverter();
@@ -124,6 +154,32 @@ public class CoreExtensionTests
         var convertedClaim = converter.ConvertFromSurrogate(converter.ConvertToSurrogate(claim));
 
         convertedClaim.Properties[ClaimPropertyKey].ShouldBe(ClaimPropertyValue);
+    }
+
+    [Fact]
+    public void ClaimsPrincipalWireRoundTrip_PreservesIdentityAndClaimOrder()
+    {
+        const string customName = "custom-name";
+        const string customRole = "custom-role";
+        var first = new ClaimsIdentity(
+            [new Claim(customName, "first"), new Claim(customName, "second"), new Claim(customRole, RoleAdmin)],
+            AuthenticationType, customName, customRole);
+        first.Claims.First().Properties[ClaimPropertyKey] = ClaimPropertyValue;
+        var second = new ClaimsIdentity([new Claim(ClaimTypes.Name, "other")]);
+        var principal = new ClaimsPrincipal([first, second]);
+        using var services = new ServiceCollection()
+            .AddSerializer(builder => builder.AddAssembly(typeof(ClaimsPrincipalSurrogate).Assembly))
+            .BuildServiceProvider();
+        var serializer = services.GetRequiredService<Serializer>();
+
+        var restored = serializer.Deserialize<ClaimsPrincipal>(serializer.SerializeToArray(principal));
+
+        restored.ShouldNotBeNull();
+        restored.Identities.Select(identity => identity.Name).ShouldBe(["first", "other"]);
+        restored.Identities.First().Claims.Select(claim => claim.Value).ShouldBe(["first", "second", RoleAdmin]);
+        restored.Identities.First().Claims.First().Properties[ClaimPropertyKey].ShouldBe(ClaimPropertyValue);
+        restored.IsInRole(RoleAdmin).ShouldBeTrue();
+        restored.GetRoles().ShouldBe([RoleAdmin]);
     }
 
     [Fact]

@@ -349,6 +349,86 @@ public sealed class StreamingAuthorizationTests(TestClusterApplication app)
         values.ShouldBe(["unannotated"]);
     }
 
+    [Fact]
+    public async Task Stream_CompletedEnumerationReleasesItsIdWithoutDispose()
+    {
+        SetUser(TestRoles.ADMIN);
+        var grain = app.Cluster.Client.GetGrain<IStreamingAuthorizationGrain>(Guid.NewGuid());
+        var transport = grain.AsReference<IAsyncEnumerableGrainExtension>();
+        var id = Guid.NewGuid();
+
+        try
+        {
+            for (var iteration = 0; iteration < 2; iteration++)
+            {
+                var request = (IAsyncEnumerableRequest<string>)grain.InterfaceProtected("value");
+                request.MaxBatchSize = 1;
+                var result = await transport.StartEnumeration(id, request, CancellationToken.None);
+                for (var index = 0; index < 3; index++)
+                {
+                    result.Status.ShouldBe(EnumerationResult.Element);
+                    result.Value.ShouldBe($"value{index}");
+                    result = await transport.MoveNext<string>(id, CancellationToken.None);
+                }
+                result.Status.ShouldBe(EnumerationResult.Completed);
+            }
+            (await grain.Counts()).ShouldBe((2, 2));
+        }
+        finally { RequestContext.Clear(); }
+    }
+
+    [Fact]
+    public async Task Stream_DisposeWithoutAuthorizationStateDoesNotTouchEnumerator()
+    {
+        SetUser(TestRoles.ADMIN);
+        var grain = app.Cluster.Client.GetGrain<IStreamingAuthorizationGrain>(Guid.NewGuid());
+        var request = (IAsyncEnumerableRequest<string>)grain.InterfaceProtected("value");
+        request.MaxBatchSize = 1;
+        var transport = grain.AsReference<IAsyncEnumerableGrainExtension>();
+        var id = Guid.NewGuid();
+
+        try
+        {
+            (await transport.StartEnumeration(id, request, CancellationToken.None)).Status.ShouldBe(EnumerationResult.Element);
+            await grain.ForgetStreamAuthorization(id);
+
+            SetUser(TestRoles.USER);
+            await transport.DisposeAsync(id);
+            (await grain.Counts()).Disposed.ShouldBe(0);
+        }
+        finally { RequestContext.Clear(); }
+    }
+
+    [Theory]
+    [InlineData(TestRoles.USER)]
+    [InlineData(TestRoles.ADMIN)]
+    public async Task InheritedClassAuthorization_EnforcesRoleForTaskAndStream(string role)
+    {
+        SetUser(role);
+        var grain = app.Cluster.Client.GetGrain<IInheritedProtectedAuthorizationGrain>(Guid.NewGuid());
+        try
+        {
+            if (role == TestRoles.ADMIN)
+            {
+                (await grain.ReadTask()).ShouldBe("unannotated");
+                (await ReadStreamAsync()).ShouldBe(["unannotated"]);
+            }
+            else
+            {
+                await Should.ThrowAsync<UnauthorizedAccessException>(() => grain.ReadTask());
+                await Should.ThrowAsync<UnauthorizedAccessException>(ReadStreamAsync);
+            }
+        }
+        finally { RequestContext.Clear(); }
+
+        async Task<List<string>> ReadStreamAsync()
+        {
+            var values = new List<string>();
+            await foreach (var value in grain.ReadStream()) values.Add(value);
+            return values;
+        }
+    }
+
     private (
         Func<Task<string>> ProtectedTask,
         Func<IAsyncEnumerable<string>> ProtectedStream,

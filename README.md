@@ -67,7 +67,7 @@ siloBuilder.AddOrleansIdentity(options =>
 
 `IAsyncEnumerable<T>` methods use the same interface, implementation, class, role, and policy checks as ordinary grain calls. Orleans transports these calls through its enumeration extension; the filter resolves the original method and arguments before starting it. Custom policies receive an `IIncomingGrainCallContext` for that original operation, including the target grain and method metadata.
 
-Every continuation and disposal rechecks authorization and must retain the initiating principal and source identity. Another caller cannot read or close an existing enumeration. Authority is kept only on the target activation, bounded to 128 pending enumerations, removed on disposal, and pruned after three configured response-timeout intervals of inactivity when new enumerations arrive. Orleans retains responsibility for iterator execution and disposal. Anonymous streams still require an explicit `[AllowAnonymous]` override when their grain is protected.
+Active continuations and disposals recheck authorization against the initiating principal and source identity. The comparison preserves the order of identities and their claims. Authority is kept on the target activation, bounded to 128 pending enumerations, and released on completion or disposal. New enumerations prune entries that have been idle for three configured response-timeout intervals. Orleans runs and disposes the iterators. Anonymous streams still require an explicit `[AllowAnonymous]` override when their grain is protected.
 
 Method-level access attributes override interface/class anonymous defaults. Use `[GrainAllowAnonymous]` from `ManagedCode.Orleans.Identity.Core.Attributes` to put an anonymous default on an interface; the ASP.NET Core `[AllowAnonymous]` attribute supports only classes and methods. An explicit `[Authorize]` on either the interface method or its implementation enforces the collected authorization requirements even when the interface or class is anonymous. A method-level `[AllowAnonymous]` remains a public override. Methods without any authorization attributes retain their existing behavior.
 
@@ -101,13 +101,12 @@ app.MapHub<ChatHub>("/chat");
 app.Run();
 ```
 
-The MVC and SignalR filters installed by `AddOrleansIdentity` push the authenticated user into `RequestContext` whenever a
-controller action or hub method is invoked.
+The filters installed by `AddOrleansIdentity` forward the authenticated principal through MVC action and result execution,
+SignalR hub callbacks, and enumeration of async streams returned by hub methods.
 
 ### 3. Enforce authorization in grains
 
 ```csharp
-[Authorize]
 public interface IUserGrain : IGrainWithGuidKey
 {
     Task<string> GetProfileAsync();
@@ -116,6 +115,7 @@ public interface IUserGrain : IGrainWithGuidKey
     Task<string> GetAdminPanelAsync();
 }
 
+[Authorize]
 public class UserGrain : Grain, IUserGrain
 {
     public Task<string> GetProfileAsync()
@@ -137,13 +137,13 @@ the grain extension retrieves the caller’s claims for business logic.
 For grain operations that require authentication, use
 `OrleansIdentityContext.RequireAuthenticatedPrincipal()` or
 `OrleansIdentityContext.RequireAuthenticatedUserId()` from the Core package.
-These read the propagated Orleans request context and throw when the principal
-is missing, anonymous, or lacks a user id. Product-specific roles and resource
+These read the propagated Orleans request context. The user ID must come from
+the authenticated primary identity. Product-specific roles and resource
 authorization remain the application's responsibility.
 
 `[Authorize(Policy = "...")]` is supported through ASP.NET Core authorization services registered in the silo.
-`AuthorizeAttribute.AuthenticationSchemes` is rejected for grain authorization because Orleans grain calls do not run through
-the HTTP authentication scheme selector.
+Grain authorization rejects authentication schemes declared on attributes or policies because grain calls run outside the
+HTTP authentication scheme selector.
 
 ## Testing
 

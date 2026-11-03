@@ -34,6 +34,7 @@ public interface IStreamingAuthorizationGrain : IGrainWithGuidKey
     [AllowAnonymous]
     [AlwaysInterleave]
     Task<bool> IsDisposing(Guid enumerationId);
+    Task ForgetStreamAuthorization(Guid enumerationId);
 }
 
 public sealed class StreamingAuthorizationGrain : Grain, IStreamingAuthorizationGrain
@@ -65,6 +66,17 @@ public sealed class StreamingAuthorizationGrain : Grain, IStreamingAuthorization
     }
     public Task<bool> IsDisposing(Guid enumerationId) => Task.FromResult(
         this.GrainContext.GetComponent<StreamingAuthorizationState>()?.Find(enumerationId)?.Disposing == true);
+    public Task ForgetStreamAuthorization(Guid enumerationId)
+    {
+        var state = this.GrainContext.GetComponent<StreamingAuthorizationState>();
+        if (state?.Find(enumerationId) is { } entry)
+        {
+            state.Remove(enumerationId, entry);
+        }
+
+        return Task.CompletedTask;
+    }
+
     public async IAsyncEnumerable<string> BlockAfterFirst()
     {
         started++;
@@ -225,12 +237,25 @@ public interface IUnannotatedAuthorizationGrain : IGrainWithGuidKey
     IAsyncEnumerable<string> ReadStream();
 }
 
-public sealed class UnannotatedAuthorizationGrain : Grain, IUnannotatedAuthorizationGrain
+public sealed class UnannotatedAuthorizationGrain : InheritedAuthorizationGrainBase, IUnannotatedAuthorizationGrain;
+
+public interface IInheritedProtectedAuthorizationGrain : IGrainWithGuidKey
 {
-    public Task<string> ReadTask() => Task.FromResult("unannotated");
+    Task<string> ReadTask();
+    IAsyncEnumerable<string> ReadStream();
+}
+
+[Authorize(Roles = TestRoles.ADMIN)]
+public sealed class InheritedProtectedAuthorizationGrain : InheritedAuthorizationGrainBase, IInheritedProtectedAuthorizationGrain;
+
+public abstract class InheritedAuthorizationGrainBase : Grain
+{
+    private readonly string value = "unannotated";
+
+    public Task<string> ReadTask() => Task.FromResult(value);
     public async IAsyncEnumerable<string> ReadStream()
     {
-        yield return "unannotated";
+        yield return value;
         await Task.Yield();
     }
 }

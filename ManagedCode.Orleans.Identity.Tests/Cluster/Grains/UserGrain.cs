@@ -76,4 +76,6 @@ public class UserGrain : Grain, IUserGrain
     {
         return Task.FromResult(AuthenticationSchemeInfo);
     }
+
+    public Task<string> GetPolicyAuthenticationSchemeInfo() => Task.FromResult(AuthenticationSchemeInfo);
 }

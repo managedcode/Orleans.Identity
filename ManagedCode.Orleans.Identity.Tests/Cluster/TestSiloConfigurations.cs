@@ -17,6 +17,8 @@ public class TestSiloConfigurations : ISiloConfigurator
                     call.ImplementationMethod.DeclaringType == typeof(Grains.StreamingAuthorizationGrain) &&
                     call.Request.GetArgument(0) is "allowed" &&
                     call.MethodName == nameof(Grains.IStreamingAuthorizationGrain.ResourceProtected)));
+            options.AddPolicy(TestAuthorizationPolicies.RequireScheme, policy =>
+                policy.AddAuthenticationSchemes(TestAuthorizationPolicies.UnsupportedAuthenticationScheme).RequireAuthenticatedUser());
             options.AddPolicy(
                 TestAuthorizationPolicies.RequireAdminDepartment,
                 policy =>
@@ -28,6 +30,8 @@ public class TestSiloConfigurations : ISiloConfigurator
                 }
             );
         });
+
+        siloBuilder.AddOrleansIdentity();
 
         // For test purpose - in-memory reminder service
         siloBuilder.UseInMemoryReminderService();

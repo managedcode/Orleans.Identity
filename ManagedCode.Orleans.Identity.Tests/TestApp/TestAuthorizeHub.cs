@@ -31,6 +31,13 @@ public class TestAuthorizeHub(IClusterClient clusterClient) : Hub
         return await userGrain.GetAdminInfo();
     }
 
+    [Authorize]
+    public IAsyncEnumerable<string> ReadStream() =>
+        clusterClient.GetGrain<IStreamingAuthorizationGrain>(Guid.NewGuid()).InterfaceProtected("hub");
+
+    [Authorize]
+    public Task<IAsyncEnumerable<string>> ReadStreamAsync() => Task.FromResult(ReadStream());
+
     [AllowAnonymous]
     public async Task<string> GetPublicInfo()
     {

@@ -132,15 +132,17 @@ public class VerifyFilterTest
         }
     }
 
-    [Fact]
-    public async Task VerifyFilter_AuthenticationSchemes_ShouldFailClosed()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task VerifyFilter_AuthenticationSchemes_ShouldFailClosed(bool configuredInPolicy)
     {
         var userGrain = SetUserContextAndGetUserGrain(TestRoles.ADMIN);
 
         try
         {
             var exception = await Should.ThrowAsync<InvalidOperationException>(
-                async () => await userGrain.GetAuthenticationSchemeInfo()
+                () => configuredInPolicy ? userGrain.GetPolicyAuthenticationSchemeInfo() : userGrain.GetAuthenticationSchemeInfo()
             );
             exception.Message.ShouldContain(UnsupportedAuthenticationSchemeMessage);
         }
