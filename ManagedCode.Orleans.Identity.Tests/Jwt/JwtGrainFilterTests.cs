@@ -44,6 +44,16 @@ public class JwtGrainFilterTests
         values.ShouldBe(["http0", "http1", "http2"]);
     }
 
+    [Fact]
+    public async Task StreamResult_UsesReducedPrivilegesAfterActionReplacesPrincipal()
+    {
+        using var client = CreateAuthenticatedClient("admin", TestRoles.ADMIN);
+
+        var values = await client.GetFromJsonAsync<string[]>("/userController/stream-downgraded");
+
+        values.ShouldBe(["denied"]);
+    }
+
     #region User authorized no roles required
 
     [Fact]

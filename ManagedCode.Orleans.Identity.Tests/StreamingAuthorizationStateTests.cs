@@ -52,6 +52,26 @@ public sealed class StreamingAuthorizationStateTests
     }
 
     [Fact]
+    public void Continuation_BindsClaimPropertiesToTheOpeningPrincipal()
+    {
+        var owner = Principal("owner");
+        var claim = owner.Claims.Single();
+        claim.Properties["tenant"] = "tenant-1";
+        claim.Properties["source"] = "issuer";
+        var entry = new StreamingAuthorizationState.Entry(default, null, owner);
+
+        var equivalent = Principal("owner");
+        var equivalentClaim = equivalent.Claims.Single();
+        equivalentClaim.Properties["source"] = "issuer";
+        equivalentClaim.Properties["tenant"] = "tenant-1";
+        entry.CanContinue(null, equivalent, disposing: false).ShouldBeTrue();
+
+        claim.Properties["tenant"] = "tenant-2";
+        entry.CanContinue(null, owner, disposing: false).ShouldBeFalse();
+        entry.CanContinue(null, owner, disposing: true).ShouldBeFalse();
+    }
+
+    [Fact]
     public void StaleEntry_CannotBeginOrRemoveReplacementWithSameId()
     {
         var state = new StreamingAuthorizationState(TimeSpan.FromMinutes(1));

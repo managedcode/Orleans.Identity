@@ -1,5 +1,7 @@
+using System.Security.Claims;
 using ManagedCode.Orleans.Identity.Core.Extensions;
 using ManagedCode.Orleans.Identity.Tests.Cluster.Grains;
+using ManagedCode.Orleans.Identity.Tests.Constants;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -34,6 +36,29 @@ public class UserController : ControllerBase
     [HttpGet("stream")]
     public IAsyncEnumerable<string> ReadStream() =>
         _clusterClient.GetGrain<IStreamingAuthorizationGrain>(Guid.NewGuid()).InterfaceProtected("http");
+
+    [HttpGet("stream-downgraded")]
+    public IAsyncEnumerable<string> ReadStreamWithReducedPrivileges()
+    {
+        HttpContext.User = new ClaimsPrincipal(new ClaimsIdentity(
+            [new Claim(ClaimTypes.Name, "delegated"), new Claim(ClaimTypes.Role, TestRoles.USER)], "delegation"));
+        return ReadAdminInfoAsync();
+    }
+
+    private async IAsyncEnumerable<string> ReadAdminInfoAsync()
+    {
+        string result;
+        try
+        {
+            result = await _clusterClient.GetGrain<IUserGrain>("stream-delegation").GetAdminInfo();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            result = "denied";
+        }
+
+        yield return result;
+    }
 
     [HttpGet("anonymous")]
     [AllowAnonymous]

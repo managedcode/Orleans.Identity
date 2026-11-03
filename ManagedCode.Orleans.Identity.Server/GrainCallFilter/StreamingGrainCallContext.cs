@@ -1,4 +1,6 @@
+using System.Collections.Concurrent;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using Microsoft.Extensions.DependencyInjection;
 using Orleans.Metadata;
 using Orleans.Runtime;
@@ -10,11 +12,14 @@ namespace ManagedCode.Orleans.Identity.Server.GrainCallFilter;
 internal sealed class StreamingGrainCallContext(
     IIncomingGrainCallContext transport, StreamingGrainCallContext.Operation operation) : IIncomingGrainCallContext
 {
+    private static readonly ConditionalWeakTable<Type, ConcurrentDictionary<MethodInfo, MethodInfo>> ImplementationMethods = new();
+
     public static Operation ResolveOperation(IGrainContext target, IInvokable request)
     {
         var grain = target.GrainInstance
             ?? throw new UnauthorizedAccessException("Streaming target is unavailable.");
-        var interfaceMethod = request.GetMethod();
+        var interfaceMethod = request.GetMethod()
+            ?? throw new UnauthorizedAccessException("Streaming operation is unavailable.");
         var declaringType = interfaceMethod.DeclaringType
             ?? throw new UnauthorizedAccessException("Streaming operation is unavailable.");
         if (!declaringType.IsInterface || !declaringType.IsInstanceOfType(grain) ||
@@ -25,14 +30,17 @@ internal sealed class StreamingGrainCallContext(
         }
 
         request.SetTarget(target);
-        var map = grain.GetType().GetInterfaceMap(declaringType);
-        var definition = interfaceMethod.IsGenericMethod ? interfaceMethod.GetGenericMethodDefinition() : interfaceMethod;
-        var index = Array.IndexOf(map.InterfaceMethods, definition);
-        if (index < 0)
-        {
-            throw new UnauthorizedAccessException("Streaming implementation is unavailable.");
-        }
-        var implementationMethod = map.TargetMethods[index];
+        var grainType = grain.GetType();
+        var definition = interfaceMethod.IsConstructedGenericMethod ? interfaceMethod.GetGenericMethodDefinition() : interfaceMethod;
+        var implementationMethod = ImplementationMethods.GetOrCreateValue(grainType)
+            .GetOrAdd(definition, static (method, type) =>
+            {
+                var map = type.GetInterfaceMap(method.DeclaringType!);
+                var index = Array.IndexOf(map.InterfaceMethods, method);
+                return index >= 0
+                    ? map.TargetMethods[index]
+                    : throw new UnauthorizedAccessException("Streaming implementation is unavailable.");
+            }, grainType);
         if (implementationMethod.IsGenericMethodDefinition)
         {
             implementationMethod = implementationMethod.MakeGenericMethod(interfaceMethod.GetGenericArguments());

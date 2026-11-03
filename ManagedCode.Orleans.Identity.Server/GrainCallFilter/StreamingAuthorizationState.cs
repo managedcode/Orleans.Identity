@@ -98,7 +98,7 @@ internal sealed class StreamingAuthorizationState(TimeSpan retention)
         private readonly string? authenticationType = identity.AuthenticationType;
         private readonly string nameClaimType = identity.NameClaimType;
         private readonly string roleClaimType = identity.RoleClaimType;
-        private readonly ClaimSnapshot[] claims = identity.Claims.Select(ClaimSnapshot.FromClaim).ToArray();
+        private readonly ClaimSnapshot[] claims = identity.Claims.Select(static claim => new ClaimSnapshot(claim)).ToArray();
 
         public bool Matches(ClaimsIdentity current)
         {
@@ -112,7 +112,7 @@ internal sealed class StreamingAuthorizationState(TimeSpan retention)
             var index = 0;
             foreach (var claim in current.Claims)
             {
-                if (index == claims.Length || claims[index++] != ClaimSnapshot.FromClaim(claim))
+                if (index == claims.Length || !claims[index++].Matches(claim))
                 {
                     return false;
                 }
@@ -122,10 +122,38 @@ internal sealed class StreamingAuthorizationState(TimeSpan retention)
         }
     }
 
-    private readonly record struct ClaimSnapshot(
-        string Type, string Value, string ValueType, string Issuer, string OriginalIssuer)
+    private readonly struct ClaimSnapshot(Claim claim)
     {
-        public static ClaimSnapshot FromClaim(Claim claim) =>
-            new(claim.Type, claim.Value, claim.ValueType, claim.Issuer, claim.OriginalIssuer);
+        private readonly string type = claim.Type;
+        private readonly string value = claim.Value;
+        private readonly string valueType = claim.ValueType;
+        private readonly string issuer = claim.Issuer;
+        private readonly string originalIssuer = claim.OriginalIssuer;
+        private readonly KeyValuePair<string, string>[] properties = claim.Properties.ToArray();
+
+        public bool Matches(Claim current)
+        {
+            if (type != current.Type || value != current.Value || valueType != current.ValueType
+                || issuer != current.Issuer || originalIssuer != current.OriginalIssuer)
+            {
+                return false;
+            }
+
+            var currentProperties = current.Properties;
+            if (properties.Length != currentProperties.Count)
+            {
+                return false;
+            }
+
+            foreach (var (key, expected) in properties)
+            {
+                if (!currentProperties.TryGetValue(key, out var actual) || expected != actual)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
     }
 }

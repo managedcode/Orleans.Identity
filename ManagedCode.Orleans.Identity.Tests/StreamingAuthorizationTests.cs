@@ -188,6 +188,10 @@ public sealed class StreamingAuthorizationTests(TestClusterApplication app)
             var values = new List<int>();
             await foreach (var value in grain.GenericProtected(42)) values.Add(value);
             values.ShouldBe([42]);
+
+            var strings = new List<string>();
+            await foreach (var value in grain.GenericProtected("generic")) strings.Add(value);
+            strings.ShouldBe(["generic"]);
         }
         finally { RequestContext.Clear(); }
     }
