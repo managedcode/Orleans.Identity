@@ -20,6 +20,9 @@ public struct ClaimsIdentitySurrogate(List<Claim>? claims, string? authenticatio
 
     [Id(3)]
     public string? NameType { get; set; } = nameType;
+
+    [Id(4)]
+    public ClaimsIdentity? Actor { get; set; }
 }
 
 // This is a converter which converts between the surrogate and the foreign type.

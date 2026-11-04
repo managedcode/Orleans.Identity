@@ -32,175 +32,42 @@ public class GrainAuthorizationIncomingFilter(
             await InvokeStreamingAsync(context);
             return;
         }
-        await RequireAuthorizationAsync(context);
+        var metadata = GetCachedAuthorizationMetadata(context.InterfaceMethod, context.ImplementationMethod, context.Grain?.GetType());
+        if (metadata is not null)
+        {
+            await RequireAuthorizationAsync(context, metadata);
+        }
+
         await context.Invoke();
     }
 
-    private async Task RequireAuthorizationAsync(IIncomingGrainCallContext context)
-    {
-        var metadata = authorizationMetadata.GetOrAdd(
-            (GetMethodDefinition(context.InterfaceMethod), GetMethodDefinition(context.ImplementationMethod), context.Grain?.GetType()),
+    private AuthorizationMetadata? GetCachedAuthorizationMetadata(MethodInfo interfaceMethod, MethodInfo implementationMethod, Type? grainType) =>
+        authorizationMetadata.GetOrAdd(
+            (GetMethodDefinition(interfaceMethod), GetMethodDefinition(implementationMethod), grainType),
             static key => GetAuthorizationMetadata(key.Interface, key.Implementation, key.Grain));
 
-        if (metadata is not null)
-        {
-            var user = GetUserFromRequestContext();
-
-            if (user == null || user.Identity?.IsAuthenticated != true)
-            {
-                throw new UnauthorizedAccessException(AccessDeniedNotAuthenticated);
-            }
-
-            if (metadata.HasAuthenticationSchemes)
-            {
-                throw new InvalidOperationException(UnsupportedAuthenticationSchemes);
-            }
-
-            await AuthorizeAsync(context, user, metadata);
-        }
-
+    private Task RequireStreamingAuthorizationAsync(IIncomingGrainCallContext context, StreamingGrainCallContext.Operation operation)
+    {
+        var metadata = GetCachedAuthorizationMetadata(operation.InterfaceMethod, operation.ImplementationMethod,
+            context.TargetContext.GrainInstance?.GetType());
+        return metadata is null
+            ? Task.CompletedTask
+            : RequireAuthorizationAsync(new StreamingGrainCallContext(context, operation), metadata);
     }
 
-    private async Task InvokeStreamingAsync(IIncomingGrainCallContext context)
+    private async Task RequireAuthorizationAsync(IIncomingGrainCallContext context, AuthorizationMetadata metadata)
     {
-        if (context.Request.GetArgument(0) is not Guid id || id == Guid.Empty)
+        var user = GetUserFromRequestContext();
+        if (user?.Identity?.IsAuthenticated != true)
         {
-            throw new UnauthorizedAccessException(AccessDeniedNotAuthorized);
-        }
-        StreamingAuthorizationState state;
-        var principal = GetUserFromRequestContext();
-        var methodName = context.InterfaceMethod.Name;
-        var start = methodName == nameof(IAsyncEnumerableGrainExtension.StartEnumeration);
-        var disposing = methodName == nameof(IAsyncEnumerableGrainExtension.DisposeAsync);
-        StreamingAuthorizationState.Entry entry;
-        if (start)
-        {
-            if (context.Request.GetArgument(1) is not IInvokable request)
-            {
-                throw new UnauthorizedAccessException(AccessDeniedNotAuthorized);
-            }
-            var operation = StreamingGrainCallContext.ResolveOperation(context.TargetContext, request);
-            await RequireAuthorizationAsync(new StreamingGrainCallContext(context, operation));
-            state = GetOrCreateStreamingState(context.TargetContext);
-            entry = state.Add(id, operation, context.SourceId, principal);
-        }
-        else
-        {
-            var existingState = context.TargetContext.GetComponent<StreamingAuthorizationState>();
-            if (existingState is null || existingState.Find(id) is not { } current)
-            {
-                if (disposing)
-                {
-                    // Keep disposal idempotent without touching an enumeration whose owner is unknown.
-                    context.Response = Response.Completed;
-                    return;
-                }
-                throw new UnauthorizedAccessException(AccessDeniedNotAuthorized);
-            }
-            state = existingState;
-            entry = current;
-            if (!entry.CanContinue(context.SourceId, principal, disposing))
-            {
-                throw new UnauthorizedAccessException(AccessDeniedNotAuthorized);
-            }
-            await RequireAuthorizationAsync(new StreamingGrainCallContext(context, entry.Operation));
-            if (!state.TryBegin(id, entry, context.SourceId, principal, disposing))
-            {
-                throw new UnauthorizedAccessException(AccessDeniedNotAuthorized);
-            }
-        }
-        var terminated = false;
-        try
-        {
-            await context.Invoke();
-            terminated = disposing || IsTerminalResult(context.Response);
-        }
-        catch
-        {
-            terminated = start;
-            throw;
-        }
-        finally
-        {
-            if (entry.Finish(disposing, terminated))
-            {
-                state.Remove(id, entry);
-            }
-        }
-    }
-
-    private static bool IsTerminalResult(Response? response) =>
-        response is Response<(EnumerationResult Status, object? Value)> enumeration &&
-        enumeration.TypedResult.Status is EnumerationResult.Completed or EnumerationResult.CompletedWithElement or EnumerationResult.CompletedWithBatch
-            or EnumerationResult.MissingEnumeratorError or EnumerationResult.Error or EnumerationResult.Canceled;
-
-    private static StreamingAuthorizationState GetOrCreateStreamingState(IGrainContext target)
-    {
-        var state = target.GetComponent<StreamingAuthorizationState>();
-        if (state is null)
-        {
-            var timeout = target.ActivationServices.GetRequiredService<IOptions<MessagingOptions>>().Value.ResponseTimeout;
-            state = new StreamingAuthorizationState(timeout * 3);
-            target.SetComponent(state);
-        }
-        return state;
-    }
-
-    private static ClaimsPrincipal? GetUserFromRequestContext()
-    {
-        var requestContext = RequestContext.Get(OrleansIdentityConstants.USER_CLAIMS);
-        return requestContext as ClaimsPrincipal;
-    }
-
-    private static MethodInfo GetMethodDefinition(MethodInfo method) =>
-        method.IsConstructedGenericMethod ? method.GetGenericMethodDefinition() : method;
-
-    private static AuthorizationMetadata? GetAuthorizationMetadata(
-        MethodInfo interfaceMethod, MethodInfo implementationMethod, Type? grainType)
-    {
-        if (HasAllowAnonymousAttribute(interfaceMethod) || HasAllowAnonymousAttribute(implementationMethod))
-        {
-            return null;
+            throw new UnauthorizedAccessException(AccessDeniedNotAuthenticated);
         }
 
-        var methodAttributes = GetAuthorizeAttributes(interfaceMethod);
-        var implementationAttributes = GetAuthorizeAttributes(implementationMethod);
-        var interfaceType = interfaceMethod.DeclaringType;
-        var implementationType = implementationMethod.DeclaringType;
-        if (implementationType?.IsAssignableFrom(grainType) == true)
+        if (metadata.HasAuthenticationSchemes)
         {
-            implementationType = grainType;
+            throw new InvalidOperationException(UnsupportedAuthenticationSchemes);
         }
 
-        if (methodAttributes.Length == 0 && implementationAttributes.Length == 0
-            && ((interfaceType is not null && HasAllowAnonymousAttribute(interfaceType))
-                || (implementationType is not null && HasAllowAnonymousAttribute(implementationType))))
-        {
-            return null;
-        }
-
-        AuthorizeAttribute[] authorizeData = [
-            .. interfaceType is null ? [] : GetAuthorizeAttributes(interfaceType),
-            .. implementationType is null ? [] : GetAuthorizeAttributes(implementationType),
-            .. methodAttributes,
-            .. implementationAttributes,
-        ];
-        return authorizeData.Length == 0 ? null : new AuthorizationMetadata(authorizeData);
-    }
-
-    private static bool HasAllowAnonymousAttribute(MemberInfo memberInfo)
-    {
-        return Attribute.IsDefined(memberInfo, typeof(AllowAnonymousAttribute), inherit: true);
-    }
-
-    private static AuthorizeAttribute[] GetAuthorizeAttributes(MemberInfo memberInfo) =>
-        (AuthorizeAttribute[])Attribute.GetCustomAttributes(memberInfo, typeof(AuthorizeAttribute), inherit: true);
-
-    private async Task AuthorizeAsync(
-        IIncomingGrainCallContext context,
-        ClaimsPrincipal user,
-        AuthorizationMetadata metadata)
-    {
         var authorizationPolicy = metadata.CachedPolicy;
         if (authorizationPolicy is null)
         {
@@ -229,9 +96,152 @@ public class GrainAuthorizationIncomingFilter(
         }
     }
 
-    private sealed class AuthorizationMetadata(AuthorizeAttribute[] authorizeData)
+    private async Task InvokeStreamingAsync(IIncomingGrainCallContext context)
     {
-        public AuthorizeAttribute[] AuthorizeData { get; } = authorizeData;
+        if (context.Request.GetArgument(0) is not Guid id || id == Guid.Empty)
+        {
+            throw new UnauthorizedAccessException(AccessDeniedNotAuthorized);
+        }
+        StreamingAuthorizationState state;
+        var principal = GetUserFromRequestContext();
+        var methodName = context.InterfaceMethod.Name;
+        var start = methodName == nameof(IAsyncEnumerableGrainExtension.StartEnumeration);
+        var disposing = methodName == nameof(IAsyncEnumerableGrainExtension.DisposeAsync);
+        StreamingAuthorizationState.Entry entry;
+        if (start)
+        {
+            if (context.Request.GetArgument(1) is not IInvokable request)
+            {
+                throw new UnauthorizedAccessException(AccessDeniedNotAuthorized);
+            }
+            var operation = StreamingGrainCallContext.ResolveOperation(context.TargetContext, request);
+            entry = new StreamingAuthorizationState.Entry(operation, context.SourceId, principal);
+            await RequireStreamingAuthorizationAsync(context, operation);
+            if (!entry.CanContinue(context.SourceId, GetUserFromRequestContext(), disposing: false))
+            {
+                throw new UnauthorizedAccessException(AccessDeniedNotAuthorized);
+            }
+
+            state = GetOrCreateStreamingState(context.TargetContext);
+            state.Add(id, entry);
+        }
+        else
+        {
+            var existingState = context.TargetContext.GetComponent<StreamingAuthorizationState>();
+            if (existingState is null || existingState.Find(id) is not { } current)
+            {
+                if (disposing)
+                {
+                    // Keep disposal idempotent without touching an enumeration whose owner is unknown.
+                    context.Response = Response.Completed;
+                    return;
+                }
+                throw new UnauthorizedAccessException(AccessDeniedNotAuthorized);
+            }
+            state = existingState;
+            entry = current;
+            if (!entry.CanContinue(context.SourceId, principal, disposing))
+            {
+                throw new UnauthorizedAccessException(AccessDeniedNotAuthorized);
+            }
+            await RequireStreamingAuthorizationAsync(context, entry.Operation);
+            if (!state.TryBegin(id, entry, context.SourceId, principal, disposing))
+            {
+                throw new UnauthorizedAccessException(AccessDeniedNotAuthorized);
+            }
+        }
+        var terminated = false;
+        try
+        {
+            await context.Invoke();
+            var response = context.Response;
+            terminated = response is { Exception: not null }
+                ? start
+                : disposing || IsTerminalResult(response);
+        }
+        catch
+        {
+            terminated = start;
+            throw;
+        }
+        finally
+        {
+            state.Finish(id, entry, disposing, terminated);
+        }
+    }
+
+    private static bool IsTerminalResult(Response? response) =>
+        response is Response<(EnumerationResult Status, object? Value)> enumeration &&
+        enumeration.TypedResult.Status is EnumerationResult.Completed or EnumerationResult.CompletedWithElement or EnumerationResult.CompletedWithBatch
+            or EnumerationResult.MissingEnumeratorError or EnumerationResult.Error or EnumerationResult.Canceled;
+
+    private static StreamingAuthorizationState GetOrCreateStreamingState(IGrainContext target)
+    {
+        var state = target.GetComponent<StreamingAuthorizationState>();
+        if (state is null)
+        {
+            var timeout = target.ActivationServices.GetRequiredService<IOptions<MessagingOptions>>().Value.ResponseTimeout;
+            var timeProvider = target.ActivationServices.GetRequiredService<TimeProvider>();
+            state = new StreamingAuthorizationState(timeout * 3, timeProvider);
+            target.SetComponent(state);
+        }
+        return state;
+    }
+
+    private static ClaimsPrincipal? GetUserFromRequestContext()
+    {
+        var requestContext = RequestContext.Get(OrleansIdentityConstants.USER_CLAIMS);
+        return requestContext as ClaimsPrincipal;
+    }
+
+    private static MethodInfo GetMethodDefinition(MethodInfo method) =>
+        method.IsConstructedGenericMethod ? method.GetGenericMethodDefinition() : method;
+
+    private static AuthorizationMetadata? GetAuthorizationMetadata(
+        MethodInfo interfaceMethod, MethodInfo implementationMethod, Type? grainType)
+    {
+        var methodAttributes = GetAttributes(interfaceMethod);
+        var implementationAttributes = GetAttributes(implementationMethod);
+        if (AllowsAnonymous(methodAttributes) || AllowsAnonymous(implementationAttributes))
+        {
+            return null;
+        }
+
+        var methodAuthorizeData = methodAttributes.OfType<IAuthorizeData>().ToArray();
+        var implementationAuthorizeData = implementationAttributes.OfType<IAuthorizeData>().ToArray();
+        var interfaceType = interfaceMethod.DeclaringType;
+        var implementationType = implementationMethod.DeclaringType;
+        if (implementationType?.IsAssignableFrom(grainType) == true)
+        {
+            implementationType = grainType;
+        }
+
+        var interfaceAttributes = GetAttributes(interfaceType);
+        var typeAttributes = GetAttributes(implementationType);
+        if (methodAuthorizeData.Length == 0 && implementationAuthorizeData.Length == 0
+            && (AllowsAnonymous(interfaceAttributes) || AllowsAnonymous(typeAttributes)))
+        {
+            return null;
+        }
+
+        IAuthorizeData[] authorizeData = [
+            .. interfaceAttributes.OfType<IAuthorizeData>(),
+            .. typeAttributes.OfType<IAuthorizeData>(),
+            .. methodAuthorizeData,
+            .. implementationAuthorizeData,
+        ];
+        return authorizeData.Length == 0 ? null : new AuthorizationMetadata(authorizeData);
+    }
+
+    private static bool AllowsAnonymous(Attribute[] attributes) =>
+        Array.Exists(attributes, static attribute => attribute is IAllowAnonymous);
+
+    private static Attribute[] GetAttributes(MemberInfo? memberInfo) =>
+        memberInfo is null ? [] : Attribute.GetCustomAttributes(memberInfo, inherit: true);
+
+    private sealed class AuthorizationMetadata(IAuthorizeData[] authorizeData)
+    {
+        public IAuthorizeData[] AuthorizeData { get; } = authorizeData;
         public bool HasAuthenticationSchemes { get; } = Array.Exists(authorizeData,
             static attribute => !string.IsNullOrWhiteSpace(attribute.AuthenticationSchemes));
         public volatile AuthorizationPolicy? CachedPolicy;

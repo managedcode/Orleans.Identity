@@ -4,34 +4,49 @@ using Orleans.Runtime;
 namespace ManagedCode.Orleans.Identity.Server.GrainCallFilter;
 
 /// <summary>Bounded, activation-owned authority for live enumerations; never shared between grains.</summary>
-internal sealed class StreamingAuthorizationState(TimeSpan retention)
+internal sealed class StreamingAuthorizationState(TimeSpan retention, TimeProvider timeProvider)
 {
     private const int MaximumEnumerations = 128;
     private readonly Dictionary<Guid, Entry> entries = [];
 
     public Entry? Find(Guid id) => entries.GetValueOrDefault(id);
 
-    public Entry Add(Guid id, StreamingGrainCallContext.Operation operation, GrainId? sourceId, ClaimsPrincipal? principal)
+    public void Add(Guid id, Entry entry)
     {
-        var now = TimeProvider.System.GetTimestamp();
-        foreach (var (key, existing) in entries)
+        if (entries.Count != 0)
         {
-            if (!existing.InFlight && !existing.Disposing && TimeProvider.System.GetElapsedTime(existing.LastSeen, now) > retention)
+            var now = timeProvider.GetTimestamp();
+            foreach (var (key, existing) in entries)
             {
-                entries.Remove(key);
+                if (!existing.InFlight && !existing.Disposing && timeProvider.GetElapsedTime(existing.LastSeen, now) > retention)
+                {
+                    entries.Remove(key);
+                }
             }
         }
-        if (entries.Count >= MaximumEnumerations || entries.ContainsKey(id))
+
+        if (entries.Count >= MaximumEnumerations || !entries.TryAdd(id, entry))
         {
             throw new UnauthorizedAccessException("Streaming authorization capacity or identity conflict.");
         }
-        var entry = new Entry(operation, sourceId, principal) { InFlight = true };
-        entries.Add(id, entry);
-        return entry;
+
+        entry.InFlight = true;
     }
 
     public bool TryBegin(Guid id, Entry entry, GrainId? caller, ClaimsPrincipal? principal, bool disposing) =>
         ReferenceEquals(Find(id), entry) && entry.TryBegin(caller, principal, disposing);
+
+    public void Finish(Guid id, Entry entry, bool disposing, bool terminated)
+    {
+        if (entry.Finish(disposing, terminated))
+        {
+            Remove(id, entry);
+        }
+        else
+        {
+            entry.LastSeen = timeProvider.GetTimestamp();
+        }
+    }
 
     public void Remove(Guid id, Entry entry)
     {
@@ -49,7 +64,7 @@ internal sealed class StreamingAuthorizationState(TimeSpan retention)
         public StreamingGrainCallContext.Operation Operation { get; } = operation;
         public bool InFlight { get; set; }
         public bool Disposing { get; private set; }
-        public long LastSeen { get; private set; } = TimeProvider.System.GetTimestamp();
+        public long LastSeen { get; set; }
         private bool retired;
 
         public bool CanContinue(GrainId? caller, ClaimsPrincipal? current, bool disposing) =>
@@ -68,7 +83,6 @@ internal sealed class StreamingAuthorizationState(TimeSpan retention)
         {
             if (disposing) Disposing = false;
             else InFlight = false;
-            LastSeen = TimeProvider.System.GetTimestamp();
             retired |= terminated;
             return retired && !InFlight && !Disposing;
         }
@@ -104,18 +118,46 @@ internal sealed class StreamingAuthorizationState(TimeSpan retention)
         }
     }
 
-    private sealed class IdentitySnapshot(ClaimsIdentity identity)
+    private readonly struct IdentitySnapshot(ClaimsIdentity identity)
     {
         private readonly string? authenticationType = identity.AuthenticationType;
         private readonly string nameClaimType = identity.NameClaimType;
         private readonly string roleClaimType = identity.RoleClaimType;
-        private readonly ClaimSnapshot[] claims = identity.Claims.Select(static claim => new ClaimSnapshot(claim)).ToArray();
+        private readonly ClaimSnapshot[] claims = SnapshotClaims(identity.Claims);
+        private readonly ActorSnapshot? actor = identity.Actor is { } delegated ? new ActorSnapshot(delegated) : null;
+
+        private static ClaimSnapshot[] SnapshotClaims(IEnumerable<Claim> claims)
+        {
+            if (claims is not IReadOnlyList<Claim> list)
+            {
+                return claims.Select(static claim => new ClaimSnapshot(claim)).ToArray();
+            }
+
+            if (list.Count == 0)
+            {
+                return [];
+            }
+
+            var snapshots = new ClaimSnapshot[list.Count];
+            for (var i = 0; i < snapshots.Length; i++)
+            {
+                snapshots[i] = new ClaimSnapshot(list[i]);
+            }
+
+            return snapshots;
+        }
 
         public bool Matches(ClaimsIdentity current)
         {
             if (authenticationType != current.AuthenticationType
                 || nameClaimType != current.NameClaimType
                 || roleClaimType != current.RoleClaimType)
+            {
+                return false;
+            }
+
+            var currentActor = current.Actor;
+            if (actor is null ? currentActor is not null : currentActor is null || !actor.Matches(currentActor))
             {
                 return false;
             }
@@ -142,6 +184,13 @@ internal sealed class StreamingAuthorizationState(TimeSpan retention)
 
             return index == claims.Length;
         }
+    }
+
+    private sealed class ActorSnapshot(ClaimsIdentity actor)
+    {
+        private readonly IdentitySnapshot snapshot = new(actor);
+
+        public bool Matches(ClaimsIdentity current) => snapshot.Matches(current);
     }
 
     private readonly struct ClaimSnapshot(Claim claim)

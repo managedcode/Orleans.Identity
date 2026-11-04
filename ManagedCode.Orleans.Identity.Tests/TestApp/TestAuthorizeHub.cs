@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Threading.Channels;
 using ManagedCode.Orleans.Identity.Tests.Cluster.Grains;
 using Microsoft.AspNetCore.Authorization;
@@ -45,6 +46,25 @@ public class TestAuthorizeHub(IClusterClient clusterClient) : Hub
 
     [Authorize]
     public Task<ChannelReader<string>> ReadChannelAsync() => Task.FromResult(ReadChannel());
+
+    [Authorize]
+    public ChannelStreamTask ReadChannelTask()
+    {
+        var task = new ChannelStreamTask(ReadChannel());
+        task.Start(TaskScheduler.Default);
+        return task;
+    }
+
+    [Authorize]
+    public ChannelStreamAwaitable ReadChannelAwaitable() => new(ReadChannel());
+
+    public readonly struct ChannelStreamAwaitable(ChannelReader<string> reader)
+    {
+        public ValueTaskAwaiter<ChannelReader<string>> GetAwaiter() =>
+            new ValueTask<ChannelReader<string>>(reader).GetAwaiter();
+    }
+
+    public sealed class ChannelStreamTask(ChannelReader<string> reader) : Task<ChannelReader<string>>(() => reader);
 
     private sealed class GrainChannelReader(IUserGrain grain) : ChannelReader<string>
     {

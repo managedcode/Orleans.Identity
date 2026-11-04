@@ -1,3 +1,6 @@
+using System.Reflection;
+using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
 using System.Security.Claims;
 using System.Threading.Channels;
 using ManagedCode.Orleans.Identity.Client.Extensions;
@@ -169,6 +172,94 @@ public class ClientFilterTests
         await foreach (var item in reader.ReadAllAsync()) remaining.Add(item);
         remaining.ShouldBe(["second"]);
         await reader.Completion;
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task SignalRChannel_ReaderPropertiesUseTheInvocationPrincipal(bool authenticated)
+    {
+        var user = authenticated ? CreatePrincipal(CurrentUserName) : null;
+        var previous = CreatePrincipal(PreviousUserName);
+        var source = new PrincipalCheckingChannelReader(user);
+        using var hub = new TestAuthorizeHub(null!);
+        using var services = new ServiceCollection().BuildServiceProvider();
+        var method = typeof(TestAuthorizeHub).GetMethod(nameof(TestAuthorizeHub.ReadChannel))!;
+        var context = new HubInvocationContext(new LifecycleCallerContext(user), services, hub, method, []);
+        RequestContext.Set(OrleansIdentityConstants.USER_CLAIMS, previous);
+        try
+        {
+            var result = await new SignalRAuthorizationFilter().InvokeMethodAsync(context, _ => ValueTask.FromResult<object?>(source));
+            var reader = Assert.IsAssignableFrom<ChannelReader<string>>(result);
+            reader.Completion.ShouldBeSameAs(Task.CompletedTask);
+            reader.CanCount.ShouldBeTrue();
+            reader.CanPeek.ShouldBeTrue();
+            reader.Count.ShouldBe(0);
+            RequestContext.Get(OrleansIdentityConstants.USER_CLAIMS).ShouldBeSameAs(previous);
+        }
+        finally
+        {
+            RequestContext.Clear();
+        }
+    }
+
+    private sealed class PrincipalCheckingChannelReader(ClaimsPrincipal? user) : ChannelReader<string>
+    {
+        public override Task Completion => CheckPrincipal(Task.CompletedTask);
+        public override bool CanCount => CheckPrincipal(true);
+        public override bool CanPeek => CheckPrincipal(true);
+        public override int Count => CheckPrincipal(0);
+        public override bool TryRead(out string item)
+        {
+            item = string.Empty;
+            return false;
+        }
+
+        public override ValueTask<bool> WaitToReadAsync(CancellationToken cancellationToken = default) => ValueTask.FromResult(false);
+
+        private T CheckPrincipal<T>(T value)
+        {
+            RequestContext.Get(OrleansIdentityConstants.USER_CLAIMS).ShouldBeSameAs(user);
+            return value;
+        }
+    }
+
+    [Fact]
+    public void SignalRWrapperCache_DoesNotKeepCollectibleReturnTypesAlive()
+    {
+        var payloadType = CacheCollectibleChannel();
+
+        for (var attempt = 0; attempt < 10 && payloadType.IsAlive; attempt++)
+        {
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+        }
+
+        payloadType.IsAlive.ShouldBeFalse();
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static WeakReference CacheCollectibleChannel()
+    {
+        var assembly = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName("CollectibleChannelHub"), AssemblyBuilderAccess.RunAndCollect);
+        var module = assembly.DefineDynamicModule("Hub");
+        var payloadType = module.DefineType("Payload", TypeAttributes.Public).CreateType()!;
+        var hubType = typeof(CollectibleChannelHub<>).MakeGenericType(payloadType);
+        using var hub = (Hub)Activator.CreateInstance(hubType, nonPublic: true)!;
+        using var services = new ServiceCollection().BuildServiceProvider();
+        var method = hubType.GetMethod(nameof(CollectibleChannelHub<object>.Read))!;
+        var context = new HubInvocationContext(new LifecycleCallerContext(null), services, hub, method, []);
+        var result = new SignalRAuthorizationFilter().InvokeMethodAsync(context,
+            _ => ValueTask.FromResult(method.Invoke(hub, null))).AsTask().GetAwaiter().GetResult();
+        method.ReturnType.IsInstanceOfType(result).ShouldBeTrue();
+        return new WeakReference(payloadType);
+    }
+
+    private sealed class CollectibleChannelHub<T> : Hub
+    {
+        private readonly Channel<T> channel = Channel.CreateUnbounded<T>();
+
+        public ChannelReader<T> Read() => channel.Reader;
     }
 
     private sealed class LifecycleHub : Hub;

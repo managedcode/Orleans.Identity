@@ -5,7 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace ManagedCode.Orleans.Identity.Tests.TestApp.Services;
 
-public class JwtService : IJwtService
+public class JwtService(TimeProvider timeProvider) : IJwtService
 {
     private readonly string _secretKey = "your-super-secret-key-with-at-least-32-characters";
     private readonly string _issuer = "Orleans.Identity.Test";
@@ -32,12 +32,43 @@ public class JwtService : IJwtService
             issuer: _issuer,
             audience: _audience,
             claims: claims,
-            expires: DateTime.UtcNow.AddHours(1),
+            expires: timeProvider.GetUtcNow().AddHours(1).UtcDateTime,
             signingCredentials: credentials
         );
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
+
+    internal static LifetimeValidator CreateLifetimeValidator(TimeProvider timeProvider) =>
+        (notBefore, expires, _, parameters) =>
+        {
+            if (!expires.HasValue && parameters.RequireExpirationTime)
+            {
+                throw new SecurityTokenNoExpirationException("The token has no expiration.");
+            }
+
+            if (notBefore > expires)
+            {
+                throw new SecurityTokenInvalidLifetimeException("The token expires before it becomes valid.")
+                {
+                    NotBefore = notBefore,
+                    Expires = expires
+                };
+            }
+
+            var now = timeProvider.GetUtcNow().UtcDateTime;
+            if (notBefore is { } starts && starts - now > parameters.ClockSkew)
+            {
+                throw new SecurityTokenNotYetValidException("The token is not yet valid.") { NotBefore = starts };
+            }
+
+            if (expires is { } ends && now - ends > parameters.ClockSkew)
+            {
+                throw new SecurityTokenExpiredException("The token expired.") { Expires = ends };
+            }
+
+            return true;
+        };
 
     public ClaimsPrincipal? ValidateToken(string token)
     {
@@ -55,7 +86,8 @@ public class JwtService : IJwtService
                 ValidateAudience = true,
                 ValidAudience = _audience,
                 ValidateLifetime = true,
-                ClockSkew = TimeSpan.Zero
+                ClockSkew = TimeSpan.Zero,
+                LifetimeValidator = CreateLifetimeValidator(timeProvider)
             };
 
             var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out _);

@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using ManagedCode.Orleans.Identity.Tests.Cluster;
 using ManagedCode.Orleans.Identity.Tests.TestApp.Services;
+using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Xunit;
 using Xunit.Abstractions;
@@ -16,13 +17,11 @@ public class SimpleAuthorizationTest
 
     private readonly ITestOutputHelper _outputHelper;
     private readonly TestClusterApplication _testApp;
-    private readonly IJwtService _jwtService;
 
     public SimpleAuthorizationTest(TestClusterApplication testApp, ITestOutputHelper outputHelper)
     {
         _testApp = testApp;
         _outputHelper = outputHelper;
-        _jwtService = new JwtService();
     }
 
     [Fact]
@@ -32,7 +31,8 @@ public class SimpleAuthorizationTest
 
         // Create a client with user role only
         var client = _testApp.CreateClient();
-        var token = _jwtService.GenerateToken("normaluser", "normaluser", UserRoles);
+        using var scope = _testApp.Services.CreateScope();
+        var token = scope.ServiceProvider.GetRequiredService<IJwtService>().GenerateToken("normaluser", "normaluser", UserRoles);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         _outputHelper.WriteLine($"Created JWT token for user 'normaluser' with role 'user'");
@@ -54,7 +54,8 @@ public class SimpleAuthorizationTest
 
         // Create a client with admin role
         var client = _testApp.CreateClient();
-        var token = _jwtService.GenerateToken("adminuser", "adminuser", AdminRoles);
+        using var scope = _testApp.Services.CreateScope();
+        var token = scope.ServiceProvider.GetRequiredService<IJwtService>().GenerateToken("adminuser", "adminuser", AdminRoles);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         _outputHelper.WriteLine($"Created JWT token for user 'adminuser' with roles 'user, admin'");

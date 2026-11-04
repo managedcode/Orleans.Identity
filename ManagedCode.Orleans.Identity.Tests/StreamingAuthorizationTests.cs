@@ -74,6 +74,29 @@ public sealed class StreamingAuthorizationTests(TestClusterApplication app)
     }
 
     [Fact]
+    public async Task Stream_RejectsPrincipalMutationDuringStartAuthorization()
+    {
+        SetUser(TestRoles.ADMIN);
+        var grain = app.Cluster.Client.GetGrain<IStreamingAuthorizationGrain>(Guid.NewGuid());
+        var transport = grain.AsReference<IAsyncEnumerableGrainExtension>();
+        var id = Guid.NewGuid();
+        var changed = (IAsyncEnumerableRequest<string>)grain.ResourceProtected("mutate");
+        var valid = (IAsyncEnumerableRequest<string>)grain.InterfaceProtected("safe");
+        valid.MaxBatchSize = 1;
+
+        try
+        {
+            await Should.ThrowAsync<UnauthorizedAccessException>(() => transport.StartEnumeration(id, changed).AsTask());
+            (await grain.Counts()).ShouldBe((0, 0));
+
+            (await transport.StartEnumeration(id, valid)).Value.ShouldBe("safe0");
+            await transport.DisposeAsync(id);
+            (await grain.Counts()).ShouldBe((1, 1));
+        }
+        finally { RequestContext.Clear(); }
+    }
+
+    [Fact]
     public async Task AnonymousStream_RemainsPublic()
     {
         RequestContext.Clear();
@@ -158,6 +181,43 @@ public sealed class StreamingAuthorizationTests(TestClusterApplication app)
             (await grain.Counts()).ShouldBe((1, 1));
         }
         finally { RequestContext.Clear(); }
+    }
+
+    [Fact]
+    public async Task Stream_RejectsDelegationChangeOnReadAndDispose()
+    {
+        SetDelegatedUser("original-actor");
+        var grain = app.Cluster.Client.GetGrain<IStreamingAuthorizationGrain>(Guid.NewGuid());
+        var transport = grain.AsReference<IAsyncEnumerableGrainExtension>();
+        var request = (IAsyncEnumerableRequest<string>)grain.InterfaceProtected("secret");
+        request.MaxBatchSize = 1;
+        var id = Guid.NewGuid();
+
+        try
+        {
+            (await transport.StartEnumeration(id, request)).Value.ShouldBe("secret0");
+
+            SetDelegatedUser("different-actor");
+            await Should.ThrowAsync<UnauthorizedAccessException>(async () => await transport.MoveNext<string>(id));
+            await Should.ThrowAsync<UnauthorizedAccessException>(async () => await transport.DisposeAsync(id));
+            (await grain.Counts()).Disposed.ShouldBe(0);
+
+            SetDelegatedUser("original-actor");
+            (await transport.MoveNext<string>(id)).Value.ShouldBe("secret1");
+            await transport.DisposeAsync(id);
+            (await grain.Counts()).ShouldBe((1, 1));
+        }
+        finally { RequestContext.Clear(); }
+
+        static void SetDelegatedUser(string originalActor)
+        {
+            SetUser(TestRoles.ADMIN);
+            var principal = (ClaimsPrincipal)RequestContext.Get(OrleansIdentityConstants.USER_CLAIMS)!;
+            principal.Identities.Single().Actor = new ClaimsIdentity([new Claim(ClaimTypes.NameIdentifier, "delegate")], "stream-test")
+            {
+                Actor = new ClaimsIdentity([new Claim(ClaimTypes.NameIdentifier, originalActor)], "stream-test")
+            };
+        }
     }
 
     [Fact]
@@ -382,6 +442,65 @@ public sealed class StreamingAuthorizationTests(TestClusterApplication app)
     }
 
     [Fact]
+    public async Task Stream_FaultedStartReleasesIdForRetry()
+    {
+        SetUser(TestRoles.ADMIN);
+        var grain = app.Cluster.Client.GetGrain<IStreamingAuthorizationGrain>(Guid.NewGuid());
+        var transport = grain.AsReference<IAsyncEnumerableGrainExtension>();
+        var id = Guid.NewGuid();
+        const string method = nameof(IAsyncEnumerableGrainExtension.StartEnumeration);
+
+        try
+        {
+            RequestContext.Set(StreamingAuthorizationGrain.RejectedTransportMethod, method);
+            var rejection = await Should.ThrowAsync<InvalidOperationException>(async () => await StartAsync());
+            rejection.Message.ShouldBe(method);
+            (await grain.Counts()).ShouldBe((0, 0));
+            RequestContext.Remove(StreamingAuthorizationGrain.RejectedTransportMethod);
+
+            (await StartAsync()).Status.ShouldBe(EnumerationResult.Element);
+            await transport.DisposeAsync(id, CancellationToken.None);
+            (await grain.Counts()).ShouldBe((1, 1));
+        }
+        finally { RequestContext.Clear(); }
+
+        ValueTask<(EnumerationResult Status, object? Value)> StartAsync()
+        {
+            var request = (IAsyncEnumerableRequest<string>)grain.InterfaceProtected("value");
+            request.MaxBatchSize = 1;
+            return transport.StartEnumeration(id, request, CancellationToken.None);
+        }
+    }
+
+    [Fact]
+    public async Task Stream_FaultedDisposalCanBeRetriedByTheOwner()
+    {
+        SetUser(TestRoles.ADMIN);
+        var grain = app.Cluster.Client.GetGrain<IStreamingAuthorizationGrain>(Guid.NewGuid());
+        var request = (IAsyncEnumerableRequest<string>)grain.InterfaceProtected("value");
+        request.MaxBatchSize = 1;
+        var transport = grain.AsReference<IAsyncEnumerableGrainExtension>();
+        var id = Guid.NewGuid();
+
+        try
+        {
+            (await transport.StartEnumeration(id, request, CancellationToken.None)).Status.ShouldBe(EnumerationResult.Element);
+
+            const string method = nameof(IAsyncEnumerableGrainExtension.DisposeAsync);
+            RequestContext.Set(StreamingAuthorizationGrain.RejectedTransportMethod, method);
+            var rejection = await Should.ThrowAsync<InvalidOperationException>(
+                async () => await transport.DisposeAsync(id, CancellationToken.None));
+            rejection.Message.ShouldBe(method);
+            (await grain.Counts()).Disposed.ShouldBe(0);
+            RequestContext.Remove(StreamingAuthorizationGrain.RejectedTransportMethod);
+
+            await transport.DisposeAsync(id, CancellationToken.None);
+            (await grain.Counts()).ShouldBe((1, 1));
+        }
+        finally { RequestContext.Clear(); }
+    }
+
+    [Fact]
     public async Task Stream_DisposeWithoutAuthorizationStateDoesNotTouchEnumerator()
     {
         SetUser(TestRoles.ADMIN);
@@ -430,6 +549,43 @@ public sealed class StreamingAuthorizationTests(TestClusterApplication app)
             var values = new List<string>();
             await foreach (var value in grain.ReadStream()) values.Add(value);
             return values;
+        }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task CustomInterfaceAuthorizationMetadataEnforcesRoleAndAllowsExplicitGuests(bool streaming)
+    {
+        var grain = app.Cluster.Client.GetGrain<ICustomRoleAuthorizationGrain>(Guid.NewGuid());
+        try
+        {
+            SetUser(null);
+            (await ReadAsync(allowAnonymous: true)).ShouldBe("unannotated");
+            await Should.ThrowAsync<UnauthorizedAccessException>(() => ReadAsync());
+
+            SetUser(TestRoles.USER);
+            await Should.ThrowAsync<UnauthorizedAccessException>(() => ReadAsync());
+
+            SetUser(TestRoles.ADMIN);
+            (await ReadAsync()).ShouldBe("unannotated");
+        }
+        finally { RequestContext.Clear(); }
+
+        async Task<string> ReadAsync(bool allowAnonymous = false)
+        {
+            if (!streaming)
+            {
+                return await (allowAnonymous ? grain.ReadPublicTask() : grain.ReadTask());
+            }
+
+            var values = allowAnonymous ? grain.ReadPublicStream() : grain.ReadStream();
+            await foreach (var item in values)
+            {
+                return item;
+            }
+
+            throw new InvalidOperationException("The stream did not return an item.");
         }
     }
 

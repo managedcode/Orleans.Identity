@@ -157,7 +157,7 @@ public class CoreExtensionTests
     }
 
     [Fact]
-    public void ClaimsPrincipalWireRoundTrip_PreservesIdentityAndClaimOrder()
+    public void ClaimsPrincipalWireRoundTrip_PreservesIdentityOrderAndDelegation()
     {
         const string customName = "custom-name";
         const string customRole = "custom-role";
@@ -165,6 +165,10 @@ public class CoreExtensionTests
             [new Claim(customName, "first"), new Claim(customName, "second"), new Claim(customRole, RoleAdmin)],
             AuthenticationType, customName, customRole);
         first.Claims.First().Properties[ClaimPropertyKey] = ClaimPropertyValue;
+        first.Actor = new ClaimsIdentity([new Claim(ClaimTypes.Name, "delegate")], AuthenticationType)
+        {
+            Actor = new ClaimsIdentity([new Claim(ClaimTypes.Name, "original-actor")], AuthenticationType)
+        };
         var second = new ClaimsIdentity([new Claim(ClaimTypes.Name, "other")]);
         var principal = new ClaimsPrincipal([first, second]);
         using var services = new ServiceCollection()
@@ -180,6 +184,11 @@ public class CoreExtensionTests
         restored.Identities.First().Claims.First().Properties[ClaimPropertyKey].ShouldBe(ClaimPropertyValue);
         restored.IsInRole(RoleAdmin).ShouldBeTrue();
         restored.GetRoles().ShouldBe([RoleAdmin]);
+        var actor = restored.Identities.First().Actor;
+        actor.ShouldNotBeNull();
+        actor.Name.ShouldBe("delegate");
+        actor.Actor?.Name.ShouldBe("original-actor");
+        restored.Identities.Last().Actor.ShouldBeNull();
     }
 
     [Fact]

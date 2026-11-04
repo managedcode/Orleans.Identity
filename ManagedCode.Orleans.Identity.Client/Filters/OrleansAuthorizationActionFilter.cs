@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace ManagedCode.Orleans.Identity.Client.Filters;
 
-public sealed class OrleansAuthorizationActionFilter : IAsyncResourceFilter, IAsyncActionFilter, IAsyncResultFilter
+public sealed class OrleansAuthorizationActionFilter : IAsyncResourceFilter, IAsyncActionFilter, IAsyncAlwaysRunResultFilter
 {
     public async Task OnResourceExecutionAsync(ResourceExecutingContext context, ResourceExecutionDelegate next)
     {

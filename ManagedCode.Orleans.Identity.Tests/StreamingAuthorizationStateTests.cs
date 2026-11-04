@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using ManagedCode.Orleans.Identity.Server.GrainCallFilter;
+using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Xunit;
 
@@ -74,17 +75,45 @@ public sealed class StreamingAuthorizationStateTests
     [Fact]
     public void StaleEntry_CannotBeginOrRemoveReplacementWithSameId()
     {
-        var state = new StreamingAuthorizationState(TimeSpan.FromMinutes(1));
+        using var services = new ServiceCollection().AddSingleton<TimeProvider>(new ManualClock()).BuildServiceProvider();
+        var state = new StreamingAuthorizationState(TimeSpan.FromMinutes(1), services.GetRequiredService<TimeProvider>());
         var id = Guid.NewGuid();
         var owner = Principal("owner");
-        var original = state.Add(id, default, null, owner);
-        original.Finish(disposing: false);
+        var original = new StreamingAuthorizationState.Entry(default, null, owner);
+        state.Add(id, original);
+        state.Finish(id, original, disposing: false, terminated: false);
         state.Remove(id, original);
-        var replacement = state.Add(id, default, null, Principal("replacement"));
+        var replacement = new StreamingAuthorizationState.Entry(default, null, Principal("replacement"));
+        state.Add(id, replacement);
 
         state.TryBegin(id, original, null, owner, disposing: false).ShouldBeFalse();
         state.Remove(id, original);
         state.Find(id).ShouldBeSameAs(replacement);
+    }
+
+    [Fact]
+    public void RetentionUsesInjectedMonotonicClockAfterOperationFinishes()
+    {
+        var clock = new ManualClock();
+        using var services = new ServiceCollection().AddSingleton<TimeProvider>(clock).BuildServiceProvider();
+        var retention = TimeSpan.FromMinutes(1);
+        var state = new StreamingAuthorizationState(retention, services.GetRequiredService<TimeProvider>());
+        var id = Guid.NewGuid();
+        var entry = new StreamingAuthorizationState.Entry(default, null, null);
+        state.Add(id, entry);
+
+        clock.Advance(retention + retention);
+        state.Add(Guid.NewGuid(), new StreamingAuthorizationState.Entry(default, null, null));
+        state.Find(id).ShouldBeSameAs(entry);
+
+        state.Finish(id, entry, disposing: false, terminated: false);
+        clock.Advance(retention);
+        state.Add(Guid.NewGuid(), new StreamingAuthorizationState.Entry(default, null, null));
+        state.Find(id).ShouldBeSameAs(entry);
+
+        clock.Advance(TimeSpan.FromTicks(1));
+        state.Add(Guid.NewGuid(), new StreamingAuthorizationState.Entry(default, null, null));
+        state.Find(id).ShouldBeNull();
     }
 
     [Fact]
@@ -110,6 +139,17 @@ public sealed class StreamingAuthorizationStateTests
 
         identity.AddClaim(new Claim(ClaimTypes.Role, "additional"));
         entry.CanContinue(null, principal, disposing: false).ShouldBeFalse();
+    }
+
+    private sealed class ManualClock : TimeProvider
+    {
+        private long timestamp;
+
+        public override long TimestampFrequency => TimeSpan.TicksPerSecond;
+
+        public override long GetTimestamp() => timestamp;
+
+        public void Advance(TimeSpan interval) => timestamp += interval.Ticks;
     }
 
     private sealed class IteratorPrincipal(ClaimsIdentity identity) : ClaimsPrincipal(identity)

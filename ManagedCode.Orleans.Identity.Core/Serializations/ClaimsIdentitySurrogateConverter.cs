@@ -9,11 +9,17 @@ public sealed class ClaimsIdentitySurrogateConverter : IConverter<ClaimsIdentity
 {
     public ClaimsIdentity ConvertFromSurrogate(in ClaimsIdentitySurrogate surrogate)
     {
-        return new ClaimsIdentity(surrogate.Claims, surrogate.AuthenticationType, surrogate.NameType, surrogate.RoleType);
+        return new ClaimsIdentity(surrogate.Claims, surrogate.AuthenticationType, surrogate.NameType, surrogate.RoleType)
+        {
+            Actor = surrogate.Actor
+        };
     }
 
     public ClaimsIdentitySurrogate ConvertToSurrogate(in ClaimsIdentity value)
     {
-        return new ClaimsIdentitySurrogate(value.Claims.ToList(), value.AuthenticationType, value.NameClaimType, value.RoleClaimType);
+        return new ClaimsIdentitySurrogate(value.Claims.ToList(), value.AuthenticationType, value.NameClaimType, value.RoleClaimType)
+        {
+            Actor = value.Actor
+        };
     }
 }

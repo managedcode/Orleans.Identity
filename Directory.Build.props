@@ -11,14 +11,14 @@
     <AnalysisLevel>latest-recommended</AnalysisLevel>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <NoWarn>$(NoWarn);CS1591;CA1707;CA1848;CA1859;CA1873</NoWarn>
-    <Version>10.4.5</Version>
+    <Version>10.4.6</Version>
     <PackageVersion>$(Version)</PackageVersion>
   </PropertyGroup>
 
   <PropertyGroup>
     <Authors>ManagedCode</Authors>
     <Company>ManagedCode</Company>
-    <Copyright>Copyright © 2021-$([System.DateTime]::Now.ToString(`yyyy`)) ManagedCode SAS</Copyright>
+    <Copyright>Copyright © 2021-2026 ManagedCode SAS</Copyright>
     <Product>ManagedCode.Orleans.Identity</Product>
     <RepositoryType>GitHub</RepositoryType>
     <RepositoryUrl>https://github.com/managedcode/Orleans.Identity</RepositoryUrl>

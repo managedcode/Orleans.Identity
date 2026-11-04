@@ -4,6 +4,7 @@ using ManagedCode.Orleans.Identity.Tests.Constants;
 using ManagedCode.Orleans.Identity.Server.GrainCallFilter;
 using Orleans.Concurrency;
 using Orleans.Runtime;
+using Orleans.Serialization.Invocation;
 using Microsoft.AspNetCore.Authorization;
 
 namespace ManagedCode.Orleans.Identity.Tests.Cluster.Grains;
@@ -37,13 +38,27 @@ public interface IStreamingAuthorizationGrain : IGrainWithGuidKey
     Task ForgetStreamAuthorization(Guid enumerationId);
 }
 
-public sealed class StreamingAuthorizationGrain : Grain, IStreamingAuthorizationGrain
+public sealed class StreamingAuthorizationGrain : Grain, IStreamingAuthorizationGrain, IIncomingGrainCallFilter
 {
     public const string ResourcePolicy = "stream-original-resource";
+    public const string RejectedTransportMethod = "rejected-stream-transport-method";
     private int started;
     private int disposed;
     private readonly TaskCompletionSource blockedMoveNextStarted = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private readonly TaskCompletionSource blockedMoveNextRelease = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+    public Task Invoke(IIncomingGrainCallContext context)
+    {
+        if (context.InterfaceMethod.DeclaringType == typeof(IAsyncEnumerableGrainExtension) &&
+            RequestContext.Get(RejectedTransportMethod) is string method &&
+            context.InterfaceMethod.Name == method)
+        {
+            context.Response = Response.FromException(new InvalidOperationException(method));
+            return Task.CompletedTask;
+        }
+
+        return context.Invoke();
+    }
 
     public IAsyncEnumerable<string> InterfaceProtected(string value, CancellationToken cancellationToken = default) =>
         Enumerate(value, cancellationToken);
@@ -247,6 +262,36 @@ public interface IInheritedProtectedAuthorizationGrain : IGrainWithGuidKey
 
 [Authorize(Roles = TestRoles.ADMIN)]
 public sealed class InheritedProtectedAuthorizationGrain : InheritedAuthorizationGrainBase, IInheritedProtectedAuthorizationGrain;
+
+[RequireGrainAdmin]
+public interface ICustomRoleAuthorizationGrain : IGrainWithGuidKey
+{
+    Task<string> ReadTask();
+    IAsyncEnumerable<string> ReadStream();
+
+    [AllowGrainGuests]
+    Task<string> ReadPublicTask();
+
+    [AllowGrainGuests]
+    IAsyncEnumerable<string> ReadPublicStream();
+}
+
+public sealed class CustomRoleAuthorizationGrain : InheritedAuthorizationGrainBase, ICustomRoleAuthorizationGrain
+{
+    public Task<string> ReadPublicTask() => ReadTask();
+    public IAsyncEnumerable<string> ReadPublicStream() => ReadStream();
+}
+
+[AttributeUsage(AttributeTargets.Method)]
+internal sealed class AllowGrainGuestsAttribute : Attribute, IAllowAnonymous;
+
+[AttributeUsage(AttributeTargets.Interface)]
+internal sealed class RequireGrainAdminAttribute : Attribute, IAuthorizeData
+{
+    public string? Policy { get; set; }
+    public string? Roles { get; set; } = TestRoles.ADMIN;
+    public string? AuthenticationSchemes { get; set; }
+}
 
 public abstract class InheritedAuthorizationGrainBase : Grain
 {

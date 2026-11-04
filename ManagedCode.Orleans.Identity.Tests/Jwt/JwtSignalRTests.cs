@@ -3,6 +3,7 @@ using ManagedCode.Orleans.Identity.Tests.Cluster;
 using ManagedCode.Orleans.Identity.Tests.TestApp.Models;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Xunit;
 using Xunit.Abstractions;
@@ -167,7 +168,8 @@ public class JwtSignalRTests
         await using var connection = await CreateSignalRConnection(token);
 
         var values = new List<string>();
-        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        var timeProvider = _testApp.Services.GetRequiredService<TimeProvider>();
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10), timeProvider);
         await foreach (var value in connection.StreamAsync<string>(method, timeout.Token))
         {
             values.Add(value);
@@ -179,11 +181,14 @@ public class JwtSignalRTests
     [Theory]
     [InlineData("ReadChannel")]
     [InlineData("ReadChannelAsync")]
+    [InlineData("ReadChannelTask")]
+    [InlineData("ReadChannelAwaitable")]
     public async Task SignalR_ChannelForwardsPrincipalDuringDeferredRead(string method)
     {
         var token = await GetJwtToken("admin");
         await using var connection = await CreateSignalRConnection(token);
-        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        var timeProvider = _testApp.Services.GetRequiredService<TimeProvider>();
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10), timeProvider);
 
         var values = new List<string>();
         await foreach (var value in connection.StreamAsync<string>(method, timeout.Token))

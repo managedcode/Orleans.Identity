@@ -1,6 +1,6 @@
-using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Security.Claims;
 using System.Threading.Channels;
 using Microsoft.AspNetCore.SignalR;
@@ -9,7 +9,7 @@ namespace ManagedCode.Orleans.Identity.Client.Filters;
 
 public sealed class SignalRAuthorizationFilter : IHubFilter
 {
-    private static readonly ConcurrentDictionary<Type, Func<object, ClaimsPrincipal?, object>?> StreamWrappers = new();
+    private static readonly ConditionalWeakTable<Type, Func<object, ClaimsPrincipal?, object>?> StreamWrappers = new();
     private static readonly MethodInfo WrapStreamMethod = typeof(SignalRAuthorizationFilter)
         .GetMethod(nameof(WrapStream), BindingFlags.NonPublic | BindingFlags.Static)!;
     private static readonly MethodInfo WrapChannelMethod = typeof(SignalRAuthorizationFilter)
@@ -27,20 +27,13 @@ public sealed class SignalRAuthorizationFilter : IHubFilter
             return null;
         }
 
-        var wrap = StreamWrappers.GetOrAdd(invocationContext.HubMethod.ReturnType, CreateStreamWrapper);
+        var wrap = StreamWrappers.GetValue(invocationContext.HubMethod.ReturnType, CreateStreamWrapper);
         return wrap is null ? result : wrap(result, user);
     }
 
     private static Func<object, ClaimsPrincipal?, object>? CreateStreamWrapper(Type returnType)
     {
-        if (returnType.IsConstructedGenericType)
-        {
-            var definition = returnType.GetGenericTypeDefinition();
-            if (definition == typeof(Task<>) || definition == typeof(ValueTask<>))
-            {
-                returnType = returnType.GenericTypeArguments[0];
-            }
-        }
+        returnType = GetAwaitedResultType(returnType) ?? returnType;
 
         var stream = IsAsyncEnumerable(returnType) ? returnType : Array.Find(returnType.GetInterfaces(), IsAsyncEnumerable);
         if (stream is not null)
@@ -59,6 +52,19 @@ public sealed class SignalRAuthorizationFilter : IHubFilter
         }
 
         return null;
+    }
+
+    private static Type? GetAwaitedResultType(Type type)
+    {
+        const BindingFlags members = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
+        var awaiter = type.GetMethod("GetAwaiter", members, Type.EmptyTypes)?.ReturnType;
+        if (awaiter is null || !typeof(INotifyCompletion).IsAssignableFrom(awaiter) ||
+            awaiter.GetProperty("IsCompleted", members, binder: null, typeof(bool), Type.EmptyTypes, modifiers: null) is null)
+        {
+            return null;
+        }
+
+        return awaiter.GetMethod("GetResult", members, Type.EmptyTypes)?.ReturnType;
     }
 
     private static bool IsAsyncEnumerable(Type type) =>
@@ -105,10 +111,41 @@ public sealed class SignalRAuthorizationFilter : IHubFilter
 
     private sealed class ScopedChannelReader<T>(ChannelReader<T> reader, ClaimsPrincipal? user) : ChannelReader<T>
     {
-        public override Task Completion => reader.Completion;
-        public override bool CanCount => reader.CanCount;
-        public override bool CanPeek => reader.CanPeek;
-        public override int Count => reader.Count;
+        public override Task Completion
+        {
+            get
+            {
+                using var scope = new OrleansRequestContextScope(user);
+                return reader.Completion;
+            }
+        }
+
+        public override bool CanCount
+        {
+            get
+            {
+                using var scope = new OrleansRequestContextScope(user);
+                return reader.CanCount;
+            }
+        }
+
+        public override bool CanPeek
+        {
+            get
+            {
+                using var scope = new OrleansRequestContextScope(user);
+                return reader.CanPeek;
+            }
+        }
+
+        public override int Count
+        {
+            get
+            {
+                using var scope = new OrleansRequestContextScope(user);
+                return reader.Count;
+            }
+        }
 
         public override bool TryRead([MaybeNullWhen(false)] out T item)
         {

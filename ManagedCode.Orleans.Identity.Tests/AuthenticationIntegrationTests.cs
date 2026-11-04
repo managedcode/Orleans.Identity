@@ -4,7 +4,6 @@ using System.Net.Http.Json;
 using ManagedCode.Orleans.Identity.Tests.Cluster;
 using ManagedCode.Orleans.Identity.Tests.Constants;
 using ManagedCode.Orleans.Identity.Tests.TestApp.Controllers;
-using ManagedCode.Orleans.Identity.Tests.TestApp.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,13 +24,11 @@ public class AuthenticationIntegrationTests
 
     private readonly ITestOutputHelper _outputHelper;
     private readonly TestClusterApplication _testApp;
-    private readonly IJwtService _jwtService;
 
     public AuthenticationIntegrationTests(TestClusterApplication testApp, ITestOutputHelper outputHelper)
     {
         _testApp = testApp;
         _outputHelper = outputHelper;
-        _jwtService = new JwtService();
     }
 
     [Fact]
@@ -91,7 +88,8 @@ public class AuthenticationIntegrationTests
         // Send message that triggers grain call
         await hubConnection.InvokeAsync(SendAuthorizedMessageMethod, SignalRMessageText);
 
-        var receivedMessage = await messageCompletion.Task.WaitAsync(TimeSpan.FromSeconds(SignalRMessageTimeoutSeconds));
+        var timeProvider = _testApp.Services.GetRequiredService<TimeProvider>();
+        var receivedMessage = await messageCompletion.Task.WaitAsync(TimeSpan.FromSeconds(SignalRMessageTimeoutSeconds), timeProvider);
         receivedMessage.ShouldContain("admin");
         receivedMessage.ShouldContain("authorized message");
 

@@ -1,6 +1,7 @@
 using ManagedCode.Orleans.Identity.Client.Extensions;
 using ManagedCode.Orleans.Identity.Tests.TestApp.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
@@ -103,6 +104,8 @@ public class HttpHostProgram
                 };
             });
 
+        builder.Services.AddOptions<JwtBearerOptions>("Bearer").Configure<TimeProvider>((options, timeProvider) =>
+            options.TokenValidationParameters.LifetimeValidator = JwtService.CreateLifetimeValidator(timeProvider));
         builder.Services.AddAuthorization();
 
         // Add JWT service
